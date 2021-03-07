@@ -31,20 +31,20 @@ Portions Copyright (c) The Cryptonote developers.
 - Web: [judecoin.io](https://judecoin.io)
 - Forum: [forum.judecoin.io](https://forum.judecoin.io)
 - Mail: [](mailto:dev@getmonero.org)
-- GitHub: [https://github.com/monero-project/monero](https://github.com/monero-project/monero)
-- IRC: [#monero-dev on Freenode](https://webchat.freenode.net/?randomnick=1&channels=%23monero-dev&prompt=1&uio=d4)
-- It is HIGHLY recommended that you join the #monero-dev IRC channel if you are developing software that uses Monero. Due to the nature of this open source software project, joining this channel and idling is the best way to stay updated on best practices and new developments in the Monero ecosystem. All you need to do is join the IRC channel and idle to stay updated with the latest in Monero development. If you do not, you risk wasting resources on developing integrations that are not compatible with the Monero network. The Monero core team and community continuously make efforts to communicate updates, developments, and documentation via other platforms – but for the best information, you need to talk to other Monero developers, and they are on IRC. #monero-dev is about Monero development, not getting help about using Monero, or help about development of other software, including yours, unless it also pertains to Monero code itself. For these cases, checkout #monero. 
+- GitHub: [https://github.com/judecoin](https://github.com/judecoin)
+- IRC: [#judecoin-dev on Freenode](https://webchat.freenode.net/?randomnick=1&channels=%23judecoin-dev&prompt=1&uio=d4)
+- It is HIGHLY recommended that you join the #judecoin-dev IRC channel if you are developing software that uses judecoin. Due to the nature of this open source software project, joining this channel and idling is the best way to stay updated on best practices and new developments in the Monero ecosystem. All you need to do is join the IRC channel and idle to stay updated with the latest in Monero development. If you do not, you risk wasting resources on developing integrations that are not compatible with the judecoin network. The judecoin core team and community continuously make efforts to communicate updates, developments, and documentation via other platforms – but for the best information, you need to talk to other judecoin developers, and they are on IRC. #judecoin-dev is about judecoin development, not getting help about using judecoin, or help about development of other software, including yours, unless it also pertains to judecoin code itself. For these cases, checkout #judecoin. 
 
 ## Vulnerability response
 
-- Our [Vulnerability Response Process](https://github.com/monero-project/meta/blob/master/VULNERABILITY_RESPONSE_PROCESS.md) encourages responsible disclosure
-- We are also available via [HackerOne](https://hackerone.com/monero)
+- Our [Vulnerability Response Process](https://github.com/judecoin/meta/blob/master/VULNERABILITY_RESPONSE_PROCESS.md) encourages responsible disclosure
+- We are also available via [HackerOne](https://hackerone.com/judecoin)
 
 ## Research
 
-The [Monero Research Lab](https://src.getmonero.org/resources/research-lab/) is an open forum where the community coordinates research into Monero cryptography, protocols, fungibility, analysis, and more. We welcome collaboration and contributions from outside researchers! Because not all Lab work and publications are distributed as traditional preprints or articles, they may be easy to miss if you are conducting literature reviews for your own Monero research. You are encouraged to get in touch with our researchers if you have questions, wish to collaborate, or would like guidance to help avoid unnecessarily duplicating earlier or known work.
+The [judecoin Research Lab](https://src.judecoin.io/resources/research-lab/) is an open forum where the community coordinates research into judecoin cryptography, protocols, fungibility, analysis, and more. We welcome collaboration and contributions from outside researchers! Because not all Lab work and publications are distributed as traditional preprints or articles, they may be easy to miss if you are conducting literature reviews for your own Monero research. You are encouraged to get in touch with our researchers if you have questions, wish to collaborate, or would like guidance to help avoid unnecessarily duplicating earlier or known work.
 
-Our researchers are available on IRC in [#monero-research-lab on Freenode](https://webchat.freenode.net/?randomnick=1&channels=%23monero-research-lab&prompt=1&uio=d4) or by email:
+Our researchers are available on IRC in [#judecoin-research-lab on Freenode](https://webchat.freenode.net/?randomnick=1&channels=%23judecoin-research-lab&prompt=1&uio=d4) or by email:
 
 - Sarang Noether, Ph.D.: [sarang@getmonero.org](mailto:sarang@getmonero.org) or [sarang.noether@protonmail.com](mailto:sarang.noether@protonmail.com); [research repository](https://github.com/SarangNoether/research-lab)
 - Surae Noether (Brandon Goodell), Ph.D.: [surae@getmonero.org](mailto:surae@getmonero.org) or [surae.noether@protonmail.com](mailto:surae.noether@protonmail.com); [research repository](https://github.com/b-g-goodell/research-lab)
