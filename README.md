@@ -54,18 +54,18 @@ Our researchers are available on IRC in [#judecoin-research-lab on Freenode](htt
 - You can subscribe to an [announcement listserv](https://lists.getmonero.org) to get critical announcements from the Monero core team. The announcement list can be very helpful for knowing when software updates are needed.
 
 ## Translations
-The CLI wallet is available in different languages. If you want to help translate it, see our self-hosted localization platform, Weblate, on [translate.getmonero.org]( https://translate.getmonero.org/projects/monero/cli-wallet/). Every translation *must* be uploaded on the platform, pull requests directly editing the code in this repository will be closed. If you need help with Weblate, you can find a guide with screenshots [here](https://github.com/monero-ecosystem/monero-translations/blob/master/weblate.md).
+The CLI wallet is available in different languages. If you want to help translate it, see our self-hosted localization platform, Weblate, on [translate.judecoin.io]( https://translate.judecoin.io/projects/judecoin/cli-wallet/). Every translation *must* be uploaded on the platform, pull requests directly editing the code in this repository will be closed. If you need help with Weblate, you can find a guide with screenshots [here](https://github.com/judecoin-ecosystem/judecoin-translations/blob/master/weblate.md).
 &nbsp;
 
-If you need help/support/info about translations, contact the localization workgroup. You can find the complete list of contacts on the repository of the workgroup: [monero-translations](https://github.com/monero-ecosystem/monero-translations#contacts).
+If you need help/support/info about translations, contact the localization workgroup. You can find the complete list of contacts on the repository of the workgroup: [judecoin-translations](https://github.com/judecoin-ecosystem/monero-translations#contacts).
 
 ## Coverage
 
 | Type      | Status |
 |-----------|--------|
 | Coverity  | [![Coverity Status](https://scan.coverity.com/projects/9657/badge.svg)](https://scan.coverity.com/projects/9657/)
-| OSS Fuzz  | [![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/monero.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:monero)
-| Coveralls | [![Coveralls Status](https://coveralls.io/repos/github/monero-project/monero/badge.svg?branch=master)](https://coveralls.io/github/monero-project/monero?branch=master)
+| OSS Fuzz  | [![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/monero.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:judecoin)
+| Coveralls | [![Coveralls Status](https://coveralls.io/repos/github/judecoin-project/judecoin/badge.svg?branch=master)](https://coveralls.io/github/judecoin-project/judecoin?branch=master)
 | License   | [![License](https://img.shields.io/badge/license-BSD3-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
 ## Introduction
@@ -78,7 +78,7 @@ Monero is a private, secure, untraceable, decentralised digital currency. You ar
 
 **Untraceability:** By taking advantage of ring signatures, a special property of a certain type of cryptography, Monero is able to ensure that transactions are not only untraceable but have an optional measure of ambiguity that ensures that transactions cannot easily be tied back to an individual user or computer.
 
-**Decentralization:** The utility of Monero depends on its decentralised peer-to-peer consensus network - anyone should be able to run the monero software, validate the integrity of the blockchain, and participate in all aspects of the monero network using consumer-grade commodity hardware. Decentralization of the monero network is maintained by software development that minimizes the costs of running the monero software and inhibits the proliferation of specialized, non-commodity hardware.  
+**Decentralization:** The utility of judecoin depends on its decentralised peer-to-peer consensus network - anyone should be able to run the judecon software, validate the integrity of the blockchain, and participate in all aspects of the judecoin network using consumer-grade commodity hardware. Decentralization of the monero network is maintained by software development that minimizes the costs of running the judecoin software and inhibits the proliferation of specialized, non-commodity hardware.  
 
 ## About this project
 
