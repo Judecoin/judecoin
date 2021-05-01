@@ -30,7 +30,7 @@ Portions Copyright (c) The Cryptonote developers.
 
 - Web: [judecoin.io](https://judecoin.io)
 - Forum: [forum.judecoin.io](https://forum.judecoin.io)
-<<<<<<< HEAD
+ HEAD
 - Mail: [](mailto:dev@getjudecoin.org)
 - GitHub: [https://github.com/judecoin-project/judecoin](https://github.com/judecoin-project/judecoin)
 - IRC: [#judecoin-dev on Freenode](https://webchat.freenode.net/?randomnick=1&channels=%23judecoin-dev&prompt=1&uio=d4)
@@ -48,16 +48,16 @@ Portions Copyright (c) The Cryptonote developers.
 ## Vulnerability response
 
 - Our [Vulnerability Response Process](https://github.com/judecoin/meta/blob/master/VULNERABILITY_RESPONSE_PROCESS.md) encourages responsible disclosure
->>>>>>> c31daa82875429599523f6578cc2903e948b4ea8
+ c31daa82875429599523f6578cc2903e948b4ea8
 - We are also available via [HackerOne](https://hackerone.com/judecoin)
 
 ## Research
 
-<<<<<<< HEAD
+ HEAD
 The [judecoin Research Lab](https://src.getjudecoin.org/resources/research-lab/) is an open forum where the community coordinates research into judecoin cryptography, protocols, fungibility, analysis, and more. We welcome collaboration and contributions from outside researchers! Because not all Lab work and publications are distributed as traditional preprints or articles, they may be easy to miss if you are conducting literature reviews for your own judecoin research. You are encouraged to get in touch with our researchers if you have questions, wish to collaborate, or would like guidance to help avoid unnecessarily duplicating earlier or known work.
 =======
 The [judecoin Research Lab](https://src.judecoin.io/resources/research-lab/) is an open forum where the community coordinates research into judecoin cryptography, protocols, fungibility, analysis, and more. We welcome collaboration and contributions from outside researchers! Because not all Lab work and publications are distributed as traditional preprints or articles, they may be easy to miss if you are conducting literature reviews for your own judecoin research. You are encouraged to get in touch with our researchers if you have questions, wish to collaborate, or would like guidance to help avoid unnecessarily duplicating earlier or known work.
->>>>>>> c31daa82875429599523f6578cc2903e948b4ea8
+ c31daa82875429599523f6578cc2903e948b4ea8
 
 Our researchers are available on IRC in [#judecoin-research-lab on Freenode](https://webchat.freenode.net/?randomnick=1&channels=%23judecoin-research-lab&prompt=1&uio=d4) or by email:
 
@@ -86,11 +86,11 @@ If you need help/support/info about translations, contact the localization workg
 | Type      | Status |
 |-----------|--------|
 | Coverity  | [![Coverity Status](https://scan.coverity.com/projects/9657/badge.svg)](https://scan.coverity.com/projects/9657/)
-<<<<<<< HEAD
+ HEAD
 | OSS Fuzz  | [![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/judecoin.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:judecoin)
 =======
 | OSS Fuzz  | [![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/judecoin.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:judecoin)
->>>>>>> c31daa82875429599523f6578cc2903e948b4ea8
+ c31daa82875429599523f6578cc2903e948b4ea8
 | Coveralls | [![Coveralls Status](https://coveralls.io/repos/github/judecoin-project/judecoin/badge.svg?branch=master)](https://coveralls.io/github/judecoin-project/judecoin?branch=master)
 | License   | [![License](https://img.shields.io/badge/license-BSD3-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
@@ -104,11 +104,11 @@ judecoin is a private, secure, untraceable, decentralised digital currency. You 
 
 **Untraceability:** By taking advantage of ring signatures, a special property of a certain type of cryptography, judecoin is able to ensure that transactions are not only untraceable but have an optional measure of ambiguity that ensures that transactions cannot easily be tied back to an individual user or computer.
 
-<<<<<<< HEAD
+HEAD
 **Decentralization:** The utility of judecoin depends on its decentralised peer-to-peer consensus network - anyone should be able to run the judecoin software, validate the integrity of the blockchain, and participate in all aspects of the judecoin network using consumer-grade commodity hardware. Decentralization of the judecoin network is maintained by software development that minimizes the costs of running the judecoin software and inhibits the proliferation of specialized, non-commodity hardware.  
 =======
 **Decentralization:** The utility of judecoin depends on its decentralised peer-to-peer consensus network - anyone should be able to run the judecon software, validate the integrity of the blockchain, and participate in all aspects of the judecoin network using consumer-grade commodity hardware. Decentralization of the judecoin network is maintained by software development that minimizes the costs of running the judecoin software and inhibits the proliferation of specialized, non-commodity hardware.  
->>>>>>> c31daa82875429599523f6578cc2903e948b4ea8
+ c31daa82875429599523f6578cc2903e948b4ea8
 
 ## About this project
 
