@@ -1,9 +1,9 @@
-# JUDECOIN
+ JUDECOIN
 
 Copyright (c) 2018-2021 The judecoinProject.   
 Portions Copyright (c) The Cryptonote developers.
 
-## Table of Contents
+ Table of Contents
 
   - [Development resources](#development-resources)
   - [Vulnerability response](#vulnerability-response)
@@ -55,7 +55,7 @@ Portions Copyright (c) The Cryptonote developers.
 
  HEAD
 The [judecoin Research Lab](https://src.getjudecoin.org/resources/research-lab/) is an open forum where the community coordinates research into judecoin cryptography, protocols, fungibility, analysis, and more. We welcome collaboration and contributions from outside researchers! Because not all Lab work and publications are distributed as traditional preprints or articles, they may be easy to miss if you are conducting literature reviews for your own judecoin research. You are encouraged to get in touch with our researchers if you have questions, wish to collaborate, or would like guidance to help avoid unnecessarily duplicating earlier or known work.
-=======
+
 The [judecoin Research Lab](https://src.judecoin.io/resources/research-lab/) is an open forum where the community coordinates research into judecoin cryptography, protocols, fungibility, analysis, and more. We welcome collaboration and contributions from outside researchers! Because not all Lab work and publications are distributed as traditional preprints or articles, they may be easy to miss if you are conducting literature reviews for your own judecoin research. You are encouraged to get in touch with our researchers if you have questions, wish to collaborate, or would like guidance to help avoid unnecessarily duplicating earlier or known work.
  c31daa82875429599523f6578cc2903e948b4ea8
 
@@ -69,17 +69,17 @@ Our researchers are available on IRC in [#judecoin-research-lab on Freenode](htt
 - You can subscribe to an [announcement listserv](https://lists.getjudecoin.org) to get critical announcements from the judecoin core team. The announcement list can be very helpful for knowing when software updates are needed.
 
 ## Translations
-<<<<<<< HEAD
+ HEAD
 The CLI wallet is available in different languages. If you want to help translate it, see our self-hosted localization platform, Weblate, on [translate.getjudecoin.org]( https://translate.getjudecoin.org/projects/judecoin/cli-wallet/). Every translation *must* be uploaded on the platform, pull requests directly editing the code in this repository will be closed. If you need help with Weblate, you can find a guide with screenshots [here](https://github.com/judecoin-ecosystem/judecoin-translations/blob/master/weblate.md).
 &nbsp;
 
 If you need help/support/info about translations, contact the localization workgroup. You can find the complete list of contacts on the repository of the workgroup: [judecoin-translations](https://github.com/judecoin-ecosystem/judecoin-translations#contacts).
-=======
+
 The CLI wallet is available in different languages. If you want to help translate it, see our self-hosted localization platform, Weblate, on [translate.judecoin.io]( https://translate.judecoin.io/projects/judecoin/cli-wallet/). Every translation *must* be uploaded on the platform, pull requests directly editing the code in this repository will be closed. If you need help with Weblate, you can find a guide with screenshots [here](https://github.com/judecoin-ecosystem/judecoin-translations/blob/master/weblate.md).
 &nbsp;
 
 If you need help/support/info about translations, contact the localization workgroup. You can find the complete list of contacts on the repository of the workgroup: [judecoin-translations](https://github.com/judecoin-ecosystem/judecoin-translations#contacts).
->>>>>>> c31daa82875429599523f6578cc2903e948b4ea8
+ c31daa82875429599523f6578cc2903e948b4ea8
 
 ## Coverage
 
@@ -88,7 +88,7 @@ If you need help/support/info about translations, contact the localization workg
 | Coverity  | [![Coverity Status](https://scan.coverity.com/projects/9657/badge.svg)](https://scan.coverity.com/projects/9657/)
  HEAD
 | OSS Fuzz  | [![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/judecoin.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:judecoin)
-=======
+
 | OSS Fuzz  | [![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/judecoin.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:judecoin)
  c31daa82875429599523f6578cc2903e948b4ea8
 | Coveralls | [![Coveralls Status](https://coveralls.io/repos/github/judecoin-project/judecoin/badge.svg?branch=master)](https://coveralls.io/github/judecoin-project/judecoin?branch=master)
@@ -106,7 +106,7 @@ judecoin is a private, secure, untraceable, decentralised digital currency. You 
 
 HEAD
 **Decentralization:** The utility of judecoin depends on its decentralised peer-to-peer consensus network - anyone should be able to run the judecoin software, validate the integrity of the blockchain, and participate in all aspects of the judecoin network using consumer-grade commodity hardware. Decentralization of the judecoin network is maintained by software development that minimizes the costs of running the judecoin software and inhibits the proliferation of specialized, non-commodity hardware.  
-=======
+
 **Decentralization:** The utility of judecoin depends on its decentralised peer-to-peer consensus network - anyone should be able to run the judecon software, validate the integrity of the blockchain, and participate in all aspects of the judecoin network using consumer-grade commodity hardware. Decentralization of the judecoin network is maintained by software development that minimizes the costs of running the judecoin software and inhibits the proliferation of specialized, non-commodity hardware.  
  c31daa82875429599523f6578cc2903e948b4ea8
 
