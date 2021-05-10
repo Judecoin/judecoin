@@ -300,7 +300,7 @@ Dependencies need to be built with -fPIC. Static libraries usually aren't, so yo
     HAVE_DOT=YES doxygen Doxyfile
     ```
 
-#### On the Raspberry Pi
+ On the Raspberry Pi
 
 Tested on a Raspberry Pi Zero with a clean install of minimal Raspbian Stretch (2017-09-07 or later) from https://www.raspberrypi.org/downloads/raspbian/. If you are using Raspian Jessie, [please see note in the following section](#note-for-raspbian-jessie-users).
 
@@ -343,7 +343,7 @@ Tested on a Raspberry Pi Zero with a clean install of minimal Raspbian Stretch (
 
 * You may wish to reduce the size of the swap file after the build has finished, and delete the boost directory from your home directory
 
-#### *Note for Raspbian Jessie users:*
+# *Note for Raspbian Jessie users:*
 
 If you are using the older Raspbian Jessie image, compiling judecoin is a bit more complicated. The version of Boost available in the Debian Jessie repositories is too old to use with judecoin, and thus you must compile a newer version yourself. The following explains the extra steps and has been tested on a Raspberry Pi 2 with a clean install of minimal Raspbian Jessie.
 
@@ -380,7 +380,7 @@ If you are using the older Raspbian Jessie image, compiling judecoin is a bit mo
 
 * From here, follow the [general Raspberry Pi instructions](#on-the-raspberry-pi) from the "Clone judecoin and checkout most recent release version" step.
 
-#### On Windows:
+#On Windows:
 
 Binaries for Windows are built on Windows using the MinGW toolchain within
 [MSYS2 environment](https://www.msys2.org). The MSYS2 environment emulates a
