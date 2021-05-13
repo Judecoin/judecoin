@@ -39,7 +39,7 @@ Portions Copyright (c) The Cryptonote developers.
 ## Vulnerability response
 
 - Our [Vulnerability Response Process](https://github.com/judecoin-project/meta/blob/master/VULNERABILITY_RESPONSE_PROCESS.md) encourages responsible disclosure
-=======
+=
 - Mail: [](mailto:dev@getjudecoin.org)
 - GitHub: [https://github.com/judecoin](https://github.com/judecoin)
 - IRC: [#judecoin-dev on Freenode](https://webchat.freenode.net/?randomnick=1&channels=%23judecoin-dev&prompt=1&uio=d4)
