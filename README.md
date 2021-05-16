@@ -618,12 +618,10 @@ More info and versions in the [Debian package tracker](https://tracker.debian.or
     echo '*/*::judecoin ~amd64' >> /etc/portage/package.accept_keywords
     emerge net-p2p/judecoin
     ```
-
 * macOS (homebrew)
     ```bash
     brew install judecoin
     ```
-
 * Docker
 
     ```bash
