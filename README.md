@@ -355,8 +355,7 @@ If you are using the older Raspbian Jessie image, compiling judecoin is a bit mo
     CONF_SWAPSIZE=2048
     sudo /etc/init.d/dphys-swapfile start
     ```
-
-
+    
 * Then, install the dependencies for judecoin except for `libunwind` and `libboost-all-dev`
 
 * Install the latest version of boost (this may first require invoking `apt-get remove --purge libboost*-dev` to remove a previous version if you're not using a clean install):
