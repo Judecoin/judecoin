@@ -149,7 +149,6 @@ If you want to help out, see [CONTRIBUTING](docs/CONTRIBUTING.md) for a set of g
 judecoin uses a fixed-schedule software upgrade (hard fork) mechanism to implement new features. This means that users of judecoin (end users and service providers) should run current versions and upgrade their software on a regular schedule. Software upgrades occur during the months of April and October. The required software for these upgrades will be available prior to the scheduled date. Please check the repository prior to this date for the proper judecoin software version. Below is the historical schedule and the projected schedule for the next upgrade.
 Dates are provided in the format YYYY-MM-DD.
 
-
 | Software upgrade block height | Date       | Fork version | Minimum judecoin version | Recommended judecoin version | Details                                                      |
 | ----------------------------- | ---------- | ------------ | ------------------------ | ---------------------------- | ------------------------------------------------------------ |
 | 1009827                       | 2016-03-22 | v2           | v0.9.4                   | v0.9.4                       | Allow only >= ringsize 3, blocktime = 120 seconds, fee-free blocksize 60 kb |
