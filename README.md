@@ -600,7 +600,6 @@ More info and versions in the [Debian package tracker](https://tracker.debian.or
     ```bash
     xbps-install -S judecoin
     ```
-
 * GuixSD
 
     ```bash
