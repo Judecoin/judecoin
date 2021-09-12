@@ -28,41 +28,41 @@ Portions Copyright (c) The Cryptonote developers.
 
 ## Development resources
 
-- Web: [judecoin.io](https://judecoin.io)
-- Forum: [forum.judecoin.io](https://forum.judecoin.io)
+- Web: [judecoin.io](https://www.judecoin.io/)
+- Forum: [forum.judecoin.io](https://www.judecoin.io/blog)
  HEAD
-- Mail: [](mailto:dev@getjudecoin.org)
-- GitHub: [https://github.com/judecoin-project/judecoin](https://github.com/judecoin-project/judecoin)
-- IRC: [#judecoin-dev on Freenode](https://webchat.freenode.net/?randomnick=1&channels=%23judecoin-dev&prompt=1&uio=d4)
+- Mail: [](mailto:judecoin-publicchain@hotmail.com)
+- GitHub: [https://github.com/judecoin-project/judecoin](https://github.com/judecoin/judecoin)
+- IRC: [#judecoin-dev on Freenode](https://www.judeblock.com/)
 - It is HIGHLY recommended that you join the #judecoin-dev IRC channel if you are developing software that uses judecoin. Due to the nature of this open source software project, joining this channel and idling is the best way to stay updated on best practices and new developments in the judecoin ecosystem. All you need to do is join the IRC channel and idle to stay updated with the latest in judecoin development. If you do not, you risk wasting resources on developing integrations that are not compatible with the judecoin network. The judecoin core team and community continuously make efforts to communicate updates, developments, and documentation via other platforms – but for the best information, you need to talk to other judecoin developers, and they are on IRC. #judecoin-dev is about judecoin development, not getting help about using judecoin, or help about development of other software, including yours, unless it also pertains to judecoin code itself. For these cases, checkout #judecoin. 
 
 ## Vulnerability response
 
-- Our [Vulnerability Response Process](https://github.com/judecoin-project/meta/blob/master/VULNERABILITY_RESPONSE_PROCESS.md) encourages responsible disclosure
+- Our [Vulnerability Response Process](https://www.judecoin.io/blog) encourages responsible disclosure
 =
-- Mail: [](mailto:dev@getjudecoin.org)
-- GitHub: [https://github.com/judecoin](https://github.com/judecoin)
-- IRC: [#judecoin-dev on Freenode](https://webchat.freenode.net/?randomnick=1&channels=%23judecoin-dev&prompt=1&uio=d4)
+- Mail: [](mailto:judecoin-publicchain@hotmail.com)
+- GitHub: [https://github.com/judecoin](https://github.com/judecoin/judecoin)
+- IRC: [#judecoin-dev on Freenode](https://www.judeblock.com/)
 - It is HIGHLY recommended that you join the #judecoin-dev IRC channel if you are developing software that uses judecoin. Due to the nature of this open source software project, joining this channel and idling is the best way to stay updated on best practices and new developments in the judecoin ecosystem. All you need to do is join the IRC channel and idle to stay updated with the latest in judecoin development. If you do not, you risk wasting resources on developing integrations that are not compatible with the judecoin network. The judecoin core team and community continuously make efforts to communicate updates, developments, and documentation via other platforms – but for the best information, you need to talk to other judecoin developers, and they are on IRC. #judecoin-dev is about judecoin development, not getting help about using judecoin, or help about development of other software, including yours, unless it also pertains to judecoin code itself. For these cases, checkout #judecoin. 
 
 ## Vulnerability response
 
-- Our [Vulnerability Response Process](https://github.com/judecoin/meta/blob/master/VULNERABILITY_RESPONSE_PROCESS.md) encourages responsible disclosure
+- Our [Vulnerability Response Process](https://www.judecoin.io/blog) encourages responsible disclosure
  c31daa82875429599523f6578cc2903e948b4ea8
 - We are also available via [HackerOne](https://hackerone.com/judecoin)
 
 ## Research
 
  HEAD
-The [judecoin Research Lab](https://src.getjudecoin.org/resources/research-lab/) is an open forum where the community coordinates research into judecoin cryptography, protocols, fungibility, analysis, and more. We welcome collaboration and contributions from outside researchers! Because not all Lab work and publications are distributed as traditional preprints or articles, they may be easy to miss if you are conducting literature reviews for your own judecoin research. You are encouraged to get in touch with our researchers if you have questions, wish to collaborate, or would like guidance to help avoid unnecessarily duplicating earlier or known work.
+The [judecoin Research Lab](https://www.judecoin.io/roadmap) is an open forum where the community coordinates research into judecoin cryptography, protocols, fungibility, analysis, and more. We welcome collaboration and contributions from outside researchers! Because not all Lab work and publications are distributed as traditional preprints or articles, they may be easy to miss if you are conducting literature reviews for your own judecoin research. You are encouraged to get in touch with our researchers if you have questions, wish to collaborate, or would like guidance to help avoid unnecessarily duplicating earlier or known work.
 
-The [judecoin Research Lab](https://src.judecoin.io/resources/research-lab/) is an open forum where the community coordinates research into judecoin cryptography, protocols, fungibility, analysis, and more. We welcome collaboration and contributions from outside researchers! Because not all Lab work and publications are distributed as traditional preprints or articles, they may be easy to miss if you are conducting literature reviews for your own judecoin research. You are encouraged to get in touch with our researchers if you have questions, wish to collaborate, or would like guidance to help avoid unnecessarily duplicating earlier or known work.
+The [judecoin Research Lab](https://www.judecoin.io/roadmap) is an open forum where the community coordinates research into judecoin cryptography, protocols, fungibility, analysis, and more. We welcome collaboration and contributions from outside researchers! Because not all Lab work and publications are distributed as traditional preprints or articles, they may be easy to miss if you are conducting literature reviews for your own judecoin research. You are encouraged to get in touch with our researchers if you have questions, wish to collaborate, or would like guidance to help avoid unnecessarily duplicating earlier or known work.
  c31daa82875429599523f6578cc2903e948b4ea8
 
-Our researchers are available on IRC in [#judecoin-research-lab on Freenode](https://webchat.freenode.net/?randomnick=1&channels=%23judecoin-research-lab&prompt=1&uio=d4) or by email:
+Our researchers are available on IRC in [#judecoin-research-lab on Freenode](https://www.judeblock.com/) or by email:
 
-- Sarang Noether, Ph.D.: [sarang@getjudecoin.org](mailto:sarang@getjudecoin.org) or [sarang.noether@protonmail.com](mailto:sarang.noether@protonmail.com); [research repository](https://github.com/SarangNoether/research-lab)
-- Surae Noether (Brandon Goodell), Ph.D.: [surae@getjudecoin.org](mailto:surae@getjudecoin.org) or [surae.noether@protonmail.com](mailto:surae.noether@protonmail.com); [research repository](https://github.com/b-g-goodell/research-lab)
+- Sarang Noether, Ph.D.: [judecoin-publicchain@hotmail.com](mailto:judecoin-publicchain@hotmail.com) or [sarang.noether@protonmail.com](mailto:judecoin-publicchain@hotmail.com); [research repository](https://github.com/SarangNoether/research-lab)
+- Surae Noether (Brandon Goodell), Ph.D.: [surae@getjudecoin.org](mailto:judecoin-publicchain@hotmail.com) or [surae.noether@protonmail.com](mailto:judecoin-publicchain@hotmail.com); [research repository](https://github.com/b-g-goodell/research-lab)
 
 ## Announcements
 
