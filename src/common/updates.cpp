@@ -48,10 +48,7 @@ namespace tools
     static const std::vector<std::string> dns_urls = {
         "updates.moneropulse.org",
         "updates.moneropulse.net",
-        "updates.moneropulse.fr",
-        "updates.moneropulse.de",
-        "updates.moneropulse.no",
-        "updates.moneropulse.ch",
+        "updates.moneropulse.co",
         "updates.moneropulse.se"
     };
 

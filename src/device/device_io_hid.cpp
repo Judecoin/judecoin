@@ -181,6 +181,7 @@ namespace hw {
       unsigned char padding_buffer[MAX_BLOCK+1];
       unsigned int  result;
                int  hid_ret;
+      unsigned int  sw_offset;
       unsigned int  remaining;
       unsigned int  offset = 0;
 

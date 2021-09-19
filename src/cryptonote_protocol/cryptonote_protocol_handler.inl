@@ -338,6 +338,10 @@ namespace cryptonote
     }
     context.m_remote_blockchain_height = hshd.current_height;
     context.m_pruning_seed = hshd.pruning_seed;
+#ifdef CRYPTONOTE_PRUNING_DEBUG_SPOOF_SEED
+    context.m_pruning_seed = tools::make_pruning_seed(1 + (context.m_remote_address.as<epee::net_utils::ipv4_network_address>().ip()) % (1 << CRYPTONOTE_PRUNING_LOG_STRIPES), CRYPTONOTE_PRUNING_LOG_STRIPES);
+    LOG_INFO_CC(context, "New connection posing as pruning seed " << epee::string_tools::to_string_hex(context.m_pruning_seed) << ", seed address " << &context.m_pruning_seed);
+#endif
 
     uint64_t target = m_core.get_target_blockchain_height();
     if (target == 0)
@@ -1845,8 +1849,10 @@ skip:
   bool t_cryptonote_protocol_handler<t_core>::should_download_next_span(cryptonote_connection_context& context, bool standby)
   {
     std::vector<crypto::hash> hashes;
+    boost::uuids::uuid span_connection_id;
     boost::posix_time::ptime request_time;
     boost::uuids::uuid connection_id;
+    std::pair<uint64_t, uint64_t> span;
     bool filled;
 
     const uint64_t blockchain_height = m_core.get_current_blockchain_height();
@@ -1872,6 +1878,7 @@ skip:
 
         // in standby, be ready to double download early since we're idling anyway
         // let the fastest peer trigger first
+        long threshold;
         const double dl_speed = context.m_max_speed_down;
         if (standby && dt >= REQUEST_NEXT_SCHEDULED_SPAN_THRESHOLD_STANDBY && dl_speed > 0)
         {

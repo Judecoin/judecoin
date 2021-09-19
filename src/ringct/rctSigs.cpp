@@ -725,6 +725,7 @@ namespace rct {
         CHECK_AND_ASSERT_THROW_MES((kLRki && mscout) || (!kLRki && !mscout), "Only one of kLRki/mscout is present");
         keyV tmp(rows + 1);
         keyV sk(rows + 1);
+        size_t i;
         keyM M(cols, tmp);
 
         keyV P, C, C_nonzero;
@@ -898,6 +899,7 @@ namespace rct {
             key R;
             geDsmp P_precomp;
             geDsmp C_precomp;
+            geDsmp H_precomp;
             size_t i = 0;
             ge_p3 hash8_p3;
             geDsmp hash_precomp;

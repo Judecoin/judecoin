@@ -687,7 +687,7 @@ namespace tools
   {
     if (!m_wallet) return not_open(er);
     const std::pair<std::map<std::string, std::string>, std::vector<std::string>> account_tags = m_wallet->get_account_tags();
-    for (const std::pair<const std::string, std::string>& p : account_tags.first)
+    for (const std::pair<std::string, std::string>& p : account_tags.first)
     {
       res.account_tags.resize(res.account_tags.size() + 1);
       auto& info = res.account_tags.back();
@@ -1282,6 +1282,7 @@ namespace tools
             dests.erase(cd.change_dts.addr);
         }
 
+        size_t n_dummy_outputs = 0;
         for (auto i = dests.begin(); i != dests.end(); )
         {
           if (i->second.second > 0)
@@ -4437,14 +4438,7 @@ public:
         wal->stop();
       });
 
-      try
-      {
-        wal->refresh(wal->is_trusted_daemon());
-      }
-      catch (const std::exception& e)
-      {
-        LOG_ERROR(tools::wallet_rpc_server::tr("Initial refresh failed: ") << e.what());
-      }
+      wal->refresh(wal->is_trusted_daemon());
       // if we ^C during potentially length load/refresh, there's no server loop yet
       if (quit)
       {

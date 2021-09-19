@@ -66,6 +66,7 @@ static std::map<uint64_t, uint64_t> load_outputs(const std::string &filename)
       s[len - 1] = 0;
     if (!s[0])
       continue;
+    std::pair<uint64_t, uint64_t> output;
     uint64_t offset, num_offsets;
     if (sscanf(s, "@%" PRIu64, &amount) == 1)
     {

@@ -973,7 +973,7 @@ start:
 std::pair<bool, uint64_t> Blockchain::check_difficulty_checkpoints() const
 {
   uint64_t res = 0;
-  for (const std::pair<const uint64_t, difficulty_type>& i : m_checkpoints.get_difficulty_points())
+  for (const std::pair<uint64_t, difficulty_type>& i : m_checkpoints.get_difficulty_points())
   {
     if (i.first >= m_db->height())
       break;
@@ -3438,6 +3438,7 @@ bool Blockchain::check_tx_inputs(transaction& tx, tx_verification_context &tvc, 
       bool failed = false;
       for (size_t i = 0; i < tx.vin.size(); i++)
       {
+        const txin_to_key& in_to_key = boost::get<txin_to_key>(tx.vin[i]);
         if(!failed && !results[i])
           failed = true;
       }
