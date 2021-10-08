@@ -687,7 +687,7 @@ namespace tools
   {
     if (!m_wallet) return not_open(er);
     const std::pair<std::map<std::string, std::string>, std::vector<std::string>> account_tags = m_wallet->get_account_tags();
-    for (const std::pair<std::string, std::string>& p : account_tags.first)
+    for (const std::pair<const std::string, std::string>& p : account_tags.first)
     {
       res.account_tags.resize(res.account_tags.size() + 1);
       auto& info = res.account_tags.back();
@@ -1282,7 +1282,6 @@ namespace tools
             dests.erase(cd.change_dts.addr);
         }
 
-        size_t n_dummy_outputs = 0;
         for (auto i = dests.begin(); i != dests.end(); )
         {
           if (i->second.second > 0)
@@ -1888,7 +1887,6 @@ namespace tools
         rpc_transfers.tx_hash      = epee::string_tools::pod_to_hex(td.m_txid);
         rpc_transfers.subaddr_index = {td.m_subaddr_index.major, td.m_subaddr_index.minor};
         rpc_transfers.key_image    = td.m_key_image_known ? epee::string_tools::pod_to_hex(td.m_key_image) : "";
-        rpc_transfers.pubkey       = epee::string_tools::pod_to_hex(td.get_public_key());
         rpc_transfers.block_height = td.m_block_height;
         rpc_transfers.frozen       = td.m_frozen;
         rpc_transfers.unlocked     = m_wallet->is_transfer_unlocked(td);
@@ -2703,7 +2701,7 @@ namespace tools
     if (!m_wallet) return not_open(er);
     try
     {
-      std::pair<size_t, std::vector<std::pair<crypto::key_image, crypto::signature>>> ski = m_wallet->export_key_images(req.all);
+      std::pair<uint64_t, std::vector<std::pair<crypto::key_image, crypto::signature>>> ski = m_wallet->export_key_images(req.all);
       res.offset = ski.first;
       res.signed_key_images.resize(ski.second.size());
       for (size_t n = 0; n < ski.second.size(); ++n)
@@ -4439,7 +4437,14 @@ public:
         wal->stop();
       });
 
-      wal->refresh(wal->is_trusted_daemon());
+      try
+      {
+        wal->refresh(wal->is_trusted_daemon());
+      }
+      catch (const std::exception& e)
+      {
+        LOG_ERROR(tools::wallet_rpc_server::tr("Initial refresh failed: ") << e.what());
+      }
       // if we ^C during potentially length load/refresh, there's no server loop yet
       if (quit)
       {
