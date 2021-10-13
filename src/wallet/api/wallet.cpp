@@ -791,11 +791,11 @@ bool WalletImpl::close(bool store)
     return result;
 }
 
-std::string WalletImpl::seed() const
+std::string WalletImpl::seed(const std::string& seed_offset) const
 {
     epee::wipeable_string seed;
     if (m_wallet)
-        m_wallet->get_seed(seed);
+        m_wallet->get_seed(seed, seed_offset);
     return std::string(seed.data(), seed.size()); // TODO
 }
 
@@ -1168,7 +1168,7 @@ bool WalletImpl::submitTransaction(const string &fileName) {
   return true;
 }
 
-bool WalletImpl::exportKeyImages(const string &filename) 
+bool WalletImpl::exportKeyImages(const string &filename, bool all) 
 {
   if (m_wallet->watch_only())
   {
@@ -1178,7 +1178,7 @@ bool WalletImpl::exportKeyImages(const string &filename)
   
   try
   {
-    if (!m_wallet->export_key_images(filename))
+    if (!m_wallet->export_key_images(filename), all)
     {
       setStatusError(tr("failed to save file ") + filename);
       return false;
