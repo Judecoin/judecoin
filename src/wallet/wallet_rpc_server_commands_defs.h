@@ -2028,6 +2028,26 @@ namespace wallet_rpc
     typedef epee::misc_utils::struct_init<response_t> response;
   };
 
+  struct COMMAND_RPC_SCAN_TX
+  {
+    struct request_t
+    {
+      std::list<std::string> txids;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(txids)
+      END_KV_SERIALIZE_MAP()
+    };
+    typedef epee::misc_utils::struct_init<request_t> request;
+
+    struct response_t
+    {
+      BEGIN_KV_SERIALIZE_MAP()
+      END_KV_SERIALIZE_MAP()
+    };
+    typedef epee::misc_utils::struct_init<response_t> response;
+  };
+
   struct COMMAND_RPC_START_MINING
   {
     struct request_t
@@ -2192,7 +2212,6 @@ namespace wallet_rpc
       std::string viewkey;
       std::string password;
       bool autosave_current;
-      std::string language;
 
       BEGIN_KV_SERIALIZE_MAP()
       KV_SERIALIZE_OPT(restore_height, (uint64_t)0)
@@ -2202,7 +2221,6 @@ namespace wallet_rpc
       KV_SERIALIZE(viewkey)
       KV_SERIALIZE(password)
       KV_SERIALIZE_OPT(autosave_current, true)
-      KV_SERIALIZE(language)
       END_KV_SERIALIZE_MAP()
     };
 
