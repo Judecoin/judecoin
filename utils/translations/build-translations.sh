@@ -27,3 +27,4 @@ else
   languages="translations/*.ts"
 fi
 "$lrelease" $languages
+

@@ -32,27 +32,22 @@ namespace serialization
 {
   namespace detail
   {
-    template<typename T>
-    inline constexpr bool use_container_varint() noexcept
-    {
-      return std::is_integral<T>::value && std::is_unsigned<T>::value && sizeof(T) > 1;
-    }
-
     template <typename Archive, class T>
-    typename std::enable_if<!use_container_varint<T>(), bool>::type
-    serialize_container_element(Archive& ar, T& e)
+    bool serialize_container_element(Archive& ar, T& e)
     {
       return ::do_serialize(ar, e);
     }
 
-    template<typename Archive, typename T>
-    typename std::enable_if<use_container_varint<T>(), bool>::type
-    serialize_container_element(Archive& ar, T& e)
+    template <typename Archive>
+    bool serialize_container_element(Archive& ar, uint32_t& e)
     {
-      static constexpr const bool previously_varint = std::is_same<uint64_t, T>() || std::is_same<uint32_t, T>();
+      ar.serialize_varint(e);
+      return true;
+    }
 
-      if (!previously_varint && ar.varint_bug_backward_compatibility_enabled() && !typename Archive::is_saving())
-        return ::do_serialize(ar, e);
+    template <typename Archive>
+    bool serialize_container_element(Archive& ar, uint64_t& e)
+    {
       ar.serialize_varint(e);
       return true;
     }

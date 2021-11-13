@@ -104,7 +104,6 @@ namespace cryptonote
 
   uint64_t get_transaction_weight_clawback(const transaction &tx, size_t n_padded_outputs)
   {
-    const rct::rctSig &rv = tx.rct_signatures;
     const uint64_t bp_base = 368;
     const size_t n_outputs = tx.vout.size();
     if (n_padded_outputs <= 2)
@@ -725,6 +724,25 @@ namespace cryptonote
     //write data
     ++start_pos;
     memcpy(&tx_extra[start_pos], extra_nonce.data(), extra_nonce.size());
+    return true;
+  }
+  //---------------------------------------------------------------
+  bool add_mm_merkle_root_to_tx_extra(std::vector<uint8_t>& tx_extra, const crypto::hash& mm_merkle_root, size_t mm_merkle_tree_depth)
+  {
+    CHECK_AND_ASSERT_MES(mm_merkle_tree_depth < 32, false, "merge mining merkle tree depth should be less than 32");
+    size_t start_pos = tx_extra.size();
+    tx_extra.resize(tx_extra.size() + 3 + 32);
+    //write tag
+    tx_extra[start_pos] = TX_EXTRA_MERGE_MINING_TAG;
+    //write data size
+    ++start_pos;
+    tx_extra[start_pos] = 33;
+    //write depth varint (always one byte here)
+    ++start_pos;
+    tx_extra[start_pos] = mm_merkle_tree_depth;
+    //write data
+    ++start_pos;
+    memcpy(&tx_extra[start_pos], &mm_merkle_root, 32);
     return true;
   }
   //---------------------------------------------------------------

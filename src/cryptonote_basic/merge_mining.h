@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2020, The Monero Project
+// Copyright (c) 2020, The Monero Project
 // 
 // All rights reserved.
 // 
@@ -26,36 +26,15 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "include_base_utils.h"
-#include "file_io_utils.h"
-#include "cryptonote_basic/blobdatatype.h"
-#include "cryptonote_basic/cryptonote_basic.h"
-#include "cryptonote_basic/cryptonote_format_utils.h"
-#include "wallet/wallet2.h"
-#include "fuzzer.h"
+#pragma once
 
-static tools::wallet2 *wallet = NULL;
+#include <stdint.h>
+#include "crypto/crypto.h"
 
-BEGIN_INIT_SIMPLE_FUZZER()
-  static tools::wallet2 local_wallet;
-  wallet = &local_wallet;
-
-  static const char * const spendkey_hex = "f285d4ac9e66271256fc7cde0d3d6b36f66efff6ccd766706c408e86f4997a0d";
-  crypto::secret_key spendkey;
-  epee::string_tools::hex_to_pod(spendkey_hex, spendkey);
-
-  wallet->init("", boost::none, "", 0, true, epee::net_utils::ssl_support_t::e_ssl_support_disabled);
-  wallet->set_subaddress_lookahead(1, 1);
-  wallet->generate("", "", spendkey, true, false);
-END_INIT_SIMPLE_FUZZER()
-
-BEGIN_SIMPLE_FUZZER()
-  std::string s((const char*)buf, len);
-  std::pair<size_t, std::vector<tools::wallet2::transfer_details>> outputs;
-  std::stringstream iss;
-  iss << s;
-  binary_archive<false> ar(iss);
-  ::serialization::serialize(ar, outputs);
-  size_t n_outputs = wallet->import_outputs(outputs);
-  std::cout << boost::lexical_cast<std::string>(n_outputs) << " outputs imported" << std::endl;
-END_SIMPLE_FUZZER()
+namespace cryptonote
+{
+  uint32_t get_aux_slot(const crypto::hash &id, uint32_t nonce, uint32_t n_aux_chains);
+  uint32_t get_path_from_aux_slot(uint32_t slot, uint32_t n_aux_chains);
+  uint32_t encode_mm_depth(uint32_t n_aux_chains, uint32_t nonce);
+  bool decode_mm_depth(uint32_t depth, uint32_t &n_aux_chains, uint32_t &nonce);
+}
