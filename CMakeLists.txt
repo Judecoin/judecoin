@@ -43,7 +43,7 @@ if (IOS)
     INCLUDE(CmakeLists_IOS.txt)
 endif()
 
-cmake_minimum_required(VERSION 2.8.7)
+cmake_minimum_required(VERSION 3.5)
 message(STATUS "CMake version ${CMAKE_VERSION}")
 
 project(monero)
@@ -106,16 +106,18 @@ function (die msg)
 endfunction ()
 
 function (add_c_flag_if_supported flag var)
-  string(REPLACE "-" "_" supported ${flag}_c)
-  check_c_compiler_flag(${flag} ${supported})
+  set(TMP "-Werror ${flag}")
+  string(REGEX REPLACE "[- ]" "_" supported ${TMP}_c)
+  check_c_compiler_flag(${TMP} ${supported})
   if(${${supported}})
     set(${var} "${${var}} ${flag}" PARENT_SCOPE)
   endif()
 endfunction()
 
 function (add_cxx_flag_if_supported flag var)
-  string(REPLACE "-" "_" supported ${flag}_cxx)
-  check_cxx_compiler_flag(${flag} ${supported})
+  set(TMP "-Werror ${flag}")
+  string(REGEX REPLACE "[- ]" "_" supported ${TMP}_cxx)
+  check_cxx_compiler_flag(${TMP} ${supported})
   if(${${supported}})
     set(${var} "${${var}} ${flag}" PARENT_SCOPE)
   endif()
@@ -154,6 +156,15 @@ function (monero_set_target_no_relink target)
   endif()
 endfunction()
 
+option(STRIP_TARGETS "Strip symbols from targets?" OFF)
+function (monero_set_target_strip target)
+  if (STRIP_TARGETS)
+    set_target_properties("${target}" PROPERTIES LINK_FLAGS_RELEASE -s)
+    set_target_properties("${target}" PROPERTIES LINK_FLAGS_DEBUG -s)
+    # Stripping from Debug might make sense if you're low on disk space, but want to test if debug version builds properly.
+  endif()
+endfunction()
+
 function (monero_add_minimal_executable name)
   source_group("${name}"
     FILES
@@ -161,8 +172,83 @@ function (monero_add_minimal_executable name)
 
   add_executable("${name}"
     ${ARGN})
-    monero_set_target_no_relink( ${name} )
+    monero_set_target_no_relink("${name}")
+    monero_set_target_strip    ("${name}")
 endfunction()
+
+# Finds all headers in a directory and its subdirs, to be able to search for them and autosave in IDEs.
+#
+# Parameters:
+# - headers_found:    Output variable, which will hold the found headers
+# - module_root_dir:  The search path for the headers. Typically it will be the module's root dir, so "${CMAKE_CURRENT_SOURCE_DIR}" or a derivative of it.
+macro (monero_find_all_headers headers_found module_root_dir)
+  file(GLOB ${headers_found}
+           "${module_root_dir}/*.h*"    # h* will include hpps as well.
+           "${module_root_dir}/**/*.h*" # Any number of subdirs will be included.
+           "${module_root_dir}/*.inl"   # .inl is typically template code and is being treated as headers (it's being included).
+           "${module_root_dir}/**/*.inl"
+)
+endmacro()
+
+# Function to forbid undefined symbols and also verify
+# 1) Test project with all types of libraries and without undefined symbols can compile successfully
+# 2) Test project with all types of libraries and undefined symbols can not compile successfully
+function(forbid_undefined_symbols)
+  unset(TMP)
+  # https://www.unix.com/man-page/linux/1/ld, --no-undefined, Report unresolved symbol references from regular object files.
+  add_linker_flag_if_supported(-Wl,--no-undefined TMP)
+  # https://www.unix.com/man-page/osx/1/ld/, -undefined, Specifies how undefined symbols are to be treated.
+  add_linker_flag_if_supported(-Wl,-undefined,error TMP)
+  string(APPEND CMAKE_SHARED_LINKER_FLAGS ${TMP})
+  string(APPEND CMAKE_MODULE_LINKER_FLAGS ${TMP})
+  set(CMAKE_SHARED_LINKER_FLAGS ${CMAKE_SHARED_LINKER_FLAGS} PARENT_SCOPE)
+  set(CMAKE_MODULE_LINKER_FLAGS ${CMAKE_MODULE_LINKER_FLAGS} PARENT_SCOPE)
+  set(TEST_PROJECT "${CMAKE_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/CMakeTmp/test_project")
+  foreach(EXPECT IN ITEMS TRUE FALSE)
+    file(REMOVE_RECURSE "${TEST_PROJECT}")
+    file(MAKE_DIRECTORY "${TEST_PROJECT}")
+    file(WRITE "${TEST_PROJECT}/CMakeLists.txt"
+      [=[
+cmake_minimum_required(VERSION 3.1)
+project(test)
+option(EXPECT_SUCCESS "" ON)
+file(WRITE "${CMAKE_SOURCE_DIR}/incorrect_source.cpp" "void undefined_symbol(); void symbol() { undefined_symbol(); }")
+if (EXPECT_SUCCESS)
+  file(APPEND "${CMAKE_SOURCE_DIR}/incorrect_source.cpp" " void undefined_symbol() {}; ")
+endif()
+add_library(l0 SHARED incorrect_source.cpp)
+add_library(l1 MODULE incorrect_source.cpp)
+add_library(l2 STATIC incorrect_source.cpp)
+add_library(l3 OBJECT incorrect_source.cpp)
+]=]
+    )
+    try_compile(SUCCESS "${TEST_PROJECT}/build" "${TEST_PROJECT}" test
+      CMAKE_FLAGS
+      "-DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}"
+      "-DCMAKE_MODULE_LINKER_FLAGS=${CMAKE_MODULE_LINKER_FLAGS}"
+      "-DEXPECT_SUCCESS=${EXPECT}"
+    )
+    if (NOT ${SUCCESS} STREQUAL ${EXPECT})
+      message(FATAL_ERROR "Undefined symbols test failure: expect(${EXPECT}), success(${SUCCESS})")
+    endif()
+    file(REMOVE_RECURSE "${TEST_PROJECT}")
+  endforeach()
+endfunction()
+if (NOT (CMAKE_SYSTEM_NAME MATCHES "kOpenBSD.*|OpenBSD.*") AND NOT OSSFUZZ)
+  forbid_undefined_symbols()
+endif()
+
+if (MINGW)
+  function(export_all_symbols)
+    unset(TMP)
+    add_linker_flag_if_supported(-Wl,--export-all-symbols TMP)
+    string(APPEND CMAKE_SHARED_LINKER_FLAGS ${TMP})
+    string(APPEND CMAKE_MODULE_LINKER_FLAGS ${TMP})
+    set(CMAKE_SHARED_LINKER_FLAGS ${CMAKE_SHARED_LINKER_FLAGS} PARENT_SCOPE)
+    set(CMAKE_MODULE_LINKER_FLAGS ${CMAKE_MODULE_LINKER_FLAGS} PARENT_SCOPE)
+  endfunction()
+  export_all_symbols()
+endif()
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
@@ -484,7 +570,7 @@ if (CMAKE_SYSTEM_NAME MATCHES "(SunOS|Solaris)")
 endif ()
 
 if (APPLE AND NOT IOS)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=x86-64 -fvisibility=default -std=c++11")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=default -std=c++11")
   if (NOT OPENSSL_ROOT_DIR)
       EXECUTE_PROCESS(COMMAND brew --prefix openssl
         OUTPUT_VARIABLE OPENSSL_ROOT_DIR
@@ -502,6 +588,10 @@ if(STATIC AND NOT IOS)
   endif()
 endif()
 
+if (WIN32)
+  list(APPEND OPENSSL_LIBRARIES ws2_32 crypt32)
+endif()
+
 find_package(HIDAPI)
 
 add_definition_if_library_exists(c memset_s "string.h" HAVE_MEMSET_S)
@@ -512,6 +602,61 @@ add_definitions(-DAUTO_INITIALIZE_EASYLOGGINGPP)
 
 set(MONERO_GENERATED_HEADERS_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated_include")
 include_directories(${MONERO_GENERATED_HEADERS_DIR})
+
+# As of OpenBSD 6.8, -march=<anything> breaks the build
+function(set_default_arch)
+  if (OPENBSD)
+    set(ARCH default)
+  else()
+    set(ARCH native)
+  endif()
+
+  set(ARCH ${ARCH} CACHE STRING "CPU to build for: -march value or 'default' to not pass -march at all")
+endfunction()
+
+if (NOT (MSVC OR ARCH))
+    set_default_arch()
+endif()
+
+CHECK_C_COMPILER_FLAG(-std=c11 HAVE_C11)
+
+option(COVERAGE "Enable profiling for test coverage report" OFF)
+if(COVERAGE)
+    message(STATUS "Building with profiling for test coverage report")
+endif()
+macro (monero_enable_coverage)
+  if(COVERAGE)
+    foreach(COV_FLAG -fprofile-arcs -ftest-coverage --coverage)
+      set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   ${COV_FLAG}")
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COV_FLAG}")
+    endforeach()
+  endif()
+endmacro()
+
+function (monero_add_library name)
+    monero_add_library_with_deps(NAME "${name}" SOURCES ${ARGN})
+endfunction()
+
+function (monero_add_library_with_deps)
+  cmake_parse_arguments(MONERO_ADD_LIBRARY "" "NAME" "DEPENDS;SOURCES" ${ARGN})
+  source_group("${MONERO_ADD_LIBRARY_NAME}" FILES ${MONERO_ADD_LIBRARY_SOURCES})
+
+  # Define a ("virtual") object library and an actual library that links those
+  # objects together. The virtual libraries can be arbitrarily combined to link
+  # any subset of objects into one library archive. This is used for releasing
+  # libwallet, which combines multiple components.
+  set(objlib obj_${MONERO_ADD_LIBRARY_NAME})
+  add_library(${objlib} OBJECT ${MONERO_ADD_LIBRARY_SOURCES})
+  add_library("${MONERO_ADD_LIBRARY_NAME}" $<TARGET_OBJECTS:${objlib}>)
+  monero_set_target_no_relink("${MONERO_ADD_LIBRARY_NAME}")
+  monero_set_target_strip    ("${MONERO_ADD_LIBRARY_NAME}")
+  if (MONERO_ADD_LIBRARY_DEPENDS)
+    add_dependencies(${objlib} ${MONERO_ADD_LIBRARY_DEPENDS})
+  endif()
+  set_property(TARGET "${MONERO_ADD_LIBRARY_NAME}" PROPERTY FOLDER "libs")
+  target_compile_definitions(${objlib}
+    PRIVATE $<TARGET_PROPERTY:${MONERO_ADD_LIBRARY_NAME},INTERFACE_COMPILE_DEFINITIONS>)
+endfunction ()
 
 # Generate header for embedded translations
 # Generate header for embedded translations, use target toolchain if depends, otherwise use the
@@ -566,9 +711,6 @@ if(MSVC)
   include_directories(SYSTEM src/platform/msc)
 else()
   include(TestCXXAcceptsFlag)
-  if (NOT ARCH)
-    set(ARCH native CACHE STRING "CPU to build for: -march value or 'default' to not pass -march at all")
-  endif()
   message(STATUS "Building on ${CMAKE_SYSTEM_PROCESSOR} for ${ARCH}")
   if(ARCH STREQUAL "default")
     set(ARCH_FLAG "")
@@ -630,7 +772,7 @@ else()
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ARCH_FLAG}")
 
   set(WARNINGS "-Wall -Wextra -Wpointer-arith -Wundef -Wvla -Wwrite-strings -Wno-error=extra -Wno-error=deprecated-declarations -Wno-unused-parameter -Wno-error=unused-variable -Wno-error=undef -Wno-error=uninitialized")
-  if(CMAKE_C_COMPILER_ID STREQUAL "Clang")
+  if(CMAKE_C_COMPILER_ID MATCHES "Clang")
     if(ARM)
       set(WARNINGS "${WARNINGS} -Wno-error=inline-asm")
     endif()
@@ -665,13 +807,7 @@ else()
     set(STATIC_ASSERT_CPP_FLAG "-Dstatic_assert=_Static_assert")
   endif()
 
-  option(COVERAGE "Enable profiling for test coverage report" 0)
-
-  if(COVERAGE)
-    message(STATUS "Building with profiling for test coverage report")
-    set(COVERAGE_FLAGS "-fprofile-arcs -ftest-coverage --coverage")
-  endif()
-
+  monero_enable_coverage()
   # With GCC 6.1.1 the compiled binary malfunctions due to aliasing. Until that
   # is fixed in the code (Issue #847), force compiler to be conservative.
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-strict-aliasing")
@@ -718,7 +854,12 @@ else()
     # PIE executables randomly crash at startup with ASAN
     # Windows binaries die on startup with PIE when compiled with GCC <9.x
     # Windows dynamically-linked binaries die on startup with PIE regardless of GCC version
-    add_linker_flag_if_supported(-pie LD_SECURITY_FLAGS)
+    if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+      # Clang does not support -pie flag
+      add_linker_flag_if_supported("-Wl,-pie" LD_SECURITY_FLAGS)
+    else()
+      add_linker_flag_if_supported("-pie" LD_SECURITY_FLAGS)
+    endif()
   endif()
   add_linker_flag_if_supported(-Wl,-z,relro LD_SECURITY_FLAGS)
   add_linker_flag_if_supported(-Wl,-z,now LD_SECURITY_FLAGS)
@@ -744,12 +885,19 @@ else()
     add_linker_flag_if_supported(-Wl,--high-entropy-va LD_SECURITY_FLAGS)
   endif()
 
+  # Warnings, that when ignored are so severe, that they can segfault or even UB any application.
+  # Treat them as errors.
+  add_c_flag_if_supported(  -Werror=switch      C_SECURITY_FLAGS)
+  add_cxx_flag_if_supported(-Werror=switch      CXX_SECURITY_FLAGS)
+  add_c_flag_if_supported(  -Werror=return-type C_SECURITY_FLAGS)
+  add_cxx_flag_if_supported(-Werror=return-type CXX_SECURITY_FLAGS)
+
   message(STATUS "Using C security hardening flags: ${C_SECURITY_FLAGS}")
   message(STATUS "Using C++ security hardening flags: ${CXX_SECURITY_FLAGS}")
   message(STATUS "Using linker security hardening flags: ${LD_SECURITY_FLAGS}")
 
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -D_GNU_SOURCE ${MINGW_FLAG} ${STATIC_ASSERT_FLAG} ${WARNINGS} ${C_WARNINGS} ${COVERAGE_FLAGS} ${PIC_FLAG} ${C_SECURITY_FLAGS}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -D_GNU_SOURCE ${MINGW_FLAG} ${STATIC_ASSERT_CPP_FLAG} ${WARNINGS} ${CXX_WARNINGS} ${COVERAGE_FLAGS} ${PIC_FLAG} ${CXX_SECURITY_FLAGS}")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -D_GNU_SOURCE ${MINGW_FLAG} ${STATIC_ASSERT_FLAG} ${WARNINGS} ${C_WARNINGS} ${PIC_FLAG} ${C_SECURITY_FLAGS}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -D_GNU_SOURCE ${MINGW_FLAG} ${STATIC_ASSERT_CPP_FLAG} ${WARNINGS} ${CXX_WARNINGS} ${PIC_FLAG} ${CXX_SECURITY_FLAGS}")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LD_SECURITY_FLAGS} ${LD_BACKCOMPAT_FLAGS}")
 
   # With GCC 6.1.1 the compiled binary malfunctions due to aliasing. Until that
@@ -867,7 +1015,7 @@ else()
   endif()
   set(USE_LTO ${USE_LTO_DEFAULT} CACHE BOOL "Use Link-Time Optimization (Release mode only)")
 
-  if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # There is a clang bug that does not allow to compile code that uses AES-NI intrinsics if -flto is enabled, so explicitly disable
     set(USE_LTO false)
   endif()
@@ -1014,7 +1162,7 @@ if(ANDROID)
   set(ATOMIC libatomic.a)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error=user-defined-warnings")
 endif()
-if(CMAKE_C_COMPILER_ID STREQUAL "Clang" AND ARCH_WIDTH EQUAL "32" AND NOT IOS AND NOT FREEBSD)
+if(CMAKE_C_COMPILER_ID MATCHES "Clang" AND ARCH_WIDTH EQUAL "32" AND NOT IOS AND NOT FREEBSD)
   find_library(ATOMIC atomic)
   if (ATOMIC_FOUND)
     list(APPEND EXTRA_LIBRARIES ${ATOMIC})
@@ -1097,9 +1245,6 @@ option(BUILD_GUI_DEPS "Build GUI dependencies." OFF)
 # This is not nice, distribution packagers should not enable this, but depend
 # on libunbound shipped with their distribution instead
 option(INSTALL_VENDORED_LIBUNBOUND "Install libunbound binary built from source vendored with this repo." OFF)
-
-
-CHECK_C_COMPILER_FLAG(-std=c11 HAVE_C11)
 
 find_package(PythonInterp)
 find_program(iwyu_tool_path NAMES iwyu_tool.py iwyu_tool)

@@ -3,15 +3,15 @@
 SOURCES_PATH ?= $(BASEDIR)/sources
 BASE_CACHE ?= $(BASEDIR)/built
 SDK_PATH ?= $(BASEDIR)/SDKs
-FALLBACK_DOWNLOAD_PATH ?= https://bitcoincore.org/depends-sources
+FALLBACK_DOWNLOAD_PATH ?= https://downloads.getmonero.org/depends-sources
 
 BUILD = $(shell ./config.guess)
 HOST ?= $(BUILD)
 PATCHES_PATH = $(BASEDIR)/patches
 BASEDIR = $(CURDIR)
 HASH_LENGTH:=11
-DOWNLOAD_CONNECT_TIMEOUT:=10
-DOWNLOAD_RETRIES:=3
+DOWNLOAD_CONNECT_TIMEOUT:=30
+DOWNLOAD_RETRIES:=5
 HOST_ID_SALT ?= salt
 BUILD_ID_SALT ?= salt
 

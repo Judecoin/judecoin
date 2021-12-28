@@ -648,11 +648,9 @@ public:
       bvc.m_verifivation_failed = true;
 
     cryptonote::block blk;
-    std::stringstream ss;
-    ss << sr_block.data;
-    binary_archive<false> ba(ss);
+    binary_archive<false> ba{epee::strspan<std::uint8_t>(sr_block.data)};
     ::serialization::serialize(ba, blk);
-    if (!ss.good())
+    if (!ba.good())
     {
       blk = cryptonote::block();
     }
@@ -671,11 +669,9 @@ public:
     bool tx_added = pool_size + 1 == m_c.get_pool_transactions_count();
 
     cryptonote::transaction tx;
-    std::stringstream ss;
-    ss << sr_tx.data;
-    binary_archive<false> ba(ss);
+    binary_archive<false> ba{epee::strspan<std::uint8_t>(sr_tx.data)};
     ::serialization::serialize(ba, tx);
-    if (!ss.good())
+    if (!ba.good())
     {
       tx = cryptonote::transaction();
     }
@@ -1084,7 +1080,7 @@ inline bool do_replay_file(const std::string& filename)
   }
 
 #define QUOTEME(x) #x
-#define DEFINE_TESTS_ERROR_CONTEXT(text) const char* perr_context = text;
+#define DEFINE_TESTS_ERROR_CONTEXT(text) const char* perr_context = text; (void) perr_context;
 #define CHECK_TEST_CONDITION(cond) CHECK_AND_ASSERT_MES(cond, false, "[" << perr_context << "] failed: \"" << QUOTEME(cond) << "\"")
 #define CHECK_EQ(v1, v2) CHECK_AND_ASSERT_MES(v1 == v2, false, "[" << perr_context << "] failed: \"" << QUOTEME(v1) << " == " << QUOTEME(v2) << "\", " << v1 << " != " << v2)
 #define CHECK_NOT_EQ(v1, v2) CHECK_AND_ASSERT_MES(!(v1 == v2), false, "[" << perr_context << "] failed: \"" << QUOTEME(v1) << " != " << QUOTEME(v2) << "\", " << v1 << " == " << v2)

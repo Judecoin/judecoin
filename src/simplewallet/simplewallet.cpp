@@ -50,6 +50,7 @@
 #include <boost/format.hpp>
 #include <boost/regex.hpp>
 #include <boost/range/adaptor/transformed.hpp>
+#include <boost/filesystem.hpp>
 #include "include_base_utils.h"
 #include "console_handler.h"
 #include "common/i18n.h"
@@ -607,9 +608,14 @@ void simple_wallet::handle_transfer_exception(const std::exception_ptr &e, bool 
       fail_msg_writer() << e.what();
       warn_of_possible_attack = false;
     }
+    catch (const tools::error::zero_amount&)
+    {
+      fail_msg_writer() << sw::tr("destination amount is zero");
+      warn_of_possible_attack = false;
+    }
     catch (const tools::error::zero_destination&)
     {
-      fail_msg_writer() << sw::tr("one of destinations is zero");
+      fail_msg_writer() << sw::tr("transaction has no destination");
       warn_of_possible_attack = false;
     }
     catch (const tools::error::tx_too_big& e)
@@ -5889,7 +5895,7 @@ bool simple_wallet::refresh_main(uint64_t start_height, enum ResetType reset, bo
   if (reset != ResetNone)
   {
     if (reset == ResetSoftKeepKI)
-      height_pre = m_wallet->hash_m_transfers(-1, transfer_hash_pre);
+      height_pre = m_wallet->hash_m_transfers(boost::none, transfer_hash_pre);
 
     m_wallet->rescan_blockchain(reset == ResetHard, false, reset == ResetSoftKeepKI);
   }
@@ -8916,12 +8922,12 @@ bool simple_wallet::export_transfers(const std::vector<std::string>& args_)
 
   // header
   file <<
-      boost::format("%8.8s,%9.9s,%8.8s,%25.25s,%20.20s,%20.20s,%64.64s,%16.16s,%14.14s,%100.100s,%20.20s,%s,%s") %
+      boost::format("%8.8s,%9.9s,%8.8s,%25.25s,%20.20s,%20.20s,%64.64s,%16.16s,%14.14s,%106.106s,%20.20s,%s,%s") %
       tr("block") % tr("direction") % tr("unlocked") % tr("timestamp") % tr("amount") % tr("running balance") % tr("hash") % tr("payment ID") % tr("fee") % tr("destination") % tr("amount") % tr("index") % tr("note")
       << std::endl;
 
   uint64_t running_balance = 0;
-  auto formatter = boost::format("%8.8llu,%9.9s,%8.8s,%25.25s,%20.20s,%20.20s,%64.64s,%16.16s,%14.14s,%100.100s,%20.20s,\"%s\",%s");
+  auto formatter = boost::format("%8.8llu,%9.9s,%8.8s,%25.25s,%20.20s,%20.20s,%64.64s,%16.16s,%14.14s,%106.106s,%20.20s,\"%s\",%s");
 
   for (const auto& transfer : all_transfers)
   {

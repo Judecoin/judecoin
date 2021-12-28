@@ -456,6 +456,7 @@ struct Wallet
     //! returns both error and error string atomically. suggested to use in instead of status() and errorString()
     virtual void statusWithErrorString(int& status, std::string& errorString) const = 0;
     virtual bool setPassword(const std::string &password) = 0;
+    virtual const std::string& getPassword() const = 0;
     virtual bool setDevicePin(const std::string &pin) { (void)pin; return false; };
     virtual bool setDevicePassphrase(const std::string &passphrase) { (void)passphrase; return false; };
     virtual std::string address(uint32_t accountIndex = 0, uint32_t addressIndex = 0) const = 0;
@@ -919,6 +920,19 @@ struct Wallet
     */
     virtual bool importKeyImages(const std::string &filename) = 0;
 
+    /*!
+     * \brief importOutputs - exports outputs to file
+     * \param filename
+     * \return                  - true on success
+     */
+    virtual bool exportOutputs(const std::string &filename, bool all = false) = 0;
+
+    /*!
+     * \brief importOutputs - imports outputs from file
+     * \param filename
+     * \return                  - true on success
+     */
+    virtual bool importOutputs(const std::string &filename) = 0;
 
     virtual TransactionHistory * history() = 0;
     virtual AddressBook * addressBook() = 0;
@@ -980,7 +994,7 @@ struct Wallet
      * \param message - the message to sign (arbitrary byte data)
      * \return the signature
      */
-    virtual std::string signMessage(const std::string &message) = 0;
+    virtual std::string signMessage(const std::string &message, const std::string &address = "") = 0;
     /*!
      * \brief verifySignedMessage - verify a signature matches a given message
      * \param message - the message (arbitrary byte data)
@@ -1014,6 +1028,13 @@ struct Wallet
     * \return true on success
     */
     virtual bool rescanSpent() = 0;
+
+   /*
+    * \brief setOffline - toggle set offline on/off
+    * \param offline - true/false
+    */
+    virtual void setOffline(bool offline) = 0;
+    virtual bool isOffline() const = 0;
     
     //! blackballs a set of outputs
     virtual bool blackballOutputs(const std::vector<std::string> &outputs, bool add) = 0;
@@ -1065,6 +1086,15 @@ struct Wallet
 
     //! shows address on device display
     virtual void deviceShowAddress(uint32_t accountIndex, uint32_t addressIndex, const std::string &paymentId) = 0;
+
+    //! attempt to reconnect to hardware device
+    virtual bool reconnectDevice() = 0;
+
+    //! get bytes received
+    virtual uint64_t getBytesReceived() = 0;
+
+    //! get bytes sent
+    virtual uint64_t getBytesSent() = 0;
 };
 
 /**
@@ -1343,6 +1373,3 @@ struct WalletManagerFactory
 
 
 }
-
-namespace Bitmonero = Monero;
-

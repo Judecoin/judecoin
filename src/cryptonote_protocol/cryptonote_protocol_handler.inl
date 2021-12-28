@@ -2081,6 +2081,8 @@ skip:
           }
           MDEBUG(context << "Nothing to get from this peer, and it's not ahead of us, all done");
           context.m_state = cryptonote_connection_context::state_normal;
+          if (m_core.get_current_blockchain_height() >= m_core.get_target_blockchain_height())
+            on_connection_synchronized();
           return true;
         }
         uint64_t next_needed_height = m_block_queue.get_next_needed_height(bc_height);
@@ -2228,6 +2230,8 @@ skip:
           }
           MDEBUG(context << "Nothing to get from this peer, and it's not ahead of us, all done");
           context.m_state = cryptonote_connection_context::state_normal;
+          if (m_core.get_current_blockchain_height() >= m_core.get_target_blockchain_height())
+            on_connection_synchronized();
           return true;
         }
 
@@ -2310,7 +2314,7 @@ skip:
           const uint32_t peer_stripe = tools::get_pruning_stripe(context.m_pruning_seed);
           const uint32_t first_stripe = tools::get_pruning_stripe(span.first, context.m_remote_blockchain_height, CRYPTONOTE_PRUNING_LOG_STRIPES);
           const uint32_t last_stripe = tools::get_pruning_stripe(span.first + span.second - 1, context.m_remote_blockchain_height, CRYPTONOTE_PRUNING_LOG_STRIPES);
-          if ((((first_stripe && peer_stripe != first_stripe) || (last_stripe && peer_stripe != last_stripe)) && !m_sync_pruned_blocks) || (m_sync_pruned_blocks && req.prune))
+          if (((first_stripe && peer_stripe != first_stripe) || (last_stripe && peer_stripe != last_stripe)) && !m_sync_pruned_blocks)
           {
             MDEBUG(context << "We need full data, but the peer does not have it, dropping peer");
             return false;
@@ -2419,10 +2423,7 @@ skip:
       if (context.m_remote_blockchain_height >= m_core.get_target_blockchain_height())
       {
         if (m_core.get_current_blockchain_height() >= m_core.get_target_blockchain_height())
-        {
-          MGINFO_GREEN("SYNCHRONIZED OK");
           on_connection_synchronized();
-        }
       }
       else
       {
@@ -2713,15 +2714,15 @@ skip:
     // send fluffy ones first, we want to encourage people to run that
     if (!fluffyConnections.empty())
     {
-      epee::byte_slice fluffyBlob;
-      epee::serialization::store_t_to_binary(fluffy_arg, fluffyBlob, 32 * 1024);
-      m_p2p->relay_notify_to_list(NOTIFY_NEW_FLUFFY_BLOCK::ID, epee::to_span(fluffyBlob), std::move(fluffyConnections));
+      epee::levin::message_writer fluffyBlob{32 * 1024};
+      epee::serialization::store_t_to_binary(fluffy_arg, fluffyBlob.buffer);
+      m_p2p->relay_notify_to_list(NOTIFY_NEW_FLUFFY_BLOCK::ID, std::move(fluffyBlob), std::move(fluffyConnections));
     }
     if (!fullConnections.empty())
     {
-      epee::byte_slice fullBlob;
-      epee::serialization::store_t_to_binary(arg, fullBlob, 128 * 1024);
-      m_p2p->relay_notify_to_list(NOTIFY_NEW_BLOCK::ID, epee::to_span(fullBlob), std::move(fullConnections));
+      epee::levin::message_writer fullBlob{128 * 1024};
+      epee::serialization::store_t_to_binary(arg, fullBlob.buffer);
+      m_p2p->relay_notify_to_list(NOTIFY_NEW_BLOCK::ID, std::move(fullBlob), std::move(fullConnections));
     }
 
     return true;

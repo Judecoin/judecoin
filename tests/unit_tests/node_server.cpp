@@ -293,6 +293,18 @@ TEST(node_server, bind_same_p2p_port)
     boost::program_options::variables_map vm;
     boost::program_options::store(boost::program_options::parse_command_line(1, argv, desc_options), vm);
 
+    /*
+    Reason for choosing '127.0.0.2' as the IP:
+
+    A TCP local socket address that has been bound is unavailable for some time after closing, unless the SO_REUSEADDR flag has been set.
+    That's why connections with automatically assigned source port 48080/58080 from previous test blocks the next to bind acceptor
+    so solution is to either set reuse_addr option for each socket in all tests
+    or use ip different from localhost for acceptors in order to not interfere with automatically assigned source endpoints
+
+    Relevant part about REUSEADDR from man:
+    https://www.man7.org/linux/man-pages/man7/ip.7.html
+    */
+    vm.find(nodetool::arg_p2p_bind_ip.name)->second   = boost::program_options::variable_value(std::string("127.0.0.2"), false);
     vm.find(nodetool::arg_p2p_bind_port.name)->second = boost::program_options::variable_value(std::string(port), false);
 
     boost::program_options::notify(vm);
@@ -339,7 +351,7 @@ TEST(cryptonote_protocol_handler, race_condition)
     acceptor.set_option(boost::asio::ip::tcp::acceptor::reuse_address(true));
     acceptor.bind(endpoint, ec);
     EXPECT_EQ(ec.value(), 0);
-    acceptor.listen(boost::asio::socket_base::max_listen_connections, ec);
+    acceptor.listen(boost::asio::socket_base::max_connections, ec);
     EXPECT_EQ(ec.value(), 0);
     out->socket().open(endpoint.protocol(), ec);
     EXPECT_EQ(ec.value(), 0);
@@ -437,7 +449,6 @@ TEST(cryptonote_protocol_handler, race_condition)
   };
   struct net_node_t: commands_handler_t, p2p_endpoint_t {
     using span_t = epee::span<const uint8_t>;
-    using string_t = std::string;
     using zone_t = epee::net_utils::zone;
     using uuid_t = boost::uuids::uuid;
     using relay_t = cryptonote::relay_method;
@@ -450,12 +461,9 @@ TEST(cryptonote_protocol_handler, race_condition)
       using subnets = std::map<epee::net_utils::ipv4_network_subnet, time_t>;
       using hosts = std::map<std::string, time_t>;
     };
-    struct slice {
-      using bytes = epee::byte_slice;
-    };
     shared_state_ptr shared_state;
     core_protocol_ptr core_protocol;
-    virtual int invoke(int command, const span_t in, slice::bytes &out, context_t &context) override {
+    virtual int invoke(int command, const span_t in, epee::byte_stream &out, context_t &context) override {
       if (core_protocol) {
         if (command == messages::handshake::ID) {
           return epee::net_utils::buff_to_t_adapter<void, typename messages::handshake::request, typename messages::handshake::response>(
@@ -479,7 +487,7 @@ TEST(cryptonote_protocol_handler, race_condition)
     virtual int notify(int command, const span_t in, context_t &context) override {
       if (core_protocol) {
         bool handled;
-        slice::bytes out;
+        epee::byte_stream out;
         return core_protocol->handle_invoke_map(true, command, in, out, context, handled);
       }
       else
@@ -515,22 +523,16 @@ TEST(cryptonote_protocol_handler, race_condition)
       else
         return {};
     }
-    virtual bool invoke_command_to_peer(int command, const span_t in, string_t& out, const contexts::basic& context) override {
+    virtual bool invoke_notify_to_peer(int command, epee::levin::message_writer in, const contexts::basic& context) override {
       if (shared_state)
-        return shared_state->invoke(command, in, out, context.m_connection_id);
+        return shared_state->send(in.finalize_notify(command), context.m_connection_id);
       else
         return {};
     }
-    virtual bool invoke_notify_to_peer(int command, const span_t in, const contexts::basic& context) override {
-      if (shared_state)
-        return shared_state->notify(command, in, context.m_connection_id);
-      else
-        return {};
-    }
-    virtual bool relay_notify_to_list(int command, const span_t in, connections_t connections) override {
+    virtual bool relay_notify_to_list(int command, epee::levin::message_writer in, connections_t connections) override {
       if (shared_state) {
         for (auto &e: connections)
-          shared_state->notify(command, in, e.second);
+          shared_state->send(in.finalize_notify(command), e.second);
       }
       return {};
     }
@@ -793,9 +795,11 @@ TEST(cryptonote_protocol_handler, race_condition)
       workers_t workers;
     } check;
     check.work = std::make_shared<work_t>(check.io_context);
-    check.workers.emplace_back([&check]{
-      check.io_context.run();
-    });
+    while (check.workers.size() < 2) {
+      check.workers.emplace_back([&check]{
+        check.io_context.run();
+      });
+    }
     while (daemon.main.conn.size() < 1) {
       daemon.main.conn.emplace_back(new connection_t(check.io_context, daemon.main.shared_state, {}, {}));
       daemon.alt.conn.emplace_back(new connection_t(io_context, daemon.alt.shared_state, {}, {}));
@@ -854,7 +858,7 @@ TEST(cryptonote_protocol_handler, race_condition)
       }
     }
     while (daemon.main.conn.size() < 2) {
-      daemon.main.conn.emplace_back(new connection_t(io_context, daemon.main.shared_state, {}, {}));
+      daemon.main.conn.emplace_back(new connection_t(check.io_context, daemon.main.shared_state, {}, {}));
       daemon.alt.conn.emplace_back(new connection_t(io_context, daemon.alt.shared_state, {}, {}));
       create_conn_pair(daemon.main.conn.back(), daemon.alt.conn.back());
       conduct_handshake(daemon.alt.net_node, daemon.alt.conn.back());
