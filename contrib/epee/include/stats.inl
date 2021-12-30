@@ -1,7 +1,6 @@
 #include <math.h>
 #include <limits>
 #include <algorithm>
-#include "misc_language.h"
 #include "stats.h"
 
 enum
@@ -87,7 +86,7 @@ Tpod Stats<T, Tpod>::get_median() const
     }
     else
     {
-      median = epee::misc_utils::get_mid(sorted[(sorted.size() - 1) / 2], sorted[sorted.size() / 2]);
+      median = (sorted[(sorted.size() - 1) / 2] + sorted[sorted.size() / 2]) / 2;
     }
     set_cached(bit_median);
   }
