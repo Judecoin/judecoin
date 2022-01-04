@@ -144,6 +144,9 @@ using namespace cryptonote;
 
 #define IGNORE_LONG_PAYMENT_ID_FROM_BLOCK_VERSION 12
 
+#define DEFAULT_UNLOCK_TIME (CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE * DIFFICULTY_TARGET_V2)
+#define RECENT_SPEND_WINDOW (50 * DIFFICULTY_TARGET_V2)
+
 static const std::string MULTISIG_SIGNATURE_MAGIC = "SigMultisigPkV1";
 static const std::string MULTISIG_EXTRA_INFO_MAGIC = "MultisigxV1";
 
@@ -1028,6 +1031,34 @@ uint64_t gamma_picker::pick()
 {
   double x = gamma(engine);
   x = exp(x);
+
+  if (x > DEFAULT_UNLOCK_TIME) 
+  {
+    // We are trying to select an output from the chain that appeared 'x' seconds before the
+    // current chain tip, where 'x' is selected from the gamma distribution recommended in Miller et al.
+    // (https://arxiv.org/pdf/1704.04299/).
+    // Our method is to get the average time delta between outputs in the recent past, estimate the number of
+    // outputs 'n' that would have appeared between 'chain_tip - x' and 'chain_tip', select the real output at
+    // 'current_num_outputs - n', then randomly select an output from the block where that output appears.
+    // Source code to paper: https://github.com/maltemoeser/moneropaper
+    //
+    // Due to the 'default spendable age' mechanic in Monero, 'current_num_outputs' only contains
+    // currently *unlocked* outputs, which means the earliest output that can be selected is not at the chain tip!
+    // Therefore, we must offset 'x' so it matches up with the timing of the outputs being considered. We do
+    // this by saying if 'x` equals the expected age of the first unlocked output (compared to the current
+    // chain tip - i.e. DEFAULT_UNLOCK_TIME), then select the first unlocked output.
+    x -= DEFAULT_UNLOCK_TIME;
+  }
+  else 
+  {
+    // If the spent time suggested by the gamma is less than the unlock time, that means the gamma is suggesting an output
+    // that is no longer feasible to be spent (possible since the gamma was constructed when consensus rules did not enforce the
+    // lock time). The assumption made in this code is that an output expected spent quicker than the unlock time would likely
+    // be spent within RECENT_SPEND_WINDOW after allowed. So it returns an output that falls between 0 and the RECENT_SPEND_WINDOW.
+    // The RECENT_SPEND_WINDOW was determined with empirical analysis of observed data.
+    x = crypto::rand_idx(static_cast<uint64_t>(RECENT_SPEND_WINDOW));
+  }
+
   uint64_t output_index = x / average_output_time;
   if (output_index >= num_rct_outputs)
     return std::numeric_limits<uint64_t>::max(); // bad pick
@@ -1213,7 +1244,6 @@ wallet2::wallet2(network_type nettype, uint64_t kdf_rounds, bool unattended, std
 
 wallet2::~wallet2()
 {
-  deinit();
 }
 
 bool wallet2::has_testnet_option(const boost::program_options::variables_map& vm)
@@ -2777,8 +2807,9 @@ void wallet2::process_parsed_blocks(uint64_t start_height, const std::vector<cry
   {
     if (tx_cache_data[i].empty())
       continue;
-    tpool.submit(&waiter, [&gender, &tx_cache_data, i]() {
+    tpool.submit(&waiter, [&hwdev, &gender, &tx_cache_data, i]() {
       auto &slot = tx_cache_data[i];
+      boost::unique_lock<hw::device> hwdev_lock(hwdev);
       for (auto &iod: slot.primary)
         gender(iod);
       for (auto &iod: slot.additional)
@@ -3494,6 +3525,14 @@ void wallet2::refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blo
         blocks_fetched += added_blocks;
       }
       THROW_WALLET_EXCEPTION_IF(!waiter.wait(), error::wallet_internal_error, "Exception in thread pool");
+      if(!first && blocks_start_height == next_blocks_start_height)
+      {
+        m_node_rpc_proxy.set_height(m_blockchain.size());
+        refreshed = true;
+        break;
+      }
+
+      first = false;
 
       // handle error from async fetching thread
       if (error)
@@ -3503,15 +3542,6 @@ void wallet2::refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blo
         else
           throw std::runtime_error("proxy exception in refresh thread");
       }
-
-      if(!first && blocks_start_height == next_blocks_start_height)
-      {
-        m_node_rpc_proxy.set_height(m_blockchain.size());
-        refreshed = true;
-        break;
-      }
-
-      first = false;
 
       if (!next_blocks.empty())
       {
@@ -3749,11 +3779,9 @@ void wallet2::detach_blockchain(uint64_t height, std::map<std::pair<uint64_t, ui
 //----------------------------------------------------------------------------------------------------
 bool wallet2::deinit()
 {
-  if(m_is_initialized) {
-    m_is_initialized = false;
-    unlock_keys_file();
-    m_account.deinit();
-  }
+  m_is_initialized=false;
+  unlock_keys_file();
+  m_account.deinit();
   return true;
 }
 //----------------------------------------------------------------------------------------------------
@@ -4428,7 +4456,7 @@ bool wallet2::load_keys_buf(const std::string& keys_buf, const epee::wipeable_st
 
     account_public_address device_account_public_address;
     THROW_WALLET_EXCEPTION_IF(!hwdev.get_public_address(device_account_public_address), error::wallet_internal_error, "Cannot get a device address");
-    THROW_WALLET_EXCEPTION_IF(device_account_public_address != m_account.get_keys().m_account_address, error::wallet_internal_error, "Device wallet does not match wallet address. If the device uses the passphrase feature, please check whether the passphrase was entered correctly (it may have been misspelled - different passphrases generate different wallets, passphrase is case-sensitive). "
+    THROW_WALLET_EXCEPTION_IF(device_account_public_address != m_account.get_keys().m_account_address, error::wallet_internal_error, "Device wallet does not match wallet address. "
                                                                                                                                      "Device address: " + cryptonote::get_account_address_as_str(m_nettype, false, device_account_public_address) +
                                                                                                                                      ", wallet address: " + m_account.get_public_address_str(m_nettype));
     LOG_PRINT_L0("Device inited...");
@@ -8593,30 +8621,18 @@ void wallet2::get_outs(std::vector<std::vector<tools::wallet2::get_outs_entry>> 
     }
 
     // get the keys for those
-    // the response can get large and end up rejected by the anti DoS limits, so chunk it if needed
-    size_t offset = 0;
-    while (offset < req.outputs.size())
-    {
-      static const size_t chunk_size = 1000;
-      COMMAND_RPC_GET_OUTPUTS_BIN::request chunk_req = AUTO_VAL_INIT(chunk_req);
-      COMMAND_RPC_GET_OUTPUTS_BIN::response chunk_daemon_resp = AUTO_VAL_INIT(chunk_daemon_resp);
-      chunk_req.get_txid = false;
-      for (size_t i = 0; i < std::min<size_t>(req.outputs.size() - offset, chunk_size); ++i)
-        chunk_req.outputs.push_back(req.outputs[offset + i]);
+    req.get_txid = false;
 
+    {
       const boost::lock_guard<boost::recursive_mutex> lock{m_daemon_rpc_mutex};
       uint64_t pre_call_credits = m_rpc_payment_state.credits;
-      chunk_req.client = get_client_signature();
-      bool r = epee::net_utils::invoke_http_bin("/get_outs.bin", chunk_req, chunk_daemon_resp, *m_http_client, rpc_timeout);
-      THROW_ON_RPC_RESPONSE_ERROR(r, {}, chunk_daemon_resp, "get_outs.bin", error::get_outs_error, get_rpc_status(chunk_daemon_resp.status));
-      THROW_WALLET_EXCEPTION_IF(chunk_daemon_resp.outs.size() != chunk_req.outputs.size(), error::wallet_internal_error,
+      req.client = get_client_signature();
+      bool r = epee::net_utils::invoke_http_bin("/get_outs.bin", req, daemon_resp, *m_http_client, rpc_timeout);
+      THROW_ON_RPC_RESPONSE_ERROR(r, {}, daemon_resp, "get_outs.bin", error::get_outs_error, get_rpc_status(daemon_resp.status));
+      THROW_WALLET_EXCEPTION_IF(daemon_resp.outs.size() != req.outputs.size(), error::wallet_internal_error,
         "daemon returned wrong response for get_outs.bin, wrong amounts count = " +
-        std::to_string(chunk_daemon_resp.outs.size()) + ", expected " +  std::to_string(chunk_req.outputs.size()));
-      check_rpc_cost("/get_outs.bin", chunk_daemon_resp.credits, pre_call_credits, chunk_daemon_resp.outs.size() * COST_PER_OUT);
-
-      offset += chunk_size;
-      for (size_t i = 0; i < chunk_daemon_resp.outs.size(); ++i)
-        daemon_resp.outs.push_back(std::move(chunk_daemon_resp.outs[i]));
+        std::to_string(daemon_resp.outs.size()) + ", expected " +  std::to_string(req.outputs.size()));
+      check_rpc_cost("/get_outs.bin", daemon_resp.credits, pre_call_credits, daemon_resp.outs.size() * COST_PER_OUT);
     }
 
     std::unordered_map<uint64_t, uint64_t> scanty_outs;
