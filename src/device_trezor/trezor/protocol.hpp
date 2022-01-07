@@ -66,7 +66,9 @@ namespace protocol{
 
   template<typename T>
   bool cn_deserialize(const void * buff, size_t len, T & dst){
-    binary_archive<false> ba{{reinterpret_cast<const std::uint8_t*>(buff), len}};
+    std::stringstream ss;
+    ss.write(static_cast<const char *>(buff), len);  //ss << tx_blob;
+    binary_archive<false> ba(ss);
     bool r = ::serialization::serialize(ba, dst);
     return r;
   }

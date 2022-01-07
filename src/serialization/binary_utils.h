@@ -39,7 +39,8 @@ namespace serialization {
   template <class T>
     bool parse_binary(const std::string &blob, T &v)
     {
-      binary_archive<false> iar{epee::strspan<std::uint8_t>(blob)};
+      std::istringstream istr(blob);
+      binary_archive<false> iar(istr);
       return ::serialization::serialize(iar, v);
     }
 

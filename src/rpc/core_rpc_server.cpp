@@ -242,11 +242,11 @@ namespace cryptonote
       auto get_nodes = [this]() {
         return get_public_nodes(credits_per_hash_threshold);
       };
-      m_bootstrap_daemon.reset(new bootstrap_daemon(std::move(get_nodes), rpc_payment_enabled, proxy));
+      m_bootstrap_daemon.reset(new bootstrap_daemon(std::move(get_nodes), rpc_payment_enabled, m_bootstrap_daemon_proxy.empty() ? proxy : m_bootstrap_daemon_proxy));
     }
     else
     {
-      m_bootstrap_daemon.reset(new bootstrap_daemon(address, credentials, rpc_payment_enabled, proxy));
+      m_bootstrap_daemon.reset(new bootstrap_daemon(address, credentials, rpc_payment_enabled, m_bootstrap_daemon_proxy.empty() ? proxy : m_bootstrap_daemon_proxy));
     }
 
     m_should_use_bootstrap_daemon = m_bootstrap_daemon.get() != nullptr;
@@ -264,8 +264,10 @@ namespace cryptonote
       , const bool restricted
       , const std::string& port
       , bool allow_rpc_payment
+      , const std::string& proxy
     )
   {
+    m_bootstrap_daemon_proxy = proxy;
     m_restricted = restricted;
     m_net_server.set_threads_prefix("RPC");
     m_net_server.set_connection_filter(&m_p2p);
@@ -1044,7 +1046,6 @@ namespace cryptonote
       if (e.in_pool)
       {
         e.block_height = e.block_timestamp = std::numeric_limits<uint64_t>::max();
-        e.confirmations = 0;
         auto it = per_tx_pool_tx_info.find(tx_hash);
         if (it != per_tx_pool_tx_info.end())
         {
@@ -1063,7 +1064,6 @@ namespace cryptonote
       else
       {
         e.block_height = m_core.get_blockchain_storage().get_db().get_tx_block_height(tx_hash);
-        e.confirmations = m_core.get_current_blockchain_height() - e.block_height;
         e.block_timestamp = m_core.get_blockchain_storage().get_db().get_block_timestamp(e.block_height);
         e.received_timestamp = 0;
         e.double_spend_seen = false;

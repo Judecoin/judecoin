@@ -87,3 +87,5 @@ private:
 };
 
 } // namespace
+
+namespace Bitmonero = Monero;

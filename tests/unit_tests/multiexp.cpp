@@ -260,7 +260,7 @@ TEST(multiexp, scalarmult_triple)
   rct::key res;
   ge_p3 Gp3;
 
-  ASSERT_EQ(ge_frombytes_vartime(&Gp3, rct::G.bytes), 0);
+  ge_frombytes_vartime(&Gp3, rct::G.bytes);
 
   static const rct::key scalars[] = {
     rct::Z,

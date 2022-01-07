@@ -89,7 +89,6 @@ public:
     std::string errorString() const override;
     void statusWithErrorString(int& status, std::string& errorString) const override;
     bool setPassword(const std::string &password) override;
-    const std::string& getPassword() const override;
     bool setDevicePin(const std::string &password) override;
     bool setDevicePassphrase(const std::string &password) override;
     std::string address(uint32_t accountIndex = 0, uint32_t addressIndex = 0) const override;
@@ -186,7 +185,6 @@ public:
     virtual std::string getCacheAttribute(const std::string &key) const override;
 
     virtual void setOffline(bool offline) override;
-    virtual bool isOffline() const override;
 
     virtual bool setUserNote(const std::string &txid, const std::string &note) override;
     virtual std::string getUserNote(const std::string &txid) const override;
@@ -198,7 +196,7 @@ public:
     virtual bool checkSpendProof(const std::string &txid, const std::string &message, const std::string &signature, bool &good) const override;
     virtual std::string getReserveProof(bool all, uint32_t account_index, uint64_t amount, const std::string &message) const override;
     virtual bool checkReserveProof(const std::string &address, const std::string &message, const std::string &signature, bool &good, uint64_t &total, uint64_t &spent) const override;
-    virtual std::string signMessage(const std::string &message, const std::string &address) override;
+    virtual std::string signMessage(const std::string &message) override;
     virtual bool verifySignedMessage(const std::string &message, const std::string &address, const std::string &signature) const override;
     virtual std::string signMultisigParticipant(const std::string &message) const override;
     virtual bool verifyMessageWithPublicKey(const std::string &message, const std::string &publicKey, const std::string &signature) const override;
@@ -222,9 +220,6 @@ public:
     virtual bool isKeysFileLocked() override;
     virtual uint64_t coldKeyImageSync(uint64_t &spent, uint64_t &unspent) override;
     virtual void deviceShowAddress(uint32_t accountIndex, uint32_t addressIndex, const std::string &paymentId) override;
-    virtual bool reconnectDevice() override;
-    virtual uint64_t getBytesReceived() override;
-    virtual uint64_t getBytesSent() override;
 
 private:
     void clearStatus() const;
@@ -286,4 +281,7 @@ private:
 
 } // namespace
 
+namespace Bitmonero = Monero;
+
 #endif
+

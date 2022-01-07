@@ -106,18 +106,16 @@ function (die msg)
 endfunction ()
 
 function (add_c_flag_if_supported flag var)
-  set(TMP "-Werror ${flag}")
-  string(REGEX REPLACE "[- ]" "_" supported ${TMP}_c)
-  check_c_compiler_flag(${TMP} ${supported})
+  string(REPLACE "-" "_" supported ${flag}_c)
+  check_c_compiler_flag(${flag} ${supported})
   if(${${supported}})
     set(${var} "${${var}} ${flag}" PARENT_SCOPE)
   endif()
 endfunction()
 
 function (add_cxx_flag_if_supported flag var)
-  set(TMP "-Werror ${flag}")
-  string(REGEX REPLACE "[- ]" "_" supported ${TMP}_cxx)
-  check_cxx_compiler_flag(${TMP} ${supported})
+  string(REPLACE "-" "_" supported ${flag}_cxx)
+  check_cxx_compiler_flag(${flag} ${supported})
   if(${${supported}})
     set(${var} "${${var}} ${flag}" PARENT_SCOPE)
   endif()
@@ -156,15 +154,6 @@ function (monero_set_target_no_relink target)
   endif()
 endfunction()
 
-option(STRIP_TARGETS "Strip symbols from targets?" OFF)
-function (monero_set_target_strip target)
-  if (STRIP_TARGETS)
-    set_target_properties("${target}" PROPERTIES LINK_FLAGS_RELEASE -s)
-    set_target_properties("${target}" PROPERTIES LINK_FLAGS_DEBUG -s)
-    # Stripping from Debug might make sense if you're low on disk space, but want to test if debug version builds properly.
-  endif()
-endfunction()
-
 function (monero_add_minimal_executable name)
   source_group("${name}"
     FILES
@@ -172,8 +161,7 @@ function (monero_add_minimal_executable name)
 
   add_executable("${name}"
     ${ARGN})
-    monero_set_target_no_relink("${name}")
-    monero_set_target_strip    ("${name}")
+    monero_set_target_no_relink( ${name} )
 endfunction()
 
 # Finds all headers in a directory and its subdirs, to be able to search for them and autosave in IDEs.
@@ -189,66 +177,6 @@ macro (monero_find_all_headers headers_found module_root_dir)
            "${module_root_dir}/**/*.inl"
 )
 endmacro()
-
-# Function to forbid undefined symbols and also verify
-# 1) Test project with all types of libraries and without undefined symbols can compile successfully
-# 2) Test project with all types of libraries and undefined symbols can not compile successfully
-function(forbid_undefined_symbols)
-  unset(TMP)
-  # https://www.unix.com/man-page/linux/1/ld, --no-undefined, Report unresolved symbol references from regular object files.
-  add_linker_flag_if_supported(-Wl,--no-undefined TMP)
-  # https://www.unix.com/man-page/osx/1/ld/, -undefined, Specifies how undefined symbols are to be treated.
-  add_linker_flag_if_supported(-Wl,-undefined,error TMP)
-  string(APPEND CMAKE_SHARED_LINKER_FLAGS ${TMP})
-  string(APPEND CMAKE_MODULE_LINKER_FLAGS ${TMP})
-  set(CMAKE_SHARED_LINKER_FLAGS ${CMAKE_SHARED_LINKER_FLAGS} PARENT_SCOPE)
-  set(CMAKE_MODULE_LINKER_FLAGS ${CMAKE_MODULE_LINKER_FLAGS} PARENT_SCOPE)
-  set(TEST_PROJECT "${CMAKE_BINARY_DIR}/${CMAKE_FILES_DIRECTORY}/CMakeTmp/test_project")
-  foreach(EXPECT IN ITEMS TRUE FALSE)
-    file(REMOVE_RECURSE "${TEST_PROJECT}")
-    file(MAKE_DIRECTORY "${TEST_PROJECT}")
-    file(WRITE "${TEST_PROJECT}/CMakeLists.txt"
-      [=[
-cmake_minimum_required(VERSION 3.1)
-project(test)
-option(EXPECT_SUCCESS "" ON)
-file(WRITE "${CMAKE_SOURCE_DIR}/incorrect_source.cpp" "void undefined_symbol(); void symbol() { undefined_symbol(); }")
-if (EXPECT_SUCCESS)
-  file(APPEND "${CMAKE_SOURCE_DIR}/incorrect_source.cpp" " void undefined_symbol() {}; ")
-endif()
-add_library(l0 SHARED incorrect_source.cpp)
-add_library(l1 MODULE incorrect_source.cpp)
-add_library(l2 STATIC incorrect_source.cpp)
-add_library(l3 OBJECT incorrect_source.cpp)
-]=]
-    )
-    try_compile(SUCCESS "${TEST_PROJECT}/build" "${TEST_PROJECT}" test
-      CMAKE_FLAGS
-      "-DCMAKE_SHARED_LINKER_FLAGS=${CMAKE_SHARED_LINKER_FLAGS}"
-      "-DCMAKE_MODULE_LINKER_FLAGS=${CMAKE_MODULE_LINKER_FLAGS}"
-      "-DEXPECT_SUCCESS=${EXPECT}"
-    )
-    if (NOT ${SUCCESS} STREQUAL ${EXPECT})
-      message(FATAL_ERROR "Undefined symbols test failure: expect(${EXPECT}), success(${SUCCESS})")
-    endif()
-    file(REMOVE_RECURSE "${TEST_PROJECT}")
-  endforeach()
-endfunction()
-if (NOT (CMAKE_SYSTEM_NAME MATCHES "kOpenBSD.*|OpenBSD.*") AND NOT OSSFUZZ)
-  forbid_undefined_symbols()
-endif()
-
-if (MINGW)
-  function(export_all_symbols)
-    unset(TMP)
-    add_linker_flag_if_supported(-Wl,--export-all-symbols TMP)
-    string(APPEND CMAKE_SHARED_LINKER_FLAGS ${TMP})
-    string(APPEND CMAKE_MODULE_LINKER_FLAGS ${TMP})
-    set(CMAKE_SHARED_LINKER_FLAGS ${CMAKE_SHARED_LINKER_FLAGS} PARENT_SCOPE)
-    set(CMAKE_MODULE_LINKER_FLAGS ${CMAKE_MODULE_LINKER_FLAGS} PARENT_SCOPE)
-  endfunction()
-  export_all_symbols()
-endif()
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
@@ -588,10 +516,6 @@ if(STATIC AND NOT IOS)
   endif()
 endif()
 
-if (WIN32)
-  list(APPEND OPENSSL_LIBRARIES ws2_32 crypt32)
-endif()
-
 find_package(HIDAPI)
 
 add_definition_if_library_exists(c memset_s "string.h" HAVE_MEMSET_S)
@@ -602,23 +526,6 @@ add_definitions(-DAUTO_INITIALIZE_EASYLOGGINGPP)
 
 set(MONERO_GENERATED_HEADERS_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated_include")
 include_directories(${MONERO_GENERATED_HEADERS_DIR})
-
-# As of OpenBSD 6.8, -march=<anything> breaks the build
-function(set_default_arch)
-  if (OPENBSD)
-    set(ARCH default)
-  else()
-    set(ARCH native)
-  endif()
-
-  set(ARCH ${ARCH} CACHE STRING "CPU to build for: -march value or 'default' to not pass -march at all")
-endfunction()
-
-if (NOT (MSVC OR ARCH))
-    set_default_arch()
-endif()
-
-CHECK_C_COMPILER_FLAG(-std=c11 HAVE_C11)
 
 option(COVERAGE "Enable profiling for test coverage report" OFF)
 if(COVERAGE)
@@ -633,30 +540,6 @@ macro (monero_enable_coverage)
   endif()
 endmacro()
 
-function (monero_add_library name)
-    monero_add_library_with_deps(NAME "${name}" SOURCES ${ARGN})
-endfunction()
-
-function (monero_add_library_with_deps)
-  cmake_parse_arguments(MONERO_ADD_LIBRARY "" "NAME" "DEPENDS;SOURCES" ${ARGN})
-  source_group("${MONERO_ADD_LIBRARY_NAME}" FILES ${MONERO_ADD_LIBRARY_SOURCES})
-
-  # Define a ("virtual") object library and an actual library that links those
-  # objects together. The virtual libraries can be arbitrarily combined to link
-  # any subset of objects into one library archive. This is used for releasing
-  # libwallet, which combines multiple components.
-  set(objlib obj_${MONERO_ADD_LIBRARY_NAME})
-  add_library(${objlib} OBJECT ${MONERO_ADD_LIBRARY_SOURCES})
-  add_library("${MONERO_ADD_LIBRARY_NAME}" $<TARGET_OBJECTS:${objlib}>)
-  monero_set_target_no_relink("${MONERO_ADD_LIBRARY_NAME}")
-  monero_set_target_strip    ("${MONERO_ADD_LIBRARY_NAME}")
-  if (MONERO_ADD_LIBRARY_DEPENDS)
-    add_dependencies(${objlib} ${MONERO_ADD_LIBRARY_DEPENDS})
-  endif()
-  set_property(TARGET "${MONERO_ADD_LIBRARY_NAME}" PROPERTY FOLDER "libs")
-  target_compile_definitions(${objlib}
-    PRIVATE $<TARGET_PROPERTY:${MONERO_ADD_LIBRARY_NAME},INTERFACE_COMPILE_DEFINITIONS>)
-endfunction ()
 
 # Generate header for embedded translations
 # Generate header for embedded translations, use target toolchain if depends, otherwise use the
@@ -699,6 +582,17 @@ endif()
 # Trezor support check
 include(CheckTrezor)
 
+# As of OpenBSD 6.8, -march=<anything> breaks the build
+function(set_default_arch)
+  if (OPENBSD)
+    set(ARCH default)
+  else()
+    set(ARCH native)
+  endif()
+
+  set(ARCH ${ARCH} CACHE STRING "CPU to build for: -march value or 'default' to not pass -march at all")
+endfunction()
+
 if(MSVC)
   add_definitions("/bigobj /MP /W3 /GS- /D_CRT_SECURE_NO_WARNINGS /wd4996 /wd4345 /D_WIN32_WINNT=0x0600 /DWIN32_LEAN_AND_MEAN /DGTEST_HAS_TR1_TUPLE=0 /FIinline_c.h /D__SSE4_1__")
   # set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Dinline=__inline")
@@ -711,6 +605,9 @@ if(MSVC)
   include_directories(SYSTEM src/platform/msc)
 else()
   include(TestCXXAcceptsFlag)
+  if (NOT ARCH)
+    set_default_arch()
+  endif()
   message(STATUS "Building on ${CMAKE_SYSTEM_PROCESSOR} for ${ARCH}")
   if(ARCH STREQUAL "default")
     set(ARCH_FLAG "")
@@ -884,13 +781,6 @@ else()
     add_linker_flag_if_supported(-Wl,--nxcompat LD_SECURITY_FLAGS)
     add_linker_flag_if_supported(-Wl,--high-entropy-va LD_SECURITY_FLAGS)
   endif()
-
-  # Warnings, that when ignored are so severe, that they can segfault or even UB any application.
-  # Treat them as errors.
-  add_c_flag_if_supported(  -Werror=switch      C_SECURITY_FLAGS)
-  add_cxx_flag_if_supported(-Werror=switch      CXX_SECURITY_FLAGS)
-  add_c_flag_if_supported(  -Werror=return-type C_SECURITY_FLAGS)
-  add_cxx_flag_if_supported(-Werror=return-type CXX_SECURITY_FLAGS)
 
   message(STATUS "Using C security hardening flags: ${C_SECURITY_FLAGS}")
   message(STATUS "Using C++ security hardening flags: ${CXX_SECURITY_FLAGS}")
@@ -1245,6 +1135,9 @@ option(BUILD_GUI_DEPS "Build GUI dependencies." OFF)
 # This is not nice, distribution packagers should not enable this, but depend
 # on libunbound shipped with their distribution instead
 option(INSTALL_VENDORED_LIBUNBOUND "Install libunbound binary built from source vendored with this repo." OFF)
+
+
+CHECK_C_COMPILER_FLAG(-std=c11 HAVE_C11)
 
 find_package(PythonInterp)
 find_program(iwyu_tool_path NAMES iwyu_tool.py iwyu_tool)

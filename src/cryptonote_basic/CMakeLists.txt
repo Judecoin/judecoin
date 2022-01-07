@@ -36,14 +36,6 @@ if(APPLE)
   endif()
 endif()
 
-monero_add_library(cryptonote_format_utils_basic
-  cryptonote_format_utils_basic.cpp
-)
-target_link_libraries(cryptonote_format_utils_basic
-  PUBLIC
-  cncrypto
-)
-
 set(cryptonote_basic_sources
   account.cpp
   connection_context.cpp
@@ -82,7 +74,6 @@ target_link_libraries(cryptonote_basic
     common
     cncrypto
     checkpoints
-    cryptonote_format_utils_basic
     device
     ${Boost_DATE_TIME_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}

@@ -293,13 +293,12 @@ namespace cryptonote
     MINFO("loading rpc payments data from " << state_file_path);
     std::ifstream data;
     data.open(state_file_path, std::ios_base::binary | std::ios_base::in);
-    std::string bytes(std::istream_iterator<char>{data}, std::istream_iterator<char>{});
     if (!data.fail())
     {
       bool loaded = false;
       try
       {
-        binary_archive<false> ar{epee::strspan<std::uint8_t>(bytes)};
+        binary_archive<false> ar(data);
         if (::serialization::serialize(ar, *this))
           if (::serialization::check_stream_state(ar))
             loaded = true;
@@ -307,8 +306,6 @@ namespace cryptonote
       catch (...) {}
       if (!loaded)
       {
-        bytes.clear();
-        bytes.shrink_to_fit();
         try
         {
           boost::archive::portable_binary_iarchive a(data);

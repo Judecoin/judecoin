@@ -1213,7 +1213,6 @@ wallet2::wallet2(network_type nettype, uint64_t kdf_rounds, bool unattended, std
 
 wallet2::~wallet2()
 {
-  deinit();
 }
 
 bool wallet2::has_testnet_option(const boost::program_options::variables_map& vm)
@@ -1321,9 +1320,6 @@ bool wallet2::set_daemon(std::string daemon_address, boost::optional<epee::net_u
   m_trusted_daemon = trusted_daemon;
   if (changed)
   {
-    if (!m_persistent_rpc_client_id) {
-      set_rpc_client_secret_key(rct::rct2sk(rct::skGen()));
-    }
     m_rpc_payment_state.expected_spent = 0;
     m_rpc_payment_state.discrepancy = 0;
     m_node_rpc_proxy.invalidate();
@@ -2777,8 +2773,9 @@ void wallet2::process_parsed_blocks(uint64_t start_height, const std::vector<cry
   {
     if (tx_cache_data[i].empty())
       continue;
-    tpool.submit(&waiter, [&gender, &tx_cache_data, i]() {
+    tpool.submit(&waiter, [&hwdev, &gender, &tx_cache_data, i]() {
       auto &slot = tx_cache_data[i];
+      boost::unique_lock<hw::device> hwdev_lock(hwdev);
       for (auto &iod: slot.primary)
         gender(iod);
       for (auto &iod: slot.additional)
@@ -3494,6 +3491,14 @@ void wallet2::refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blo
         blocks_fetched += added_blocks;
       }
       THROW_WALLET_EXCEPTION_IF(!waiter.wait(), error::wallet_internal_error, "Exception in thread pool");
+      if(!first && blocks_start_height == next_blocks_start_height)
+      {
+        m_node_rpc_proxy.set_height(m_blockchain.size());
+        refreshed = true;
+        break;
+      }
+
+      first = false;
 
       // handle error from async fetching thread
       if (error)
@@ -3503,15 +3508,6 @@ void wallet2::refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blo
         else
           throw std::runtime_error("proxy exception in refresh thread");
       }
-
-      if(!first && blocks_start_height == next_blocks_start_height)
-      {
-        m_node_rpc_proxy.set_height(m_blockchain.size());
-        refreshed = true;
-        break;
-      }
-
-      first = false;
 
       if (!next_blocks.empty())
       {
@@ -3749,11 +3745,9 @@ void wallet2::detach_blockchain(uint64_t height, std::map<std::pair<uint64_t, ui
 //----------------------------------------------------------------------------------------------------
 bool wallet2::deinit()
 {
-  if(m_is_initialized) {
-    m_is_initialized = false;
-    unlock_keys_file();
-    m_account.deinit();
-  }
+  m_is_initialized=false;
+  unlock_keys_file();
+  m_account.deinit();
   return true;
 }
 //----------------------------------------------------------------------------------------------------
@@ -4428,7 +4422,7 @@ bool wallet2::load_keys_buf(const std::string& keys_buf, const epee::wipeable_st
 
     account_public_address device_account_public_address;
     THROW_WALLET_EXCEPTION_IF(!hwdev.get_public_address(device_account_public_address), error::wallet_internal_error, "Cannot get a device address");
-    THROW_WALLET_EXCEPTION_IF(device_account_public_address != m_account.get_keys().m_account_address, error::wallet_internal_error, "Device wallet does not match wallet address. If the device uses the passphrase feature, please check whether the passphrase was entered correctly (it may have been misspelled - different passphrases generate different wallets, passphrase is case-sensitive). "
+    THROW_WALLET_EXCEPTION_IF(device_account_public_address != m_account.get_keys().m_account_address, error::wallet_internal_error, "Device wallet does not match wallet address. "
                                                                                                                                      "Device address: " + cryptonote::get_account_address_as_str(m_nettype, false, device_account_public_address) +
                                                                                                                                      ", wallet address: " + m_account.get_public_address_str(m_nettype));
     LOG_PRINT_L0("Device inited...");
@@ -5707,13 +5701,17 @@ void wallet2::load(const std::string& wallet_, const epee::wipeable_string& pass
 
         try
         {
-          binary_archive<false> ar{epee::strspan<std::uint8_t>(cache_data)};
+          std::stringstream iss;
+          iss << cache_data;
+          binary_archive<false> ar(iss);
           if (::serialization::serialize(ar, *this))
             if (::serialization::check_stream_state(ar))
               loaded = true;
           if (!loaded)
           {
-            binary_archive<false> ar{epee::strspan<std::uint8_t>(cache_data)};
+            std::stringstream iss;
+            iss << cache_data;
+            binary_archive<false> ar(iss);
             ar.enable_varint_bug_backward_compatibility();
             if (::serialization::serialize(ar, *this))
               if (::serialization::check_stream_state(ar))
@@ -6788,7 +6786,8 @@ bool wallet2::parse_unsigned_tx_from_str(const std::string &unsigned_tx_st, unsi
     catch(const std::exception &e) { LOG_PRINT_L0("Failed to decrypt unsigned tx: " << e.what()); return false; }
     try
     {
-      binary_archive<false> ar{epee::strspan<std::uint8_t>(s)};
+      std::istringstream iss(s);
+      binary_archive<false> ar(iss);
       if (!::serialization::serialize(ar, exported_txs))
       {
         LOG_PRINT_L0("Failed to parse data from unsigned tx");
@@ -7102,7 +7101,8 @@ bool wallet2::parse_tx_from_str(const std::string &signed_tx_st, std::vector<too
     catch (const std::exception &e) { LOG_PRINT_L0("Failed to decrypt signed transaction: " << e.what()); return false; }
     try
     {
-      binary_archive<false> ar{epee::strspan<std::uint8_t>(s)};
+      std::istringstream iss(s);
+      binary_archive<false> ar(iss);
       if (!::serialization::serialize(ar, signed_txs))
       {
         LOG_PRINT_L0("Failed to deserialize signed transaction");
@@ -7237,7 +7237,8 @@ bool wallet2::parse_multisig_tx_from_str(std::string multisig_tx_st, multisig_tx
   bool loaded = false;
   try
   {
-    binary_archive<false> ar{epee::strspan<std::uint8_t>(multisig_tx_st)};
+    std::istringstream iss(multisig_tx_st);
+    binary_archive<false> ar(iss);
     if (::serialization::serialize(ar, exported_txs))
       if (::serialization::check_stream_state(ar))
         loaded = true;
@@ -8593,30 +8594,18 @@ void wallet2::get_outs(std::vector<std::vector<tools::wallet2::get_outs_entry>> 
     }
 
     // get the keys for those
-    // the response can get large and end up rejected by the anti DoS limits, so chunk it if needed
-    size_t offset = 0;
-    while (offset < req.outputs.size())
-    {
-      static const size_t chunk_size = 1000;
-      COMMAND_RPC_GET_OUTPUTS_BIN::request chunk_req = AUTO_VAL_INIT(chunk_req);
-      COMMAND_RPC_GET_OUTPUTS_BIN::response chunk_daemon_resp = AUTO_VAL_INIT(chunk_daemon_resp);
-      chunk_req.get_txid = false;
-      for (size_t i = 0; i < std::min<size_t>(req.outputs.size() - offset, chunk_size); ++i)
-        chunk_req.outputs.push_back(req.outputs[offset + i]);
+    req.get_txid = false;
 
+    {
       const boost::lock_guard<boost::recursive_mutex> lock{m_daemon_rpc_mutex};
       uint64_t pre_call_credits = m_rpc_payment_state.credits;
-      chunk_req.client = get_client_signature();
-      bool r = epee::net_utils::invoke_http_bin("/get_outs.bin", chunk_req, chunk_daemon_resp, *m_http_client, rpc_timeout);
-      THROW_ON_RPC_RESPONSE_ERROR(r, {}, chunk_daemon_resp, "get_outs.bin", error::get_outs_error, get_rpc_status(chunk_daemon_resp.status));
-      THROW_WALLET_EXCEPTION_IF(chunk_daemon_resp.outs.size() != chunk_req.outputs.size(), error::wallet_internal_error,
+      req.client = get_client_signature();
+      bool r = epee::net_utils::invoke_http_bin("/get_outs.bin", req, daemon_resp, *m_http_client, rpc_timeout);
+      THROW_ON_RPC_RESPONSE_ERROR(r, {}, daemon_resp, "get_outs.bin", error::get_outs_error, get_rpc_status(daemon_resp.status));
+      THROW_WALLET_EXCEPTION_IF(daemon_resp.outs.size() != req.outputs.size(), error::wallet_internal_error,
         "daemon returned wrong response for get_outs.bin, wrong amounts count = " +
-        std::to_string(chunk_daemon_resp.outs.size()) + ", expected " +  std::to_string(chunk_req.outputs.size()));
-      check_rpc_cost("/get_outs.bin", chunk_daemon_resp.credits, pre_call_credits, chunk_daemon_resp.outs.size() * COST_PER_OUT);
-
-      offset += chunk_size;
-      for (size_t i = 0; i < chunk_daemon_resp.outs.size(); ++i)
-        daemon_resp.outs.push_back(std::move(chunk_daemon_resp.outs[i]));
+        std::to_string(daemon_resp.outs.size()) + ", expected " +  std::to_string(req.outputs.size()));
+      check_rpc_cost("/get_outs.bin", daemon_resp.credits, pre_call_credits, daemon_resp.outs.size() * COST_PER_OUT);
     }
 
     std::unordered_map<uint64_t, uint64_t> scanty_outs;
@@ -11527,9 +11516,6 @@ void wallet2::check_tx_key_helper(const cryptonote::transaction &tx, const crypt
 
 void wallet2::check_tx_key_helper(const crypto::hash &txid, const crypto::key_derivation &derivation, const std::vector<crypto::key_derivation> &additional_derivations, const cryptonote::account_public_address &address, uint64_t &received, bool &in_pool, uint64_t &confirmations)
 {
-  uint32_t rpc_version;
-  THROW_WALLET_EXCEPTION_IF(!check_connection(&rpc_version), error::wallet_internal_error, "Failed to connect to daemon: " + get_daemon_address());
-
   COMMAND_RPC_GET_TRANSACTIONS::request req;
   COMMAND_RPC_GET_TRANSACTIONS::response res;
   req.txs_hashes.push_back(epee::string_tools::pod_to_hex(txid));
@@ -11575,17 +11561,10 @@ void wallet2::check_tx_key_helper(const crypto::hash &txid, const crypto::key_de
   confirmations = 0;
   if (!in_pool)
   {
-    if (rpc_version < MAKE_CORE_RPC_VERSION(3, 7))
-    {
-      std::string err;
-      uint64_t bc_height = get_daemon_blockchain_height(err);
-      if (err.empty() && bc_height > res.txs.front().block_height)
-        confirmations = bc_height - res.txs.front().block_height;
-    }
-    else
-    {
-      confirmations = res.txs.front().confirmations;
-    }
+    std::string err;
+    uint64_t bc_height = get_daemon_blockchain_height(err);
+    if (err.empty())
+      confirmations = bc_height - res.txs.front().block_height;
   }
 }
 
@@ -12048,7 +12027,8 @@ bool wallet2::check_reserve_proof(const cryptonote::account_public_address &addr
   serializable_unordered_map<crypto::public_key, crypto::signature> subaddr_spendkeys;
   try
   {
-    binary_archive<false> ar{epee::strspan<std::uint8_t>(sig_decoded)};
+    std::istringstream iss(sig_decoded);
+    binary_archive<false> ar(iss);
     if (::serialization::serialize_noeof(ar, proofs))
       if (::serialization::serialize_noeof(ar, subaddr_spendkeys))
         if (::serialization::check_stream_state(ar))
@@ -13232,7 +13212,9 @@ size_t wallet2::import_outputs_from_str(const std::string &outputs_st)
     std::pair<uint64_t, std::vector<tools::wallet2::transfer_details>> outputs;
     try
     {
-      binary_archive<false> ar{epee::strspan<std::uint8_t>(body)};
+      std::stringstream iss;
+      iss << body;
+      binary_archive<false> ar(iss);
       if (::serialization::serialize(ar, outputs))
         if (::serialization::check_stream_state(ar))
           loaded = true;
@@ -13484,7 +13466,8 @@ size_t wallet2::import_multisig(std::vector<cryptonote::blobdata> blobs)
     bool loaded = false;
     try
     {
-      binary_archive<false> ar{epee::strspan<std::uint8_t>(body)};
+      std::istringstream iss(body);
+      binary_archive<false> ar(iss);
       if (::serialization::serialize(ar, i))
         if (::serialization::check_stream_state(ar))
           loaded = true;

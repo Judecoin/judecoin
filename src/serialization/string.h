@@ -39,7 +39,7 @@ inline bool do_serialize(Archive<false>& ar, std::string& str)
   ar.serialize_varint(size);
   if (ar.remaining_bytes() < size)
   {
-    ar.set_fail();
+    ar.stream().setstate(std::ios::failbit);
     return false;
   }
 

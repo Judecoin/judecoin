@@ -648,9 +648,11 @@ public:
       bvc.m_verifivation_failed = true;
 
     cryptonote::block blk;
-    binary_archive<false> ba{epee::strspan<std::uint8_t>(sr_block.data)};
+    std::stringstream ss;
+    ss << sr_block.data;
+    binary_archive<false> ba(ss);
     ::serialization::serialize(ba, blk);
-    if (!ba.good())
+    if (!ss.good())
     {
       blk = cryptonote::block();
     }
@@ -669,9 +671,11 @@ public:
     bool tx_added = pool_size + 1 == m_c.get_pool_transactions_count();
 
     cryptonote::transaction tx;
-    binary_archive<false> ba{epee::strspan<std::uint8_t>(sr_tx.data)};
+    std::stringstream ss;
+    ss << sr_tx.data;
+    binary_archive<false> ba(ss);
     ::serialization::serialize(ba, tx);
-    if (!ba.good())
+    if (!ss.good())
     {
       tx = cryptonote::transaction();
     }
