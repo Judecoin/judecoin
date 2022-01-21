@@ -450,7 +450,7 @@ WalletImpl::~WalletImpl()
     LOG_PRINT_L1(__FUNCTION__);
     m_wallet->callback(NULL);
     // Pause refresh thread - prevents refresh from starting again
-    pauseRefresh();
+    WalletImpl::pauseRefresh(); // Call the method directly (not polymorphically) to protect against UB in destructor.
     // Close wallet - stores cache and stops ongoing refresh operation 
     close(false); // do not store wallet as part of the closing activities
     // Stop refresh thread
@@ -836,6 +836,11 @@ bool WalletImpl::setPassword(const std::string &password)
     return status() == Status_Ok;
 }
 
+const std::string& WalletImpl::getPassword() const
+{
+    return m_password;
+}
+
 bool WalletImpl::setDevicePin(const std::string &pin)
 {
     clearStatus();
@@ -1175,7 +1180,7 @@ bool WalletImpl::exportKeyImages(const string &filename, bool all)
   
   try
   {
-    if (!m_wallet->export_key_images(filename), all)
+    if (!m_wallet->export_key_images(filename, all))
     {
       setStatusError(tr("failed to save file ") + filename);
       return false;
@@ -2360,6 +2365,11 @@ bool WalletImpl::parse_uri(const std::string &uri, std::string &address, std::st
     return m_wallet->parse_uri(uri, address, payment_id, amount, tx_description, recipient_name, unknown_parameters, error);
 }
 
+std::string WalletImpl::make_uri(const std::string &address, const std::string &payment_id, uint64_t amount, const std::string &tx_description, const std::string &recipient_name, std::string &error) const
+{
+    return m_wallet->make_uri(address, payment_id, amount, tx_description, recipient_name, error);
+}
+
 std::string WalletImpl::getDefaultDataDir() const
 {
  return tools::get_default_data_dir();
@@ -2385,6 +2395,11 @@ bool WalletImpl::rescanSpent()
 void WalletImpl::setOffline(bool offline)
 {
     m_wallet->set_offline(offline);
+}
+
+bool WalletImpl::isOffline() const
+{
+    return m_wallet->is_offline();
 }
 
 void WalletImpl::hardForkInfo(uint8_t &version, uint64_t &earliest_height) const

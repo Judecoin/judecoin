@@ -270,9 +270,17 @@ namespace nodetool
 
       peerlist_entry pe{};
       pe.adr = addr;
-      zone.second.m_peerlist.remove_from_peer_white(pe);
-      zone.second.m_peerlist.remove_from_peer_gray(pe);
-      zone.second.m_peerlist.remove_from_peer_anchor(addr);
+      if (addr.port() == 0)
+      {
+        zone.second.m_peerlist.evict_host_from_peerlist(true, pe);
+        zone.second.m_peerlist.evict_host_from_peerlist(false, pe);
+      }
+      else
+      {
+        zone.second.m_peerlist.remove_from_peer_white(pe);
+        zone.second.m_peerlist.remove_from_peer_gray(pe);
+        zone.second.m_peerlist.remove_from_peer_anchor(addr);
+     }
 
       for (const auto &c: conns)
         zone.second.m_net_server.get_config_object().close(c);
@@ -331,6 +339,13 @@ namespace nodetool
       });
       for (const auto &c: conns)
         zone.second.m_net_server.get_config_object().close(c);
+
+      for (int i = 0; i < 2; ++i)
+        zone.second.m_peerlist.filter(i == 0, [&subnet](const peerlist_entry &pe){
+          if (pe.adr.get_type_id() != epee::net_utils::ipv4_network_address::get_type_id())
+            return false;
+          return subnet.matches(pe.adr.as<const epee::net_utils::ipv4_network_address>());
+        });
 
       conns.clear();
     }
@@ -683,12 +698,14 @@ namespace nodetool
       full_addrs.insert("212.83.172.165:28080");
       full_addrs.insert("192.110.160.146:28080");
       full_addrs.insert("88.99.173.38:28080");
+      full_addrs.insert("51.79.173.165:28080");
     }
     else if (m_nettype == cryptonote::STAGENET)
     {
       full_addrs.insert("162.210.173.150:38080");
       full_addrs.insert("192.110.160.146:38080");
       full_addrs.insert("88.99.173.38:38080");
+      full_addrs.insert("51.79.173.165:38080");
     }
     else if (m_nettype == cryptonote::FAKECHAIN)
     {
@@ -704,6 +721,7 @@ namespace nodetool
       full_addrs.insert("104.238.221.81:18080");
       full_addrs.insert("66.85.74.134:18080");
       full_addrs.insert("88.99.173.38:18080");
+      full_addrs.insert("51.79.173.165:18080");
     }
     return full_addrs;
   }
@@ -831,6 +849,7 @@ namespace nodetool
           "xwvz3ekocr3dkyxfkmgm2hvbpzx2ysqmaxgter7znnqrhoicygkfswid.onion:18083",
           "4pixvbejrvihnkxmduo2agsnmc3rrulrqc7s3cbwwrep6h6hrzsibeqd.onion:18083",
           "zbjkbsxc5munw3qusl7j2hpcmikhqocdf4pqhnhtpzw5nt5jrmofptid.onion:18083",
+          "qz43zul2x56jexzoqgkx2trzwcfnr6l3hbtfcfx54g4r3eahy3bssjyd.onion:18083",
         };
       }
       return {};
