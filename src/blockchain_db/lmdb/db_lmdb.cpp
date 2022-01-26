@@ -1267,11 +1267,11 @@ BlockchainLMDB::~BlockchainLMDB()
   // batch transaction shouldn't be active at this point. If it is, consider it aborted.
   if (m_batch_active)
   {
-    try { BlockchainLMDB::batch_abort(); }
+    try { batch_abort(); }
     catch (...) { /* ignore */ }
   }
   if (m_open)
-    BlockchainLMDB::close();
+    close();
 }
 
 BlockchainLMDB::BlockchainLMDB(bool batch_transactions): BlockchainDB()
@@ -1569,9 +1569,9 @@ void BlockchainLMDB::close()
   if (m_batch_active)
   {
     LOG_PRINT_L3("close() first calling batch_abort() due to active batch transaction");
-    BlockchainLMDB::batch_abort();
+    batch_abort();
   }
-  BlockchainLMDB::sync();
+  this->sync();
   m_tinfo.reset();
 
   // FIXME: not yet thread safe!!!  Use with care.
@@ -1584,7 +1584,7 @@ void BlockchainLMDB::sync()
   LOG_PRINT_L3("BlockchainLMDB::" << __func__);
   check_open();
 
-  if (BlockchainLMDB::is_read_only())
+  if (is_read_only())
     return;
 
   // Does nothing unless LMDB environment was opened with MDB_NOSYNC or in part
