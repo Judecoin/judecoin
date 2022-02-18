@@ -287,12 +287,6 @@ namespace levin
       boost::asio::steady_timer next_epoch;
       boost::asio::steady_timer flush_txs;
       boost::asio::io_service::strand strand;
-      struct context_t {
-        std::vector<cryptonote::blobdata> fluff_txs;
-        std::chrono::steady_clock::time_point flush_time;
-        bool m_is_income;
-      };
-      boost::unordered_map<boost::uuids::uuid, context_t> contexts;
       net::dandelionpp::connection_map map;//!< Tracks outgoing uuid's for noise channels or Dandelion++ stems
       std::deque<noise_channel> channels;  //!< Never touch after init; only update elements on `noise_channel.strand`
       std::atomic<std::size_t> connection_count; //!< Only update in strand, can be read at any time
@@ -369,16 +363,14 @@ namespace levin
         const auto now = std::chrono::steady_clock::now();
         auto next_flush = std::chrono::steady_clock::time_point::max();
         std::vector<std::pair<std::vector<blobdata>, boost::uuids::uuid>> connections{};
-        for (auto &e: zone_->contexts)
+        zone_->p2p->foreach_connection([timer_error, now, &next_flush, &connections] (detail::p2p_context& context)
         {
-          auto &id = e.first;
-          auto &context = e.second;
           if (!context.fluff_txs.empty())
           {
             if (context.flush_time <= now || timer_error) // flush on canceled timer
             {
               context.flush_time = std::chrono::steady_clock::time_point::max();
-              connections.emplace_back(std::move(context.fluff_txs), id);
+              connections.emplace_back(std::move(context.fluff_txs), context.m_connection_id);
               context.fluff_txs.clear();
             }
             else // not flushing yet
@@ -386,7 +378,8 @@ namespace levin
           }
           else // nothing to flush
             context.flush_time = std::chrono::steady_clock::time_point::max();
-        }
+          return true;
+        });
 
         /* Always send with `fluff` flag, even over i2p/tor. The hidden service
 	   will disable the forwarding delay and immediately fluff. The i2p/tor
@@ -434,21 +427,22 @@ namespace levin
 
 
         MDEBUG("Queueing " << txs.size() << " transaction(s) for Dandelion++ fluffing");
-        for (auto &e: zone->contexts)
+
+        zone->p2p->foreach_connection([txs, now, &zone, &source, &in_duration, &out_duration, &next_flush] (detail::p2p_context& context)
         {
-          auto &id = e.first;
-          auto &context = e.second;
           // When i2p/tor, only fluff to outbound connections
-          if (source != id && (zone->nzone == epee::net_utils::zone::public_ || !context.m_is_income))
+          if (context.handshake_complete() && source != context.m_connection_id && (zone->nzone == epee::net_utils::zone::public_ || !context.m_is_income))
           {
             if (context.fluff_txs.empty())
               context.flush_time = now + (context.m_is_income ? in_duration() : out_duration());
 
             next_flush = std::min(next_flush, context.flush_time);
             context.fluff_txs.reserve(context.fluff_txs.size() + txs.size());
-            context.fluff_txs.insert(context.fluff_txs.end(), txs.begin(), txs.end());
+            for (const blobdata& tx : txs)
+              context.fluff_txs.push_back(tx); // must copy instead of move (multiple conns)
           }
-        }
+          return true;
+        });
 
         if (next_flush == std::chrono::steady_clock::time_point::max())
           MWARNING("Unable to send transaction(s), no available connections");
@@ -753,32 +747,6 @@ namespace levin
     zone_->strand.dispatch(
       update_channels{zone_, get_out_connections(*(zone_->p2p), core_)}
     );
-  }
-
-  void notify::on_handshake_complete(const boost::uuids::uuid &id, bool is_income)
-  {
-    if (!zone_)
-      return;
-
-    auto& zone = zone_;
-    zone_->strand.dispatch([zone, id, is_income]{
-      zone->contexts[id] = {
-        .fluff_txs = {},
-        .flush_time = std::chrono::steady_clock::time_point::max(),
-        .m_is_income = is_income,
-      };
-    });
-  }
-
-  void notify::on_connection_close(const boost::uuids::uuid &id)
-  {
-    if (!zone_)
-      return;
-
-    auto& zone = zone_;
-    zone_->strand.dispatch([zone, id]{
-      zone->contexts.erase(id);
-    });
   }
 
   void notify::run_epoch()

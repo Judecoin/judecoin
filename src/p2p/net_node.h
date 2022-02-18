@@ -111,11 +111,15 @@ namespace nodetool
   struct p2p_connection_context_t: base_type //t_payload_net_handler::connection_context //public net_utils::connection_context_base
   {
     p2p_connection_context_t()
-      : peer_id(0),
+      : fluff_txs(),
+        flush_time(std::chrono::steady_clock::time_point::max()),
+        peer_id(0),
         support_flags(0),
         m_in_timedsync(false)
     {}
 
+    std::vector<cryptonote::blobdata> fluff_txs;
+    std::chrono::steady_clock::time_point flush_time;
     peerid_type peer_id;
     uint32_t support_flags;
     bool m_in_timedsync;
@@ -255,6 +259,7 @@ namespace nodetool
         m_offline(false),
         is_closing(false),
         m_network_id(),
+        m_enable_dns_seed_nodes(true),
         max_connections(1)
     {}
     virtual ~node_server();
@@ -263,7 +268,7 @@ namespace nodetool
 
     bool run();
     network_zone& add_zone(epee::net_utils::zone zone);
-    bool init(const boost::program_options::variables_map& vm);
+    bool init(const boost::program_options::variables_map& vm, const std::string& proxy = {}, bool proxy_dns_leaks_allowed = {});
     bool deinit();
     bool send_stop_signal();
     uint32_t get_this_peer_port(){return m_listening_port;}
@@ -512,6 +517,7 @@ namespace nodetool
 
     epee::net_utils::ssl_support_t m_ssl_support;
 
+    bool m_enable_dns_seed_nodes;
     bool m_enable_dns_blocklist;
 
     uint32_t max_connections;
