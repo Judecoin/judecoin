@@ -2984,8 +2984,8 @@ void Writer::initializeLogger(Logger *logger, bool needLock) {
 }
 
 void Writer::processDispatch() {
-  static __thread bool in_dispatch = false;
-  if (in_dispatch)
+  static std::atomic_flag in_dispatch;
+  if (in_dispatch.test_and_set())
   {
     if (m_proceed && m_logger != NULL)
     {
@@ -2994,7 +2994,6 @@ void Writer::processDispatch() {
     }
     return;
   }
-  in_dispatch = true;
 #if ELPP_LOGGING_ENABLED
   if (ELPP->hasFlag(LoggingFlag::MultiLoggerSupport)) {
     bool firstDispatched = false;
@@ -3033,7 +3032,7 @@ void Writer::processDispatch() {
     m_logger->releaseLock();
   }
 #endif // ELPP_LOGGING_ENABLED
-  in_dispatch = false;
+  in_dispatch.clear();
 }
 
 void Writer::triggerDispatch(void) {
