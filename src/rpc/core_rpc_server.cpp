@@ -242,11 +242,11 @@ namespace cryptonote
       auto get_nodes = [this]() {
         return get_public_nodes(credits_per_hash_threshold);
       };
-      m_bootstrap_daemon.reset(new bootstrap_daemon(std::move(get_nodes), rpc_payment_enabled, m_bootstrap_daemon_proxy.empty() ? proxy : m_bootstrap_daemon_proxy));
+      m_bootstrap_daemon.reset(new bootstrap_daemon(std::move(get_nodes), rpc_payment_enabled, proxy));
     }
     else
     {
-      m_bootstrap_daemon.reset(new bootstrap_daemon(address, credentials, rpc_payment_enabled, m_bootstrap_daemon_proxy.empty() ? proxy : m_bootstrap_daemon_proxy));
+      m_bootstrap_daemon.reset(new bootstrap_daemon(address, credentials, rpc_payment_enabled, proxy));
     }
 
     m_should_use_bootstrap_daemon = m_bootstrap_daemon.get() != nullptr;
@@ -264,10 +264,8 @@ namespace cryptonote
       , const bool restricted
       , const std::string& port
       , bool allow_rpc_payment
-      , const std::string& proxy
     )
   {
-    m_bootstrap_daemon_proxy = proxy;
     m_restricted = restricted;
     m_net_server.set_threads_prefix("RPC");
     m_net_server.set_connection_filter(&m_p2p);
@@ -1859,43 +1857,6 @@ namespace cryptonote
     res.prev_hash = string_tools::pod_to_hex(b.prev_id);
     res.blocktemplate_blob = string_tools::buff_to_hex_nodelimer(block_blob);
     res.blockhashing_blob =  string_tools::buff_to_hex_nodelimer(hashing_blob);
-    res.status = CORE_RPC_STATUS_OK;
-    return true;
-  }
-  //------------------------------------------------------------------------------------------------------------------------------
-  bool core_rpc_server::on_getminerdata(const COMMAND_RPC_GETMINERDATA::request& req, COMMAND_RPC_GETMINERDATA::response& res, epee::json_rpc::error& error_resp, const connection_context *ctx)
-  {
-    if(!check_core_ready())
-    {
-      error_resp.code = CORE_RPC_ERROR_CODE_CORE_BUSY;
-      error_resp.message = "Core is busy";
-      return false;
-    }
-
-    crypto::hash prev_id, seed_hash;
-    difficulty_type difficulty;
-
-    std::vector<tx_block_template_backlog_entry> tx_backlog;
-    if (!m_core.get_miner_data(res.major_version, res.height, prev_id, seed_hash, difficulty, res.median_weight, res.already_generated_coins, tx_backlog))
-    {
-      error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
-      error_resp.message = "Internal error: failed to get miner data";
-      LOG_ERROR("Failed to get miner data");
-      return false;
-    }
-
-    res.tx_backlog.clear();
-    res.tx_backlog.reserve(tx_backlog.size());
-
-    for (const auto& entry : tx_backlog)
-    {
-      res.tx_backlog.emplace_back(COMMAND_RPC_GETMINERDATA::response::tx_backlog_entry{string_tools::pod_to_hex(entry.id), entry.weight, entry.fee});
-    }
-
-    res.prev_id = string_tools::pod_to_hex(prev_id);
-    res.seed_hash = string_tools::pod_to_hex(seed_hash);
-    res.difficulty = cryptonote::hex(difficulty);
-
     res.status = CORE_RPC_STATUS_OK;
     return true;
   }

@@ -41,8 +41,6 @@ namespace cryptonote
   {
     cryptonote::transaction tx;
     crypto::hash hash;
-    uint64_t blob_size;
-    uint64_t weight;
     bool res; //!< Listeners must ignore `tx` when this is false.
   };
 }

@@ -94,9 +94,6 @@ namespace
         case net::i2p_address::get_type_id():
             set = client->set_connect_command(remote.as<net::i2p_address>());
             break;
-        case epee::net_utils::ipv4_network_address::get_type_id():
-            set = client->set_connect_command(remote.as<epee::net_utils::ipv4_network_address>());
-            break;
         default:
             MERROR("Unsupported network address in socks_connect");
             return false;
@@ -342,7 +339,6 @@ namespace nodetool
             }
         };
 
-        net::socks::client::close_on_exit close_client{};
         boost::unique_future<client_result> socks_result{};
         {
             boost::promise<client_result> socks_promise{};
@@ -351,7 +347,6 @@ namespace nodetool
             auto client = net::socks::make_connect_client(
                 boost::asio::ip::tcp::socket{service}, net::socks::version::v4a, notify{std::move(socks_promise)}
              );
-            close_client.self = client;
             if (!start_socks(std::move(client), proxy, remote))
                 return boost::none;
         }
@@ -373,10 +368,7 @@ namespace nodetool
         {
             auto result = socks_result.get();
             if (!result.first)
-            {
-                close_client.self.reset();
                 return {std::move(result.second)};
-            }
 
             MERROR("Failed to make socks connection to " << remote.str() << " (via " << proxy << "): " << result.first.message());
         }
