@@ -6061,7 +6061,6 @@ bool simple_wallet::show_incoming_transfers(const std::vector<std::string>& args
   auto local_args = args;
   LOCK_IDLE_SCOPE();
 
-  std::set<uint32_t> subaddr_indices;
   bool filter = false;
   bool available = false;
   bool verbose = false;
@@ -6087,11 +6086,6 @@ bool simple_wallet::show_incoming_transfers(const std::vector<std::string>& args
       verbose = true;
     else if (local_args[0] == "uses")
       uses = true;
-    else if (local_args[0].substr(0, 6) == "index=")
-    {
-      if (!parse_subaddress_indices(local_args[0], subaddr_indices))
-        return true;
-    }
     else
     {
       fail_msg_writer() << tr("Invalid keyword: ") << local_args.front();
@@ -6103,6 +6097,14 @@ bool simple_wallet::show_incoming_transfers(const std::vector<std::string>& args
   const uint64_t blockchain_height = m_wallet->get_blockchain_current_height();
 
   PAUSE_READLINE();
+
+  std::set<uint32_t> subaddr_indices;
+  if (local_args.size() > 0 && local_args[0].substr(0, 6) == "index=")
+  {
+    if (!parse_subaddress_indices(local_args[0], subaddr_indices))
+      return true;
+    local_args.erase(local_args.begin());
+  }
 
   if (local_args.size() > 0)
   {
