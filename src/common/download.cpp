@@ -53,7 +53,7 @@ namespace tools
 
     download_thread_control(const std::string &path, const std::string &uri, std::function<void(const std::string&, const std::string&, bool)> result_cb, std::function<bool(const std::string&, const std::string&, size_t, ssize_t)> progress_cb):
         path(path), uri(uri), result_cb(result_cb), progress_cb(progress_cb), stop(false), stopped(false), success(false) {}
-    ~download_thread_control() { if (thread.joinable()) { thread.detach(); thread = {}; } }
+    ~download_thread_control() { if (thread.joinable()) thread.detach(); }
   };
 
   static void download_thread(download_async_handle control)
@@ -293,13 +293,9 @@ namespace tools
     {
       boost::lock_guard<boost::mutex> lock(control->mutex);
       if (control->stopped)
-      {
-        control->thread = {};
         return true;
-      }
     }
     control->thread.join();
-    control->thread = {};
     return true;
   }
 
@@ -309,14 +305,10 @@ namespace tools
     {
       boost::lock_guard<boost::mutex> lock(control->mutex);
       if (control->stopped)
-      {
-        control->thread = {};
         return true;
-      }
       control->stop = true;
     }
     control->thread.join();
-    control->thread = {};
     return true;
   }
 }
