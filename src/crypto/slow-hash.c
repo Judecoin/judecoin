@@ -1109,7 +1109,7 @@ union cn_slow_hash_state
 
 STATIC INLINE int check_aes_hw(void)
 {
-#ifdef __APPLE__
+#ifdef __APPLE___
     return 1;
 #else
     static int supported = -1;
