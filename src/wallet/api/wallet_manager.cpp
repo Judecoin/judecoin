@@ -49,11 +49,6 @@ namespace epee {
 
 namespace Monero {
 
-WalletManagerImpl::WalletManagerImpl()
-{
-    tools::set_strict_default_file_permissions(true);
-}
-
 Wallet *WalletManagerImpl::createWallet(const std::string &path, const std::string &password,
                                     const std::string &language, NetworkType nettype, uint64_t kdf_rounds)
 {
