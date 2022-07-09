@@ -5709,13 +5709,14 @@ void wallet2::load(const std::string& wallet_, const epee::wipeable_string& pass
   wallet_keys_unlocker unlocker(*this, m_ask_password == AskPasswordToDecrypt && !m_unattended && !m_watch_only, password);
 
   //keys loaded ok!
-  //try to load wallet file. but even if we failed, it is not big problem
-  if (use_fs && (!boost::filesystem::exists(m_wallet_file, e) || e))
+  //try to load wallet cache. but even if we failed, it is not big problem
+  bool cache_missing = use_fs ? (!boost::filesystem::exists(m_wallet_file, e) || e) : cache_buf.empty();
+  if (cache_missing)
   {
-    LOG_PRINT_L0("file not found: " << m_wallet_file << ", starting with empty blockchain");
+    LOG_PRINT_L0("wallet cache missing: " << m_wallet_file << ", starting with empty blockchain");
     m_account_public_address = m_account.get_keys().m_account_address;
   }
-  else if (use_fs || !cache_buf.empty())
+  else
   {
     wallet2::cache_file_data cache_file_data;
     std::string cache_file_buf;
@@ -6125,6 +6126,19 @@ std::map<uint32_t, uint64_t> wallet2::balance_per_subaddress(uint32_t index_majo
         amount_per_subaddr[0] = utx.second.m_change;
       else
         found->second += utx.second.m_change;
+
+      // add transfers to same wallet
+      for (const auto &dest: utx.second.m_dests) {
+        auto index = get_subaddress_index(dest.addr);
+        if (index && (*index).major == index_major)
+        {
+          auto found = amount_per_subaddr.find((*index).minor);
+          if (found == amount_per_subaddr.end())
+            amount_per_subaddr[(*index).minor] = dest.amount;
+          else
+            found->second += dest.amount;
+        }
+      }
     }
    }
 
