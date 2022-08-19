@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022, The Jude Project
+// Copyright (c) 2017-2020, The Monero Project
 // 
 // All rights reserved.
 // 
@@ -265,7 +265,7 @@ namespace rct
 
         rct::key res = ONE;
         if (n == 1)
-            return res;
+            return x;
 
         n += 1;
         rct::key x1 = copy(x);
@@ -317,16 +317,7 @@ namespace rct
     static rct::key weighted_inner_product(const rct::keyV &a, const epee::span<const rct::key> &b, const rct::key &y)
     {
         CHECK_AND_ASSERT_THROW_MES(a.size() == b.size(), "Incompatible sizes of a and b");
-        rct::key res = rct::zero();
-        rct::key y_power = ONE;
-        rct::key temp;
-        for (size_t i = 0; i < a.size(); ++i)
-        {
-            sc_mul(temp.bytes, a[i].bytes, b[i].bytes);
-            sc_mul(y_power.bytes, y_power.bytes, y.bytes);
-            sc_muladd(res.bytes, temp.bytes, y_power.bytes, res.bytes);
-        }
-        return res;
+        return weighted_inner_product(epee::to_span(a), b, y);
     }
 
     // Fold inner-product point vectors
@@ -816,7 +807,7 @@ try_again:
         size_t max_length = 0; // size of each of the longest proof's inner-product vectors
         size_t nV = 0; // number of output commitments across all proofs
         size_t inv_offset = 0;
-        size_t max_logM = 0;
+        size_t max_logM = 0; 
 
         std::vector<bp_plus_proof_data_t> proof_data;
         proof_data.reserve(proofs.size());
