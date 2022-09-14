@@ -29,7 +29,8 @@
 set(hardforks_sources
   hardforks.cpp)
 
-monero_find_all_headers(hardforks_headers "${CMAKE_CURRENT_SOURCE_DIR}")
+set(hardforks_headers
+  hardforks.h)
 
 set(hardforks_private_headers)
 
