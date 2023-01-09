@@ -7406,8 +7406,6 @@ int wallet2::get_fee_algorithm()
 //------------------------------------------------------------------------------------------------------------------------------
 uint64_t wallet2::get_min_ring_size()
 {
-  if (use_fork_rules(HF_VERSION_MIN_MIXIN_15, 0))
-    return 16;
   if (use_fork_rules(8, 10))
     return 11;
   if (use_fork_rules(7, 10))
@@ -7421,8 +7419,6 @@ uint64_t wallet2::get_min_ring_size()
 //------------------------------------------------------------------------------------------------------------------------------
 uint64_t wallet2::get_max_ring_size()
 {
-  if (use_fork_rules(HF_VERSION_MIN_MIXIN_15, 0))
-    return 16;
   if (use_fork_rules(8, 10))
     return 11;
   return 0;
@@ -10664,7 +10660,7 @@ void wallet2::cold_sign_tx(const std::vector<pending_tx>& ptx_vector, signed_tx_
   hw::wallet_shim wallet_shim;
   setup_shim(&wallet_shim, this);
   aux_data.tx_recipients = dsts_info;
-  aux_data.bp_version = (use_fork_rules(HF_VERSION_BULLETPROOF_PLUS, -10) ? 4 : use_fork_rules(HF_VERSION_CLSAG, -10) ? 3 : use_fork_rules(HF_VERSION_SMALLER_BP, -10) ? 2 : 1);
+  aux_data.bp_version = (use_fork_rules(HF_VERSION_CLSAG, -10) ? 3 : use_fork_rules(HF_VERSION_SMALLER_BP, -10) ? 2 : 1);
   aux_data.hard_fork = get_current_hard_fork();
   dev_cold->tx_sign(&wallet_shim, txs, exported_txs, aux_data);
   tx_device_aux = aux_data.tx_device_aux;
