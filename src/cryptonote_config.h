@@ -169,7 +169,6 @@
 #define HF_VERSION_MIN_MIXIN_4                  6
 #define HF_VERSION_MIN_MIXIN_6                  7
 #define HF_VERSION_MIN_MIXIN_10                 8
-#define HF_VERSION_MIN_MIXIN_15                 15
 #define HF_VERSION_ENFORCE_RCT                  6
 #define HF_VERSION_PER_BYTE_FEE                 8
 #define HF_VERSION_SMALLER_BP                   10
@@ -184,6 +183,7 @@
 #define HF_VERSION_CLSAG                        13
 #define HF_VERSION_DETERMINISTIC_UNLOCK_TIME    13
 #define HF_VERSION_BULLETPROOF_PLUS             15
+#define HF_VERSION_VIEW_TAGS                    15
 #define HF_VERSION_2021_SCALING                 15
 
 #define PER_KB_FEE_QUANTIZATION_DECIMALS        8
