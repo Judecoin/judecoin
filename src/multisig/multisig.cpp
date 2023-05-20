@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022, The Monero Project
+// Copyright (c) 2017-2022, The Jude Project
 // 
 // All rights reserved.
 // 
@@ -39,8 +39,8 @@
 #include <unordered_set>
 #include <vector>
 
-#undef MONERO_DEFAULT_LOG_CATEGORY
-#define MONERO_DEFAULT_LOG_CATEGORY "multisig"
+#undef JUDE_DEFAULT_LOG_CATEGORY
+#define JUDE_DEFAULT_LOG_CATEGORY "multisig"
 
 namespace multisig
 {

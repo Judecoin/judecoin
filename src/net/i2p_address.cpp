@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2022, The Monero Project
+// Copyright (c) 2019-2022, The Jude Project
 //
 // All rights reserved.
 //
@@ -110,7 +110,7 @@ namespace net
         const boost::string_ref port =
             address.substr(host.size() + (host.size() == address.size() ? 0 : 1));
 
-        MONERO_CHECK(host_check(host));
+        JUDE_CHECK(host_check(host));
 
         std::uint16_t porti = default_port;
         if (!port.empty() && !epee::string_tools::get_xtype_from_string(porti, std::string{port}))

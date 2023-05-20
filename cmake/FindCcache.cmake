@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2022, The Monero Project
+# Copyright (c) 2014-2022, The Jude Project
 #
 # All rights reserved.
 #
@@ -31,7 +31,7 @@
 #
 # Usage of this module as follows:
 #
-#     project(monero)
+#     project(jude)
 #     include(FindCcache) # Include AFTER the project() macro to be able to reach the CMAKE_CXX_COMPILER variable
 #
 # Properties modified by this module:

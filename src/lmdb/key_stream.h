@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2022, The Monero Project
+// Copyright (c) 2018-2022, The Jude Project
 
 // All rights reserved.
 //
@@ -144,7 +144,7 @@ namespace lmdb
             position that will reach `.is_end()` after the last duplicate key
             record. Calling `make_iterator()` will return an iterator whose
             `operator*` will return an entire value (`V`).
-            `make_iterator<MONERO_FIELD(account, id)>()` will return an
+            `make_iterator<JUDE_FIELD(account, id)>()` will return an
             iterator whose `operator*` will return a `decltype(account.id)`
             object - the other fields in the struct `account` are never copied
             from the database.
@@ -155,7 +155,7 @@ namespace lmdb
         template<typename T = V, typename F = T, std::size_t offset = 0>
         value_iterator<T, F, offset> make_value_iterator() const
         {
-            static_assert(std::is_same<T, V>(), "bad MONERO_FIELD usage?");
+            static_assert(std::is_same<T, V>(), "bad JUDE_FIELD usage?");
             return {cur};
         }
 
@@ -163,7 +163,7 @@ namespace lmdb
             Return a range from current cursor position until last duplicate
             key record. Useful in for-each range loops or in templated code
             expecting a range of elements. Calling `make_range()` will return
-            a range of `T` objects. `make_range<MONERO_FIELD(account, id)>()`
+            a range of `T` objects. `make_range<JUDE_FIELD(account, id)>()`
             will return a range of `decltype(account.id)` objects - the other
             fields in the struct `account` are never copied from the database.
 

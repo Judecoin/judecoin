@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2022, The Monero Project
+// Copyright (c) 2014-2022, The Jude Project
 //
 // All rights reserved.
 //
@@ -42,8 +42,8 @@ using namespace epee;
 #include "int-util.h"
 #include "common/dns_utils.h"
 
-#undef MONERO_DEFAULT_LOG_CATEGORY
-#define MONERO_DEFAULT_LOG_CATEGORY "cn"
+#undef JUDE_DEFAULT_LOG_CATEGORY
+#define JUDE_DEFAULT_LOG_CATEGORY "cn"
 
 namespace cryptonote {
 

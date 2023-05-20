@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2022, The Monero Project
+// Copyright (c) 2014-2022, The Jude Project
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification, are
@@ -30,7 +30,7 @@
 #include <type_traits>
 
 //! Executes a LMDB command, and returns errors via `lmdb::error` enum.
-#define MONERO_LMDB_CHECK(...)         \
+#define JUDE_LMDB_CHECK(...)         \
     do                                 \
     {                                  \
         const int err = __VA_ARGS__ ;  \

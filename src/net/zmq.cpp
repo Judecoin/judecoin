@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2022, The Monero Project
+// Copyright (c) 2019-2022, The Jude Project
 //
 // All rights reserved.
 //
@@ -163,7 +163,7 @@ namespace zmq
     expect<std::string> receive(void* const socket, const int flags)
     {
         std::string payload{};
-        MONERO_CHECK(retry_op(do_receive{}, payload, socket, flags));
+        JUDE_CHECK(retry_op(do_receive{}, payload, socket, flags));
         return {std::move(payload)};
     }
 
@@ -179,7 +179,7 @@ namespace zmq
         auto buffer = payload.take_buffer(); // clears `payload` from callee
 
         zmq_msg_t msg{};
-        MONERO_ZMQ_CHECK(zmq_msg_init_data(std::addressof(msg), data, size, epee::release_byte_slice::call, buffer.get()));
+        JUDE_ZMQ_CHECK(zmq_msg_init_data(std::addressof(msg), data, size, epee::release_byte_slice::call, buffer.get()));
         buffer.release(); // zmq will now decrement byte_slice ref-count
 
         expect<void> sent = retry_op(zmq_msg_send, std::addressof(msg), socket, flags);

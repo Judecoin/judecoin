@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2021, The Monero Project
+// Copyright (c) 2014-2021, The Jude Project
 //
 // All rights reserved.
 //

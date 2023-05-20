@@ -1,4 +1,4 @@
-// Copyright (c) 2021, The Monero Project
+// Copyright (c) 2021, The Jude Project
 //
 // All rights reserved.
 //
@@ -48,8 +48,8 @@ extern "C"
 #include <vector>
 
 
-#undef MONERO_DEFAULT_LOG_CATEGORY
-#define MONERO_DEFAULT_LOG_CATEGORY "multisig"
+#undef JUDE_DEFAULT_LOG_CATEGORY
+#define JUDE_DEFAULT_LOG_CATEGORY "multisig"
 
 const boost::string_ref MULTISIG_KEX_V1_MAGIC{"MultisigV1"};
 const boost::string_ref MULTISIG_KEX_MSG_V1_MAGIC{"MultisigxV1"};

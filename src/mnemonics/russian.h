@@ -1,6 +1,6 @@
-// Word list created by Monero contributor sammy007
+// Word list created by Jude contributor sammy007
 // 
-// Copyright (c) 2014-2022, The Monero Project
+// Copyright (c) 2014-2022, The Jude Project
 // 
 // All rights reserved.
 // 

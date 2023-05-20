@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022, The Monero Project
+// Copyright (c) 2017-2022, The Jude Project
 //
 // All rights reserved.
 //
@@ -27,8 +27,8 @@
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 
-#ifndef MONERO_PROTOCOL_H
-#define MONERO_PROTOCOL_H
+#ifndef JUDE_PROTOCOL_H
+#define JUDE_PROTOCOL_H
 
 #include "trezor_defs.hpp"
 #include "device/device_cold.hpp"
@@ -106,30 +106,30 @@ namespace chacha {
 // Cold Key image sync
 namespace ki {
 
-  using MoneroTransferDetails = messages::monero::MoneroKeyImageSyncStepRequest_MoneroTransferDetails;
-  using MoneroSubAddressIndicesList = messages::monero::MoneroKeyImageExportInitRequest_MoneroSubAddressIndicesList;
-  using MoneroExportedKeyImage = messages::monero::MoneroKeyImageSyncStepAck_MoneroExportedKeyImage;
+  using JudeTransferDetails = messages::jude::JudeKeyImageSyncStepRequest_JudeTransferDetails;
+  using JudeSubAddressIndicesList = messages::jude::JudeKeyImageExportInitRequest_JudeSubAddressIndicesList;
+  using JudeExportedKeyImage = messages::jude::JudeKeyImageSyncStepAck_JudeExportedKeyImage;
   using exported_key_image = hw::device_cold::exported_key_image;
 
   /**
-   * Converts transfer details to the MoneroTransferDetails required for KI sync
+   * Converts transfer details to the JudeTransferDetails required for KI sync
    */
   bool key_image_data(wallet_shim * wallet,
                       const std::vector<tools::wallet2::transfer_details> & transfers,
-                      std::vector<MoneroTransferDetails> & res,
+                      std::vector<JudeTransferDetails> & res,
                       bool need_all_additionals=false);
 
   /**
-   * Computes a hash over MoneroTransferDetails. Commitment used in the KI sync.
+   * Computes a hash over JudeTransferDetails. Commitment used in the KI sync.
    */
-  std::string compute_hash(const MoneroTransferDetails & rr);
+  std::string compute_hash(const JudeTransferDetails & rr);
 
   /**
    * Generates KI sync request with commitments computed.
    */
-  void generate_commitment(std::vector<MoneroTransferDetails> & mtds,
+  void generate_commitment(std::vector<JudeTransferDetails> & mtds,
                            const std::vector<tools::wallet2::transfer_details> & transfers,
-                           std::shared_ptr<messages::monero::MoneroKeyImageExportInitRequest> & req,
+                           std::shared_ptr<messages::jude::JudeKeyImageExportInitRequest> & req,
                            bool need_subaddr_indices=false);
 
   /**
@@ -137,30 +137,30 @@ namespace ki {
    */
   void live_refresh_ack(const ::crypto::secret_key & view_key_priv,
                         const ::crypto::public_key& out_key,
-                        const std::shared_ptr<messages::monero::MoneroLiveRefreshStepAck> & ack,
+                        const std::shared_ptr<messages::jude::JudeLiveRefreshStepAck> & ack,
                         ::cryptonote::keypair& in_ephemeral,
                         ::crypto::key_image& ki);
 }
 
 // Cold transaction signing
 namespace tx {
-  using TsxData = messages::monero::MoneroTransactionInitRequest_MoneroTransactionData;
-  using MoneroTransactionDestinationEntry = messages::monero::MoneroTransactionDestinationEntry;
-  using MoneroAccountPublicAddress = messages::monero::MoneroTransactionDestinationEntry_MoneroAccountPublicAddress;
-  using MoneroTransactionSourceEntry = messages::monero::MoneroTransactionSourceEntry;
-  using MoneroMultisigKLRki = messages::monero::MoneroTransactionSourceEntry_MoneroMultisigKLRki;
-  using MoneroOutputEntry = messages::monero::MoneroTransactionSourceEntry_MoneroOutputEntry;
-  using MoneroRctKey = messages::monero::MoneroTransactionSourceEntry_MoneroOutputEntry_MoneroRctKeyPublic;
-  using MoneroRsigData = messages::monero::MoneroTransactionRsigData;
+  using TsxData = messages::jude::JudeTransactionInitRequest_JudeTransactionData;
+  using JudeTransactionDestinationEntry = messages::jude::JudeTransactionDestinationEntry;
+  using JudeAccountPublicAddress = messages::jude::JudeTransactionDestinationEntry_JudeAccountPublicAddress;
+  using JudeTransactionSourceEntry = messages::jude::JudeTransactionSourceEntry;
+  using JudeMultisigKLRki = messages::jude::JudeTransactionSourceEntry_JudeMultisigKLRki;
+  using JudeOutputEntry = messages::jude::JudeTransactionSourceEntry_JudeOutputEntry;
+  using JudeRctKey = messages::jude::JudeTransactionSourceEntry_JudeOutputEntry_JudeRctKeyPublic;
+  using JudeRsigData = messages::jude::JudeTransactionRsigData;
 
   using tx_construction_data = tools::wallet2::tx_construction_data;
   using unsigned_tx_set = tools::wallet2::unsigned_tx_set;
 
-  void translate_address(MoneroAccountPublicAddress * dst, const cryptonote::account_public_address * src);
-  void translate_dst_entry(MoneroTransactionDestinationEntry * dst, const cryptonote::tx_destination_entry * src);
-  void translate_klrki(MoneroMultisigKLRki * dst, const rct::multisig_kLRki * src);
-  void translate_rct_key(MoneroRctKey * dst, const rct::ctkey * src);
-  std::string hash_addr(const MoneroAccountPublicAddress * addr, boost::optional<uint64_t> amount = boost::none, boost::optional<bool> is_subaddr = boost::none);
+  void translate_address(JudeAccountPublicAddress * dst, const cryptonote::account_public_address * src);
+  void translate_dst_entry(JudeTransactionDestinationEntry * dst, const cryptonote::tx_destination_entry * src);
+  void translate_klrki(JudeMultisigKLRki * dst, const rct::multisig_kLRki * src);
+  void translate_rct_key(JudeRctKey * dst, const rct::ctkey * src);
+  std::string hash_addr(const JudeAccountPublicAddress * addr, boost::optional<uint64_t> amount = boost::none, boost::optional<bool> is_subaddr = boost::none);
   std::string hash_addr(const std::string & spend_key, const std::string & view_key, boost::optional<uint64_t> amount = boost::none, boost::optional<bool> is_subaddr = boost::none);
   std::string hash_addr(const ::crypto::public_key * spend_key, const ::crypto::public_key * view_key, boost::optional<uint64_t> amount = boost::none, boost::optional<bool> is_subaddr = boost::none);
   ::crypto::secret_key compute_enc_key(const ::crypto::secret_key & private_view_key, const std::string & aux, const std::string & salt);
@@ -179,7 +179,7 @@ namespace tx {
     unsigned rsig_type;
     int bp_version;
     std::vector<uint64_t> grouping_vct;
-    std::shared_ptr<MoneroRsigData> rsig_param;
+    std::shared_ptr<JudeRsigData> rsig_param;
     size_t cur_input_idx;
     size_t cur_output_idx;
     size_t cur_batch_idx;
@@ -246,43 +246,43 @@ namespace tx {
     void extract_payment_id();
     void compute_integrated_indices(TsxData * tsx_data);
     bool should_compute_bp_now() const;
-    void compute_bproof(messages::monero::MoneroTransactionRsigData & rsig_data);
+    void compute_bproof(messages::jude::JudeTransactionRsigData & rsig_data);
     void process_bproof(rct::Bulletproof & bproof);
-    void set_tx_input(MoneroTransactionSourceEntry * dst, size_t idx, bool need_ring_keys=false, bool need_ring_indices=false);
+    void set_tx_input(JudeTransactionSourceEntry * dst, size_t idx, bool need_ring_keys=false, bool need_ring_indices=false);
 
   public:
     Signer(wallet_shim * wallet2, const unsigned_tx_set * unsigned_tx, size_t tx_idx = 0, hw::tx_aux_data * aux_data = nullptr);
 
-    std::shared_ptr<messages::monero::MoneroTransactionInitRequest> step_init();
-    void step_init_ack(std::shared_ptr<const messages::monero::MoneroTransactionInitAck> ack);
+    std::shared_ptr<messages::jude::JudeTransactionInitRequest> step_init();
+    void step_init_ack(std::shared_ptr<const messages::jude::JudeTransactionInitAck> ack);
 
-    std::shared_ptr<messages::monero::MoneroTransactionSetInputRequest> step_set_input(size_t idx);
-    void step_set_input_ack(std::shared_ptr<const messages::monero::MoneroTransactionSetInputAck> ack);
+    std::shared_ptr<messages::jude::JudeTransactionSetInputRequest> step_set_input(size_t idx);
+    void step_set_input_ack(std::shared_ptr<const messages::jude::JudeTransactionSetInputAck> ack);
 
     void sort_ki();
-    std::shared_ptr<messages::monero::MoneroTransactionInputsPermutationRequest> step_permutation();
-    void step_permutation_ack(std::shared_ptr<const messages::monero::MoneroTransactionInputsPermutationAck> ack);
+    std::shared_ptr<messages::jude::JudeTransactionInputsPermutationRequest> step_permutation();
+    void step_permutation_ack(std::shared_ptr<const messages::jude::JudeTransactionInputsPermutationAck> ack);
 
-    std::shared_ptr<messages::monero::MoneroTransactionInputViniRequest> step_set_vini_input(size_t idx);
-    void step_set_vini_input_ack(std::shared_ptr<const messages::monero::MoneroTransactionInputViniAck> ack);
+    std::shared_ptr<messages::jude::JudeTransactionInputViniRequest> step_set_vini_input(size_t idx);
+    void step_set_vini_input_ack(std::shared_ptr<const messages::jude::JudeTransactionInputViniAck> ack);
 
-    std::shared_ptr<messages::monero::MoneroTransactionAllInputsSetRequest> step_all_inputs_set();
-    void step_all_inputs_set_ack(std::shared_ptr<const messages::monero::MoneroTransactionAllInputsSetAck> ack);
+    std::shared_ptr<messages::jude::JudeTransactionAllInputsSetRequest> step_all_inputs_set();
+    void step_all_inputs_set_ack(std::shared_ptr<const messages::jude::JudeTransactionAllInputsSetAck> ack);
 
-    std::shared_ptr<messages::monero::MoneroTransactionSetOutputRequest> step_set_output(size_t idx);
-    void step_set_output_ack(std::shared_ptr<const messages::monero::MoneroTransactionSetOutputAck> ack);
+    std::shared_ptr<messages::jude::JudeTransactionSetOutputRequest> step_set_output(size_t idx);
+    void step_set_output_ack(std::shared_ptr<const messages::jude::JudeTransactionSetOutputAck> ack);
 
-    std::shared_ptr<messages::monero::MoneroTransactionSetOutputRequest> step_rsig(size_t idx);
-    void step_set_rsig_ack(std::shared_ptr<const messages::monero::MoneroTransactionSetOutputAck> ack);
+    std::shared_ptr<messages::jude::JudeTransactionSetOutputRequest> step_rsig(size_t idx);
+    void step_set_rsig_ack(std::shared_ptr<const messages::jude::JudeTransactionSetOutputAck> ack);
 
-    std::shared_ptr<messages::monero::MoneroTransactionAllOutSetRequest> step_all_outs_set();
-    void step_all_outs_set_ack(std::shared_ptr<const messages::monero::MoneroTransactionAllOutSetAck> ack, hw::device &hwdev);
+    std::shared_ptr<messages::jude::JudeTransactionAllOutSetRequest> step_all_outs_set();
+    void step_all_outs_set_ack(std::shared_ptr<const messages::jude::JudeTransactionAllOutSetAck> ack, hw::device &hwdev);
 
-    std::shared_ptr<messages::monero::MoneroTransactionSignInputRequest> step_sign_input(size_t idx);
-    void step_sign_input_ack(std::shared_ptr<const messages::monero::MoneroTransactionSignInputAck> ack);
+    std::shared_ptr<messages::jude::JudeTransactionSignInputRequest> step_sign_input(size_t idx);
+    void step_sign_input_ack(std::shared_ptr<const messages::jude::JudeTransactionSignInputAck> ack);
 
-    std::shared_ptr<messages::monero::MoneroTransactionFinalRequest> step_final();
-    void step_final_ack(std::shared_ptr<const messages::monero::MoneroTransactionFinalAck> ack);
+    std::shared_ptr<messages::jude::JudeTransactionFinalRequest> step_final();
+    void step_final_ack(std::shared_ptr<const messages::jude::JudeTransactionFinalAck> ack);
 
     std::string store_tx_aux_info();
 
@@ -330,14 +330,14 @@ namespace tx {
   // TX Key decryption
   void load_tx_key_data(hw::device_cold::tx_key_data_t & res, const std::string & data);
 
-  std::shared_ptr<messages::monero::MoneroGetTxKeyRequest> get_tx_key(
+  std::shared_ptr<messages::jude::JudeGetTxKeyRequest> get_tx_key(
       const hw::device_cold::tx_key_data_t & tx_data);
 
   void get_tx_key_ack(
       std::vector<::crypto::secret_key> & tx_keys,
       const std::string & tx_prefix_hash,
       const ::crypto::secret_key & view_key_priv,
-      std::shared_ptr<const messages::monero::MoneroGetTxKeyAck> ack
+      std::shared_ptr<const messages::jude::JudeGetTxKeyAck> ack
   );
 }
 
@@ -346,4 +346,4 @@ namespace tx {
 }
 
 
-#endif //MONERO_PROTOCOL_H
+#endif //JUDE_PROTOCOL_H

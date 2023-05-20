@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2022, The Monero Project
+// Copyright (c) 2014-2022, The Jude Project
 //
 // All rights reserved.
 //
@@ -79,7 +79,7 @@ static inline int use_v4_jit(void)
   if (use_v4_jit_flag != -1)
     return use_v4_jit_flag;
 
-  const char *env = getenv("MONERO_USE_CNV4_JIT");
+  const char *env = getenv("JUDE_USE_CNV4_JIT");
   if (!env) {
     use_v4_jit_flag = 1;
   }
@@ -103,7 +103,7 @@ static inline int force_software_aes(void)
   if (use != -1)
     return use;
 
-  const char *env = getenv("MONERO_USE_SOFTWARE_AES");
+  const char *env = getenv("JUDE_USE_SOFTWARE_AES");
   if (!env) {
     use = 0;
   }
@@ -568,7 +568,7 @@ STATIC INLINE void aes_256_assist2(__m128i* t1, __m128i * t3)
  * of the AES encryption used to fill (and later, extract randomness from)
  * the large 2MB buffer.  Note that CryptoNight does not use a completely
  * standard AES encryption for its buffer expansion, so do not copy this
- * function outside of Monero without caution!  This version uses the hardware
+ * function outside of Jude without caution!  This version uses the hardware
  * AESKEYGENASSIST instruction to speed key generation, and thus requires
  * CPU AES support.
  * For more information about these functions, see page 19 of Intel's AES instructions
@@ -842,7 +842,7 @@ void cn_slow_hash_free_state(void)
 }
 
 /**
- * @brief the hash function implementing CryptoNight, used for the Monero proof-of-work
+ * @brief the hash function implementing CryptoNight, used for the Jude proof-of-work
  *
  * Computes the hash of <data> (which consists of <length> bytes), returning the
  * hash in <hash>.  The CryptoNight hash operates by first using Keccak 1600,
@@ -865,7 +865,7 @@ void cn_slow_hash_free_state(void)
  * AES support on x86 CPUs.
  *
  * A diagram of the inner loop of this function can be found at
- * https://www.cs.cmu.edu/~dga/crypto/xmr/cryptonight.png
+ * https://www.cs.cmu.edu/~dga/crypto/jude/cryptonight.png
  *
  * @param data the data to hash
  * @param length the length in bytes of the data

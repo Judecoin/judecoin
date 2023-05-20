@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2022, The Monero Project
+# Copyright (c) 2014-2022, The Jude Project
 # 
 # All rights reserved.
 # 
@@ -28,7 +28,7 @@
 # 
 # Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
-set(MONERO_WALLET_CRYPTO_BENCH "auto" CACHE STRING "Select wallet crypto libraries for benchmarking")
+set(JUDE_WALLET_CRYPTO_BENCH "auto" CACHE STRING "Select wallet crypto libraries for benchmarking")
 
 # The docs say this only affects grouping in IDEs
 set(folder "tests")
@@ -76,8 +76,8 @@ file(COPY
   data/wallet_9svHk1.keys
   data/wallet_9svHk1
   data/outputs
-  data/unsigned_monero_tx
-  data/signed_monero_tx
+  data/unsigned_jude_tx
+  data/signed_jude_tx
   DESTINATION data)
 
 if (CMAKE_BUILD_TYPE STREQUAL "fuzz" OR OSSFUZZ)
@@ -111,7 +111,7 @@ set(hash_targets_sources
 
 set(hash_targets_headers)
 
-monero_add_minimal_executable(hash-target-tests
+jude_add_minimal_executable(hash-target-tests
   ${hash_targets_sources}
   ${hash_targets_headers})
 target_link_libraries(hash-target-tests
@@ -128,36 +128,36 @@ add_test(
 #
 # Configure wallet crypto benchmark
 #
-if (${MONERO_WALLET_CRYPTO_BENCH} STREQUAL "auto")
-  set(MONERO_WALLET_CRYPTO_BENCH "cn")
-  monero_crypto_autodetect(AVAILABLE BEST)
+if (${JUDE_WALLET_CRYPTO_BENCH} STREQUAL "auto")
+  set(JUDE_WALLET_CRYPTO_BENCH "cn")
+  jude_crypto_autodetect(AVAILABLE BEST)
   if (DEFINED AVAILABLE)
-    list(APPEND MONERO_WALLET_CRYPTO_BENCH ${AVAILABLE})
+    list(APPEND JUDE_WALLET_CRYPTO_BENCH ${AVAILABLE})
   endif ()
-  message("Wallet crypto bench is using ${MONERO_WALLET_CRYPTO_BENCH}")
+  message("Wallet crypto bench is using ${JUDE_WALLET_CRYPTO_BENCH}")
 endif ()
 
-list(REMOVE_DUPLICATES MONERO_WALLET_CRYPTO_BENCH)
-list(REMOVE_ITEM MONERO_WALLET_CRYPTO_BENCH "cn") # always used for comparison
-set(MONERO_WALLET_CRYPTO_BENCH_NAMES "(cn)")
-foreach(BENCH IN LISTS MONERO_WALLET_CRYPTO_BENCH)
-  monero_crypto_valid(${BENCH} VALID)
+list(REMOVE_DUPLICATES JUDE_WALLET_CRYPTO_BENCH)
+list(REMOVE_ITEM JUDE_WALLET_CRYPTO_BENCH "cn") # always used for comparison
+set(JUDE_WALLET_CRYPTO_BENCH_NAMES "(cn)")
+foreach(BENCH IN LISTS JUDE_WALLET_CRYPTO_BENCH)
+  jude_crypto_valid(${BENCH} VALID)
   if (NOT VALID)
-    message(FATAL_ERROR "Invalid MONERO_WALLET_CRYPTO_BENCH option ${BENCH}")
+    message(FATAL_ERROR "Invalid JUDE_WALLET_CRYPTO_BENCH option ${BENCH}")
   endif ()
 
-  monero_crypto_get_target(${BENCH} BENCH_LIBRARY)
+  jude_crypto_get_target(${BENCH} BENCH_LIBRARY)
   list(APPEND BENCH_OBJECTS $<TARGET_OBJECTS:${BENCH_LIBRARY}>)
 
-  monero_crypto_get_namespace(${BENCH} BENCH_NAMESPACE)
-  set(MONERO_WALLET_CRYPTO_BENCH_NAMES "${MONERO_WALLET_CRYPTO_BENCH_NAMES}(${BENCH_NAMESPACE})")
+  jude_crypto_get_namespace(${BENCH} BENCH_NAMESPACE)
+  set(JUDE_WALLET_CRYPTO_BENCH_NAMES "${JUDE_WALLET_CRYPTO_BENCH_NAMES}(${BENCH_NAMESPACE})")
 endforeach ()
 
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/benchmark.h.in" "${MONERO_GENERATED_HEADERS_DIR}/tests/benchmark.h")
-monero_add_minimal_executable(monero-wallet-crypto-bench benchmark.cpp ${BENCH_OBJECTS})
-target_link_libraries(monero-wallet-crypto-bench cncrypto)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/benchmark.h.in" "${JUDE_GENERATED_HEADERS_DIR}/tests/benchmark.h")
+jude_add_minimal_executable(jude-wallet-crypto-bench benchmark.cpp ${BENCH_OBJECTS})
+target_link_libraries(jude-wallet-crypto-bench cncrypto)
 
-add_test(NAME wallet-crypto-bench COMMAND monero-wallet-crypto-bench)
+add_test(NAME wallet-crypto-bench COMMAND jude-wallet-crypto-bench)
 
 
 set(enabled_tests

@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2022, The Monero Project
+# Copyright (c) 2014-2022, The Jude Project
 #
 # All rights reserved.
 #
@@ -30,7 +30,7 @@ set(cn_deserialize_sources
   cn_deserialize.cpp
   )
 
-monero_add_executable(cn_deserialize
+jude_add_executable(cn_deserialize
   ${cn_deserialize_sources}
   ${cn_deserialize_private_headers})
 
@@ -46,14 +46,14 @@ target_link_libraries(cn_deserialize
 
 set_property(TARGET cn_deserialize
 	PROPERTY
-	OUTPUT_NAME "monero-utils-deserialize")
+	OUTPUT_NAME "jude-utils-deserialize")
 
 
 set(object_sizes_sources
   object_sizes.cpp
   )
 
-monero_add_executable(object_sizes
+jude_add_executable(object_sizes
   ${object_sizes_sources}
   ${object_sizes_private_headers})
 
@@ -67,14 +67,14 @@ target_link_libraries(object_sizes
 
 set_property(TARGET object_sizes
 	PROPERTY
-	OUTPUT_NAME "monero-utils-object-sizes")
+	OUTPUT_NAME "jude-utils-object-sizes")
 
 
 set(dns_checks_sources
   dns_checks.cpp
   )
 
-monero_add_executable(dns_checks
+jude_add_executable(dns_checks
   ${dns_checks_sources}
   ${dns_checks_private_headers})
 
@@ -89,5 +89,5 @@ target_link_libraries(dns_checks
 
 set_property(TARGET dns_checks
 	PROPERTY
-	OUTPUT_NAME "monero-utils-dns-checks")
+	OUTPUT_NAME "jude-utils-dns-checks")
 

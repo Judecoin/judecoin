@@ -1,8 +1,8 @@
-# The Current/Future Status of ZMQ in Monero
+# The Current/Future Status of ZMQ in Jude
 
 ## ZMQ Pub/Sub
 Client `ZMQ_SUB` sockets must "subscribe" to topics before it receives any data.
-This allows filtering on the server side, so network traffic is reduced. Monero
+This allows filtering on the server side, so network traffic is reduced. Jude
 allows for filtering on: (1) format, (2) context, and (3) event.
 
  * **format** refers to the _wire_ format (i.e. JSON) used to send event
@@ -29,17 +29,17 @@ allows for filtering on: (1) format, (2) context, and (3) event.
      Available only in the `full` context.
 
 The subscription topics are formatted as `format-context-event`, with prefix
-matching supported by both Monero and ZMQ. The `format`, `context` and `event`
+matching supported by both Jude and ZMQ. The `format`, `context` and `event`
 will _never_ have hyphens or colons in their name. For example, subscribing to
 `json-minimal-chain_main` will send minimal information in JSON when changes
 to the main/primary blockchain occur. Whereas, subscribing to `json-minimal`
 will send minimal information in JSON on all available events supported by the
 daemon.
 
-The Monero daemon will ensure that events prefixed by `chain` will be sent in
+The Jude daemon will ensure that events prefixed by `chain` will be sent in
 "chain-order" - the `prev_id` (hash) field will _always_ refer to a previous
 block. On rollbacks/reorgs, the event will reference an earlier block in the
-chain instead of the last block. The Monero daemon also ensures that
+chain instead of the last block. The Jude daemon also ensures that
 `txpool_add` events are sent before `chain_*` events - the `chain_*` messages
 will only serialize miner transactions since the other transactions were
 previously published via `txpool_add`. This prevents transactions from being
@@ -55,7 +55,7 @@ timeout against `chain_main` events. The `GetLastBlockHeader` RPC is useful
 for checking the current chain state. Dropped messages should be rare in most
 conditions.
 
-The Monero daemon will send a `txpool_add` pub exactly once for each
+The Jude daemon will send a `txpool_add` pub exactly once for each
 transaction, even after a reorg or restarts. Clients should use the
 `GetTransactionPool` after a reorg to get all transactions that have been put
 back into the tx pool or been invalidated due to a double-spend.

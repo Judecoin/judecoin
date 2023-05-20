@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2022, The Monero Project
+# Copyright (c) 2014-2022, The Jude Project
 #
 # All rights reserved.
 #
@@ -57,7 +57,7 @@ set(performance_tests_headers
   performance_utils.h
   single_tx_test_base.h)
 
-monero_add_minimal_executable(performance_tests
+jude_add_minimal_executable(performance_tests
   ${performance_tests_sources}
   ${performance_tests_headers})
 target_link_libraries(performance_tests

@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2022, The Monero Project
+# Copyright (c) 2014-2022, The Jude Project
 #
 # All rights reserved.
 #
@@ -31,7 +31,7 @@ set(transfers_sources
 
 set(transfers_headers)
 
-monero_add_minimal_executable(transfers
+jude_add_minimal_executable(transfers
   ${transfers_sources}
   ${transfers_headers})
 target_link_libraries(transfers

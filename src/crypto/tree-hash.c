@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2022, The Monero Project
+// Copyright (c) 2014-2022, The Jude Project
 // 
 // All rights reserved.
 // 
@@ -60,14 +60,14 @@ size_t tree_hash_cnt(size_t count) {
 }
 
 void tree_hash(const char (*hashes)[HASH_SIZE], size_t count, char *root_hash) {
-// The blockchain block at height 202612 https://moneroblocks.info/block/202612
+// The blockchain block at height 202612 https://judeblocks.info/block/202612
 // contained 514 transactions, that triggered bad calculation of variable "cnt" in the original version of this function
 // as from CryptoNote code.
 //
 // This bug applies to all CN altcoins.
 //
 // Mathematical bug here was first published on 14:45:34 (GMT+2) 2014-09-04 by Rafal Freeman <rfree>
-// https://github.com/rfree2monero/bitmonero/commit/b417abfb7a297d09f1bbb6de29030f8de9952ac8
+// https://github.com/rfree2jude/bitjude/commit/b417abfb7a297d09f1bbb6de29030f8de9952ac8
 // and soon also applied to CryptoNote (15:10 GMT+2), and BoolBerry used not fully correct work around:
 // the work around of sizeof(size_t)*8 or <<3 as used before in 2 coins and in BBL later was blocking
 // exploitation on normal platforms, how ever we strongly recommend the following fix because it removes

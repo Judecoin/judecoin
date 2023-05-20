@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2022, The Monero Project
+# Copyright (c) 2014-2022, The Jude Project
 #
 # All rights reserved.
 #
@@ -41,11 +41,11 @@ set(checkpoints_sources
 
 set(checkpoints_headers)
 
-monero_find_all_headers(checkpoints_private_headers "${CMAKE_CURRENT_SOURCE_DIR}")
+jude_find_all_headers(checkpoints_private_headers "${CMAKE_CURRENT_SOURCE_DIR}")
 
-monero_private_headers(checkpoints
+jude_private_headers(checkpoints
   ${checkpoints_private_headers})
-monero_add_library(checkpoints
+jude_add_library(checkpoints
   ${checkpoints_sources}
   ${checkpoints_headers}
   ${checkpoints_private_headers})

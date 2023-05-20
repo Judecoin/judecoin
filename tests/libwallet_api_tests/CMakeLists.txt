@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2022, The Monero Project
+# Copyright (c) 2014-2022, The Jude Project
 #
 # All rights reserved.
 #
@@ -33,7 +33,7 @@ set(libwallet_api_tests_sources
 set(libwallet_api_tests_headers
   )
 
-monero_add_minimal_executable(libwallet_api_tests
+jude_add_minimal_executable(libwallet_api_tests
   ${libwallet_api_tests_sources}
   ${libwallet_api_tests_headers})
 

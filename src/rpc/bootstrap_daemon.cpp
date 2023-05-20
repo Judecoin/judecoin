@@ -9,8 +9,8 @@
 #include "misc_log_ex.h"
 #include "net/parse.h"
 
-#undef MONERO_DEFAULT_LOG_CATEGORY
-#define MONERO_DEFAULT_LOG_CATEGORY "daemon.rpc.bootstrap_daemon"
+#undef JUDE_DEFAULT_LOG_CATEGORY
+#define JUDE_DEFAULT_LOG_CATEGORY "daemon.rpc.bootstrap_daemon"
 
 namespace cryptonote
 {

@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2022, The Monero Project
+# Copyright (c) 2014-2022, The Jude Project
 #
 # All rights reserved.
 #
@@ -31,7 +31,7 @@ set(hash_sources
 
 set(hash_headers)
 
-monero_add_minimal_executable(hash-tests
+jude_add_minimal_executable(hash-tests
   ${hash_sources}
   ${hash_headers})
 target_link_libraries(hash-tests

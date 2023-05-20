@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2022, The Monero Project
+# Copyright (c) 2017-2022, The Jude Project
 #
 # All rights reserved.
 #
@@ -34,12 +34,12 @@ set(multisig_sources
 
 set(multisig_headers)
 
-monero_find_all_headers(multisig_private_headers "${CMAKE_CURRENT_SOURCE_DIR}")
+jude_find_all_headers(multisig_private_headers "${CMAKE_CURRENT_SOURCE_DIR}")
 
-monero_private_headers(multisig
+jude_private_headers(multisig
   ${multisig_private_headers})
 
-monero_add_library(multisig
+jude_add_library(multisig
   ${multisig_sources}
   ${multisig_headers}
   ${multisig_private_headers})

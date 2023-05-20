@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2022, The Monero Project
+// Copyright (c) 2014-2022, The Jude Project
 // 
 // All rights reserved.
 // 
@@ -55,7 +55,7 @@ namespace
 
   // try with blocks ~ 1GB. Passing 2 GB will break on 32 bit systems
 
-  TEST_F(fee, 10xmr)
+  TEST_F(fee, 10jude)
   {
     // CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V2 and lower are clamped
     ASSERT_EQ(Blockchain::get_dynamic_base_fee(10000000000000, CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V2, 3), clamp_fee(2000000000));
@@ -70,7 +70,7 @@ namespace
     ASSERT_EQ(Blockchain::get_dynamic_base_fee(10000000000000, CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V2 * 20000ull, 3), clamp_fee(2000000000 / 20000));
   }
 
-  TEST_F(fee, 1xmr)
+  TEST_F(fee, 1jude)
   {
     // CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V2 and lower are clamped
     ASSERT_EQ(Blockchain::get_dynamic_base_fee(1000000000000, CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V2, 3), clamp_fee(200000000));
@@ -85,7 +85,7 @@ namespace
     ASSERT_EQ(Blockchain::get_dynamic_base_fee(1000000000000, CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V2 * 20000ull, 3), clamp_fee(200000000 / 20000));
   }
 
-  TEST_F(fee, dot3xmr)
+  TEST_F(fee, dot3jude)
   {
     // CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V2 and lower are clamped
     ASSERT_EQ(Blockchain::get_dynamic_base_fee(300000000000, CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V2, 3), clamp_fee(60000000));
@@ -110,11 +110,11 @@ namespace
   TEST_F(fee, double_at_full)
   {
     static const uint64_t block_rewards[] = {
-      20000000000000ull, // 20 monero
+      20000000000000ull, // 20 jude
       13000000000000ull,
       1000000000000ull,
-      600000000000ull, // .6 monero, minimum reward per block at 2min
-      300000000000ull, // .3 monero, minimum reward per block at 1min
+      600000000000ull, // .6 jude, minimum reward per block at 2min
+      300000000000ull, // .3 jude, minimum reward per block at 1min
     };
     static const uint64_t median_block_weights[] = {
       CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V2,

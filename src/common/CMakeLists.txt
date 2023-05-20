@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2022, The Monero Project
+# Copyright (c) 2014-2022, The Jude Project
 #
 # All rights reserved.
 #
@@ -58,11 +58,11 @@ endif()
 
 set(common_headers)
 
-monero_find_all_headers(common_private_headers "${CMAKE_CURRENT_SOURCE_DIR}")
+jude_find_all_headers(common_private_headers "${CMAKE_CURRENT_SOURCE_DIR}")
 
-monero_private_headers(common
+jude_private_headers(common
   ${common_private_headers})
-monero_add_library(common
+jude_add_library(common
   ${common_sources}
   ${common_headers}
   ${common_private_headers}
@@ -82,5 +82,5 @@ target_link_libraries(common
     ${OPENSSL_LIBRARIES}
     ${EXTRA_LIBRARIES})
 
-#monero_install_headers(common
+#jude_install_headers(common
 #  ${common_headers})

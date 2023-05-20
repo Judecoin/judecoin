@@ -1,4 +1,4 @@
-// Copyright (c) 2021, The Monero Project
+// Copyright (c) 2021, The Jude Project
 // 
 // All rights reserved.
 // 
@@ -70,9 +70,9 @@ namespace multisig
   *   when N - M > 1).
   * 
   * - Further reading
-  *   - MRL-0009: https://www.getmonero.org/resources/research-lab/pubs/MRL-0009.pdf
+  *   - MRL-0009: https://www.getjude.org/resources/research-lab/pubs/MRL-0009.pdf
   *   - MuSig2: https://eprint.iacr.org/2020/1261
-  *   - ZtM2: https://web.getmonero.org/library/Zero-to-Monero-2-0-0.pdf Ch. 9, especially Section 9.6.3
+  *   - ZtM2: https://web.getjude.org/library/Zero-to-Jude-2-0-0.pdf Ch. 9, especially Section 9.6.3
   *   - FROST: https://eprint.iacr.org/2018/417
   */
   class multisig_account final

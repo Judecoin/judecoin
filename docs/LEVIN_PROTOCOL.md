@@ -1,9 +1,9 @@
 # Levin Protocol
 This is a document explaining the current design of the levin protocol, as
-used by Monero. The protocol is largely inherited from cryptonote, but has
+used by Jude. The protocol is largely inherited from cryptonote, but has
 undergone some changes.
 
-This document also may differ from the `struct bucket_head2` in Monero's
+This document also may differ from the `struct bucket_head2` in Jude's
 code slightly - the spec here is slightly more strict to allow for
 extensibility.
 
@@ -12,13 +12,13 @@ One of the goals of this document is to clearly indicate what is being sent
 These issues will be addressed as they are found. See `ANONMITY_NETWORKS.md` in
 the `docs` folder for any outstanding issues.
 
-> This document does not currently list all data being sent by the monero
+> This document does not currently list all data being sent by the jude
 > protocol, that portion is a work-in-progress. Please take the time to do it
-> if interested in learning about Monero p2p traffic!
+> if interested in learning about Jude p2p traffic!
 
 
 ## Header
-This header is sent for every Monero p2p message.
+This header is sent for every Jude p2p message.
 
 ```
  0               1               2               3
@@ -49,7 +49,7 @@ case someone connected to the wrong port, etc). The comments indicate that byte
 sequence is from "benders nightmare".
 
 This also can be used by deep packet inspection (DPI) engines to identify
-Monero when the link is not encrypted. SSL has been proposed as a means to
+Jude when the link is not encrypted. SSL has been proposed as a means to
 mitigate this issue, but BIP-151 or the Noise protocol should also be considered.
 
 ### Length
@@ -71,7 +71,7 @@ expected from the peer, but this flag is not set. Those responses are returned
 as notify messages and can be sent in any order by the peer.
 
 ### Command
-An unsigned 32-bit little endian integer representing the Monero specific
+An unsigned 32-bit little endian integer representing the Jude specific
 command being invoked.
 
 ### Return Code
@@ -105,7 +105,7 @@ part of the levin messaging layer, and is described in the
 [commands](#commands) section.
 
 ### Requests
-Requests are the basis of the admin protocol for Monero. The `Q` bit must be
+Requests are the basis of the admin protocol for Jude. The `Q` bit must be
 set, the `S`, `B` and `E` bits must be unset, and the `Expect Response` field
 must be non-zero. The peer is expected to send a response message with the same
 `command` number.

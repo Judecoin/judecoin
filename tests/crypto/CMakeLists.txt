@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2022, The Monero Project
+# Copyright (c) 2014-2022, The Jude Project
 #
 # All rights reserved.
 #
@@ -37,7 +37,7 @@ set(crypto_sources
 set(crypto_headers
   crypto-tests.h)
 
-monero_add_minimal_executable(cncrypto-tests
+jude_add_minimal_executable(cncrypto-tests
   ${crypto_sources}
   ${crypto_headers})
 target_link_libraries(cncrypto-tests
@@ -53,7 +53,7 @@ add_test(
   NAME    cncrypto
   COMMAND cncrypto-tests "${CMAKE_CURRENT_SOURCE_DIR}/tests.txt")
 
-monero_add_minimal_executable(cnv4-jit-tests cnv4-jit.c)
+jude_add_minimal_executable(cnv4-jit-tests cnv4-jit.c)
 target_link_libraries(cnv4-jit-tests
   PRIVATE
     common

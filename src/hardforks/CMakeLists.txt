@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2022, The Monero Project
+# Copyright (c) 2014-2022, The Jude Project
 #
 # All rights reserved.
 #
@@ -29,13 +29,13 @@
 set(hardforks_sources
   hardforks.cpp)
 
-monero_find_all_headers(hardforks_headers "${CMAKE_CURRENT_SOURCE_DIR}")
+jude_find_all_headers(hardforks_headers "${CMAKE_CURRENT_SOURCE_DIR}")
 
 set(hardforks_private_headers)
 
-monero_private_headers(hardforks
+jude_private_headers(hardforks
   ${hardforks_private_headers})
-monero_add_library(hardforks
+jude_add_library(hardforks
   ${hardforks_sources}
   ${hardforks_headers}
   ${hardforks_private_headers})

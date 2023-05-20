@@ -46,7 +46,7 @@
 // Microsoft Visual C/C++ Runtime Library, and this method does NOT offer any
 // Unicode support.
 
-// Monero code that would want to continue to use the normal file stream classes
+// Jude code that would want to continue to use the normal file stream classes
 // but WITH Unicode support could therefore not solve this problem on its own,
 // but 2 different projects from 2 different maintaining groups would need changes
 // in this particular direction - something probably difficult to achieve and

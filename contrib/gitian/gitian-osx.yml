@@ -1,5 +1,5 @@
 ---
-name: "monero-osx-0.17"
+name: "jude-osx-0.17"
 enable_cache: true
 suites:
 - "bionic"
@@ -24,8 +24,8 @@ packages:
 - "python-dev"
 - "python-setuptools"
 remotes:
-- "url": "https://github.com/monero-project/monero.git"
-  "dir": "monero"
+- "url": "https://github.com/jude-project/jude.git"
+  "dir": "jude"
 files:
 - "MacOSX10.11.sdk.tar.gz"
 script: |
@@ -78,7 +78,7 @@ script: |
   export PATH=${WRAP_DIR}:${PATH}
 
   git config --global core.abbrev 9
-  cd monero
+  cd jude
   # Set the version string that gets added to the tar archive name
   version="`git describe`"
   if [[ $version == *"-"*"-"* ]]; then
@@ -114,7 +114,7 @@ script: |
     chmod 755 bin/*
     cp ../LICENSE bin
     chmod 644 bin/LICENSE
-    DISTNAME=monero-${i}-${version}
+    DISTNAME=jude-${i}-${version}
     mv bin ${DISTNAME}
     find ${DISTNAME}/ | sort | tar --no-recursion --owner=0 --group=0 -c -T - | bzip2 -9 > ${OUTDIR}/${DISTNAME}.tar.bz2
     cd ..

@@ -6,7 +6,7 @@ This directory contains tools, which can be used for checking the health of the 
 
 Unless it's stated differently, these scripts should be called from a given source directory, where you want the checks to be performed, for instance:
 
-`og@ghetto:~/dev/monero$ utils/health/clang-build-time-analyzer-run.sh`
+`og@ghetto:~/dev/jude$ utils/health/clang-build-time-analyzer-run.sh`
 
 ## ClangBuildAnalyzer
 
@@ -42,5 +42,5 @@ The memcheck output is just a readable text file with a summary at the end.
 
 # Footer
 
-Responsible: mj-xmr
+Responsible: mj-jude
 

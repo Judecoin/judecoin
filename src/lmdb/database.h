@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2022, The Monero Project
+// Copyright (c) 2018-2022, The Jude Project
 
 // All rights reserved.
 //
@@ -119,18 +119,18 @@ namespace lmdb
                 if (!txn)
                     return txn.error();
 
-                MONERO_PRECOND(*txn != nullptr);
+                JUDE_PRECOND(*txn != nullptr);
                 const auto wrote = f(*(*txn));
                 if (wrote)
                 {
-                    MONERO_CHECK(commit(std::move(*txn)));
+                    JUDE_CHECK(commit(std::move(*txn)));
                     return wrote;
                 }
                 if (wrote != lmdb::error(MDB_MAP_FULL))
                     return wrote;
 
                 txn->reset();
-                MONERO_CHECK(this->resize());
+                JUDE_CHECK(this->resize());
             }
             return {lmdb::error(MDB_MAP_FULL)};
         }

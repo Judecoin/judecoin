@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2022, The Monero Project
+// Copyright (c) 2017-2022, The Jude Project
 // 
 // All rights reserved.
 // 
@@ -111,7 +111,7 @@ TEST(bulletproofs, multi_splitting)
     //add output
     for (size_t i = 0; i < n_outputs; ++i)
     {
-      amount = rct::randXmrAmount(available);
+      amount = rct::randJUDEAmount(available);
       outamounts.push_back(amount);
       amount_keys.push_back(rct::hash_to_scalar(rct::zero()));
       rct::skpkGen(Sk, Pk);

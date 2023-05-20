@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2022, The Monero Project
+# Copyright (c) 2014-2022, The Jude Project
 # 
 # All rights reserved.
 # 
@@ -57,4 +57,4 @@ foreach(BLOB_NAME checkpoints testnet_blocks stagenet_blocks)
     )
 endforeach()
 
-monero_add_library(blocks blocks.cpp ${GENERATED_SOURCES})
+jude_add_library(blocks blocks.cpp ${GENERATED_SOURCES})

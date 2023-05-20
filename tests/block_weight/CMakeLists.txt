@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2022, The Monero Project
+# Copyright (c) 2014-2022, The Jude Project
 #
 # All rights reserved.
 #
@@ -31,7 +31,7 @@ set(block_weight_sources
 
 set(block_weight_headers)
 
-monero_add_minimal_executable(block_weight
+jude_add_minimal_executable(block_weight
   ${block_weight_sources}
   ${block_weight_headers})
 target_link_libraries(block_weight

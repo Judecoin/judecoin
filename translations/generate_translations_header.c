@@ -1,5 +1,5 @@
 // Copyright (c) 2013, Sergey Lyubka
-// Copyright (c) 2017-2022, The Monero Project
+// Copyright (c) 2017-2022, The Jude Project
 // All rights reserved.
 // Released under the MIT license.
 
@@ -11,13 +11,13 @@
 //      cc -o generate-translations-header generate-translations-header.c
 //
 //   2. Convert list of files into single header:
-//      ./generate-translations-header monero_fr.qm monero_it.qm > translations_files.h
+//      ./generate-translations-header jude_fr.qm jude_it.qm > translations_files.h
 //
 //   3. In your application code, include translations_files.h, then you can
 //      access the files using this function:
 //      static bool find_embedded_file(const std::string &file_name, std::string &data);
 //      std::string data;
-//      find_embedded_file("monero_fr.qm", data);
+//      find_embedded_file("jude_fr.qm", data);
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2020, The Monero Project
+// Copyright (c) 2019-2020, The Jude Project
 // 
 // All rights reserved.
 // 
@@ -27,8 +27,8 @@
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // References:
-// - https://github.com/ArticMine/Monero-Documents/blob/master/MoneroScaling2021.pdf
-// - https://github.com/monero-project/research-lab/issues/70
+// - https://github.com/ArticMine/Jude-Documents/blob/master/JudeScaling2021.pdf
+// - https://github.com/jude-project/research-lab/issues/70
 
 #define IN_UNIT_TESTS
 

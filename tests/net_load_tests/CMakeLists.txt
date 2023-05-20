@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2022, The Monero Project
+# Copyright (c) 2014-2022, The Jude Project
 #
 # All rights reserved.
 #
@@ -32,7 +32,7 @@ set(clt_sources
 set(clt_headers
   net_load_tests.h)
 
-monero_add_minimal_executable(net_load_tests_clt
+jude_add_minimal_executable(net_load_tests_clt
   ${clt_sources}
   ${clt_headers})
 target_link_libraries(net_load_tests_clt
@@ -54,7 +54,7 @@ set(srv_sources
 set(srv_headers
   net_load_tests.h)
 
-monero_add_minimal_executable(net_load_tests_srv
+jude_add_minimal_executable(net_load_tests_srv
   ${srv_sources}
   ${srv_headers})
 target_link_libraries(net_load_tests_srv

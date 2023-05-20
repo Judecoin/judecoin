@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2022, The Monero Project
+# Copyright (c) 2014-2022, The Jude Project
 #
 # All rights reserved.
 #
@@ -40,7 +40,7 @@ set(trezor_tests_headers
         ../core_tests/chaingen.h
         ../core_tests/wallet_tools.h)
 
-monero_add_minimal_executable(trezor_tests
+jude_add_minimal_executable(trezor_tests
   ${trezor_tests_sources}
   ${trezor_tests_headers})
 

@@ -1,0 +1,20 @@
+[Unit]
+Description=Jude Full Node
+After=network.target
+
+[Service]
+User=jude
+Group=jude
+WorkingDirectory=~
+StateDirectory=jude
+LogsDirectory=jude
+
+Type=simple
+ExecStart=/usr/bin/juded --config-file /etc/juded.conf --non-interactive
+StandardOutput=null
+StandardError=null
+
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

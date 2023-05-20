@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2022, The Monero Project
+# Copyright (c) 2014-2022, The Jude Project
 #
 # All rights reserved.
 #
@@ -46,7 +46,7 @@ endif()
 cmake_minimum_required(VERSION 3.5)
 message(STATUS "CMake version ${CMAKE_VERSION}")
 
-project(monero)
+project(jude)
 
 option (USE_CCACHE "Use ccache if a usable instance is found" ON)
 if (USE_CCACHE)
@@ -63,15 +63,15 @@ if (USE_COMPILATION_TIME_PROFILER)
 endif()
 
 if (${CMAKE_VERSION} VERSION_GREATER "3.0.0" AND CMAKE_MAKE_PROGRAM MATCHES "ninja")
-  set(MONERO_PARALLEL_COMPILE_JOBS "" CACHE STRING "The maximum number of concurrent compilation jobs.")
-  if (MONERO_PARALLEL_COMPILE_JOBS)
-    set_property(GLOBAL APPEND PROPERTY JOB_POOLS compile_job_pool=${MONERO_PARALLEL_COMPILE_JOBS})
+  set(JUDE_PARALLEL_COMPILE_JOBS "" CACHE STRING "The maximum number of concurrent compilation jobs.")
+  if (JUDE_PARALLEL_COMPILE_JOBS)
+    set_property(GLOBAL APPEND PROPERTY JOB_POOLS compile_job_pool=${JUDE_PARALLEL_COMPILE_JOBS})
     set(CMAKE_JOB_POOL_COMPILE compile_job_pool)
   endif ()
 
-  set(MONERO_PARALLEL_LINK_JOBS "" CACHE STRING "The maximum number of concurrent link jobs.")
-  if (MONERO_PARALLEL_LINK_JOBS)
-    set_property(GLOBAL APPEND PROPERTY JOB_POOLS link_job_pool=${MONERO_PARALLEL_LINK_JOBS})
+  set(JUDE_PARALLEL_LINK_JOBS "" CACHE STRING "The maximum number of concurrent link jobs.")
+  if (JUDE_PARALLEL_LINK_JOBS)
+    set_property(GLOBAL APPEND PROPERTY JOB_POOLS link_job_pool=${JUDE_PARALLEL_LINK_JOBS})
     set(CMAKE_JOB_POOL_LINK link_job_pool)
   endif ()
 endif ()
@@ -85,9 +85,9 @@ if (USE_CLANG_TIDY_C OR USE_CLANG_TIDY_CXX)
 	include(SetClangTidy)
 endif()
 if (USE_CLANG_TIDY_C)
-	monero_clang_tidy("C")
+	jude_clang_tidy("C")
 elseif (USE_CLANG_TIDY_CXX)
-	monero_clang_tidy("CXX")
+	jude_clang_tidy("CXX")
 endif()
 
 enable_language(C ASM)
@@ -159,7 +159,7 @@ function (add_definition_if_library_exists library function header var)
 endfunction()
 
 option(RELINK_TARGETS "Relink targets, when just a dependant .so changed, but not its header?" OFF)
-function (monero_set_target_no_relink target)
+function (jude_set_target_no_relink target)
   if (RELINK_TARGETS MATCHES OFF)
     # Will not relink the target, when just its dependant .so has changed, but not it's interface
     set_target_properties("${target}" PROPERTIES LINK_DEPENDS_NO_SHARED true)
@@ -167,7 +167,7 @@ function (monero_set_target_no_relink target)
 endfunction()
 
 option(STRIP_TARGETS "Strip symbols from targets?" OFF)
-function (monero_set_target_strip target)
+function (jude_set_target_strip target)
   if (STRIP_TARGETS)
     set_target_properties("${target}" PROPERTIES LINK_FLAGS_RELEASE -s)
     set_target_properties("${target}" PROPERTIES LINK_FLAGS_DEBUG -s)
@@ -175,15 +175,15 @@ function (monero_set_target_strip target)
   endif()
 endfunction()
 
-function (monero_add_minimal_executable name)
+function (jude_add_minimal_executable name)
   source_group("${name}"
     FILES
       ${ARGN})
 
   add_executable("${name}"
     ${ARGN})
-    monero_set_target_no_relink("${name}")
-    monero_set_target_strip    ("${name}")
+    jude_set_target_no_relink("${name}")
+    jude_set_target_strip    ("${name}")
 endfunction()
 
 # Finds all headers in a directory and its subdirs, to be able to search for them and autosave in IDEs.
@@ -191,7 +191,7 @@ endfunction()
 # Parameters:
 # - headers_found:    Output variable, which will hold the found headers
 # - module_root_dir:  The search path for the headers. Typically it will be the module's root dir, so "${CMAKE_CURRENT_SOURCE_DIR}" or a derivative of it.
-macro (monero_find_all_headers headers_found module_root_dir)
+macro (jude_find_all_headers headers_found module_root_dir)
   file(GLOB ${headers_found}
            "${module_root_dir}/*.h*"    # h* will include hpps as well.
            "${module_root_dir}/**/*.h*" # Any number of subdirs will be included.
@@ -518,7 +518,7 @@ if(SANITIZE)
 endif()
 
 # Set default blockchain storage location:
-# memory was the default in Cryptonote before Monero implemented LMDB, it still works but is unnecessary.
+# memory was the default in Cryptonote before Jude implemented LMDB, it still works but is unnecessary.
 # set(DATABASE memory)
 set(DATABASE lmdb)
 message(STATUS "Using LMDB as default DB type")
@@ -605,8 +605,8 @@ add_definition_if_function_found(strptime HAVE_STRPTIME)
 
 add_definitions(-DAUTO_INITIALIZE_EASYLOGGINGPP)
 
-set(MONERO_GENERATED_HEADERS_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated_include")
-include_directories(${MONERO_GENERATED_HEADERS_DIR})
+set(JUDE_GENERATED_HEADERS_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated_include")
+include_directories(${JUDE_GENERATED_HEADERS_DIR})
 
 # As of OpenBSD 6.8, -march=<anything> breaks the build
 function(set_default_arch)
@@ -627,7 +627,7 @@ option(COVERAGE "Enable profiling for test coverage report" OFF)
 if(COVERAGE)
     message(STATUS "Building with profiling for test coverage report")
 endif()
-macro (monero_enable_coverage)
+macro (jude_enable_coverage)
   if(COVERAGE)
     foreach(COV_FLAG -fprofile-arcs -ftest-coverage --coverage)
       set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   ${COV_FLAG}")
@@ -636,29 +636,29 @@ macro (monero_enable_coverage)
   endif()
 endmacro()
 
-function (monero_add_library name)
-    monero_add_library_with_deps(NAME "${name}" SOURCES ${ARGN})
+function (jude_add_library name)
+    jude_add_library_with_deps(NAME "${name}" SOURCES ${ARGN})
 endfunction()
 
-function (monero_add_library_with_deps)
-  cmake_parse_arguments(MONERO_ADD_LIBRARY "" "NAME" "DEPENDS;SOURCES" ${ARGN})
-  source_group("${MONERO_ADD_LIBRARY_NAME}" FILES ${MONERO_ADD_LIBRARY_SOURCES})
+function (jude_add_library_with_deps)
+  cmake_parse_arguments(JUDE_ADD_LIBRARY "" "NAME" "DEPENDS;SOURCES" ${ARGN})
+  source_group("${JUDE_ADD_LIBRARY_NAME}" FILES ${JUDE_ADD_LIBRARY_SOURCES})
 
   # Define a ("virtual") object library and an actual library that links those
   # objects together. The virtual libraries can be arbitrarily combined to link
   # any subset of objects into one library archive. This is used for releasing
   # libwallet, which combines multiple components.
-  set(objlib obj_${MONERO_ADD_LIBRARY_NAME})
-  add_library(${objlib} OBJECT ${MONERO_ADD_LIBRARY_SOURCES})
-  add_library("${MONERO_ADD_LIBRARY_NAME}" $<TARGET_OBJECTS:${objlib}>)
-  monero_set_target_no_relink("${MONERO_ADD_LIBRARY_NAME}")
-  monero_set_target_strip    ("${MONERO_ADD_LIBRARY_NAME}")
-  if (MONERO_ADD_LIBRARY_DEPENDS)
-    add_dependencies(${objlib} ${MONERO_ADD_LIBRARY_DEPENDS})
+  set(objlib obj_${JUDE_ADD_LIBRARY_NAME})
+  add_library(${objlib} OBJECT ${JUDE_ADD_LIBRARY_SOURCES})
+  add_library("${JUDE_ADD_LIBRARY_NAME}" $<TARGET_OBJECTS:${objlib}>)
+  jude_set_target_no_relink("${JUDE_ADD_LIBRARY_NAME}")
+  jude_set_target_strip    ("${JUDE_ADD_LIBRARY_NAME}")
+  if (JUDE_ADD_LIBRARY_DEPENDS)
+    add_dependencies(${objlib} ${JUDE_ADD_LIBRARY_DEPENDS})
   endif()
-  set_property(TARGET "${MONERO_ADD_LIBRARY_NAME}" PROPERTY FOLDER "libs")
+  set_property(TARGET "${JUDE_ADD_LIBRARY_NAME}" PROPERTY FOLDER "libs")
   target_compile_definitions(${objlib}
-    PRIVATE $<TARGET_PROPERTY:${MONERO_ADD_LIBRARY_NAME},INTERFACE_COMPILE_DEFINITIONS>)
+    PRIVATE $<TARGET_PROPERTY:${JUDE_ADD_LIBRARY_NAME},INTERFACE_COMPILE_DEFINITIONS>)
 endfunction ()
 
 # Generate header for embedded translations
@@ -811,7 +811,7 @@ else()
     set(STATIC_ASSERT_CPP_FLAG "-Dstatic_assert=_Static_assert")
   endif()
 
-  monero_enable_coverage()
+  jude_enable_coverage()
   # With GCC 6.1.1 the compiled binary malfunctions due to aliasing. Until that
   # is fixed in the code (Issue #847), force compiler to be conservative.
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-strict-aliasing")
@@ -1006,7 +1006,7 @@ else()
 
   set(DEBUG_FLAGS "-g3")
 
-  # At least some CLANGs default to not enough for monero
+  # At least some CLANGs default to not enough for jude
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftemplate-depth=900")
 
   if(NOT DEFINED USE_LTO_DEFAULT)

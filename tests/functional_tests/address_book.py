@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 #encoding=utf-8
 
-# Copyright (c) 2019-2022, The Monero Project
+# Copyright (c) 2019-2022, The Jude Project
 # 
 # All rights reserved.
 # 
@@ -140,7 +140,7 @@ class AddressBookTest():
         assert not 'entries' in res or len(res.entries) == 0
 
         # openalias
-        res = wallet.add_address_book('donate@getmonero.org', description = 'dev fund')
+        res = wallet.add_address_book('donate@getjude.org', description = 'dev fund')
         assert res.index == 0
         res = wallet.get_address_book()
         assert len(res.entries) == 1

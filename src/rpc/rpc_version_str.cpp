@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2022, The Monero Project
+// Copyright (c) 2019-2022, The Jude Project
 // 
 // All rights reserved.
 // 
@@ -36,7 +36,7 @@ namespace cryptonote
 namespace rpc
 {
 
-// Expected format of Monero software version string:
+// Expected format of Jude software version string:
 // 1) Four numbers, one to two digits each, separated by periods
 // 2) Optionally, one of the following suffixes:
 //      a) -release

@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2022, The Monero Project
+// Copyright (c) 2019-2022, The Jude Project
 //
 // All rights reserved.
 //
@@ -84,7 +84,7 @@ static inline int disabled_flags(void) {
     return flags;
   }
 
-  const char *env = getenv("MONERO_RANDOMX_UMASK");
+  const char *env = getenv("JUDE_RANDOMX_UMASK");
   if (!env) {
     flags = 0;
   }

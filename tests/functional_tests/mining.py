@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2018-2022, The Monero Project
+# Copyright (c) 2018-2022, The Jude Project
 
 # 
 # All rights reserved.
@@ -326,7 +326,7 @@ class MiningTest():
         assert new_seed_hash != res.seed_hash
         #print('First mining: ' + str(t0))
 
-        # pop all these blocks, and feed them again to monerod
+        # pop all these blocks, and feed them again to juded
         print('Recreating the chain')
         res = daemon.get_info()
         height = res.height
