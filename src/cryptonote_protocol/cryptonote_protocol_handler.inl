@@ -2,7 +2,7 @@
 /// @author rfree (current maintainer/user in jude.cc project - most of code is from CryptoNote)
 /// @brief This is the original cryptonote protocol network-events handler, modified by us
 
-// Copyright (c) 2014-2022, The Jude Project
+// Copyright (c) 2014-2023, The Jude Project
 //
 // All rights reserved.
 //

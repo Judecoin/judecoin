@@ -1,6 +1,6 @@
 // Word list created by Jude contributor sammy007
 // 
-// Copyright (c) 2014-2022, The Jude Project
+// Copyright (c) 2014-2023, The Jude Project
 // 
 // All rights reserved.
 // 
