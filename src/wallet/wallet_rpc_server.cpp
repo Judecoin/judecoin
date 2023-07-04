@@ -622,7 +622,7 @@ namespace tools
       res.total_unlocked_balance = 0;
       cryptonote::subaddress_index subaddr_index = {0,0};
       const std::pair<std::map<std::string, std::string>, std::vector<std::string>> account_tags = m_wallet->get_account_tags();
-      if (!req.tag.empty() && account_tags.first.count(req.tag) == 0 && !req.regexp)
+      if (!req.tag.empty() && account_tags.first.count(req.tag) == 0)
       {
         er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
         er.message = (boost::format(tr("Tag %s is unregistered.")) % req.tag).str();
@@ -630,9 +630,7 @@ namespace tools
       }
       for (; subaddr_index.major < m_wallet->get_num_subaddress_accounts(); ++subaddr_index.major)
       {
-        bool no_match = !req.regexp ? (!req.tag.empty() && req.tag != account_tags.second[subaddr_index.major])
-          : (!req.tag.empty() && !boost::regex_match(account_tags.second[subaddr_index.major], boost::regex(req.tag)));
-        if (no_match)
+        if (!req.tag.empty() && req.tag != account_tags.second[subaddr_index.major])
           continue;
         wallet_rpc::COMMAND_RPC_GET_ACCOUNTS::subaddress_account_info info;
         info.account_index = subaddr_index.major;
@@ -644,12 +642,6 @@ namespace tools
         res.subaddress_accounts.push_back(info);
         res.total_balance += info.balance;
         res.total_unlocked_balance += info.unlocked_balance;
-      }
-      if (res.subaddress_accounts.size() == 0 && req.regexp)
-      {
-        er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-        er.message = (boost::format(tr("No matches for regex filter %s .")) % req.tag).str();
-        return false;
       }
     }
     catch (const std::exception& e)
@@ -1766,6 +1758,12 @@ namespace tools
         {
           er.code = WALLET_RPC_ERROR_CODE_WRONG_ADDRESS;
           er.message = "Already integrated address";
+          return false;
+        }
+        if (req.payment_id.empty())
+        {
+          er.code = WALLET_RPC_ERROR_CODE_WRONG_PAYMENT_ID;
+          er.message = "Payment ID shouldn't be left unspecified";
           return false;
         }
         res.integrated_address = get_account_integrated_address_as_str(m_wallet->nettype(), info.address, payment_id);
@@ -4134,7 +4132,8 @@ namespace tools
     try
     {
       res.multisig_info = m_wallet->exchange_multisig_keys(req.password, req.multisig_info);
-      if (res.multisig_info.empty())
+      m_wallet->multisig(&ready);
+      if (ready)
       {
         res.address = m_wallet->get_account().get_public_address_str(m_wallet->nettype());
       }

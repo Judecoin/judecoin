@@ -30,6 +30,7 @@
 
 #include <sstream>
 #include <numeric>
+#include <boost/interprocess/detail/atomic.hpp>
 #include <boost/algorithm/string.hpp>
 #include "misc_language.h"
 #include "syncobj.h"
@@ -270,13 +271,13 @@ namespace cryptonote
     // restart all threads
     {
       CRITICAL_REGION_LOCAL(m_threads_lock);
-      m_stop = true;
+      boost::interprocess::ipcdetail::atomic_write32(&m_stop, 1);
       while (m_threads_active > 0)
         misc_utils::sleep_no_w(100);
       m_threads.clear();
     }
-    m_stop = false;
-    m_thread_index = 0;
+    boost::interprocess::ipcdetail::atomic_write32(&m_stop, 0);
+    boost::interprocess::ipcdetail::atomic_write32(&m_thread_index, 0);
     for(size_t i = 0; i != m_threads_total; i++)
       m_threads.push_back(boost::thread(m_attrs, boost::bind(&miner::worker_thread, this)));
   }
@@ -393,8 +394,8 @@ namespace cryptonote
 
     request_block_template();//lets update block template
 
-    m_stop = false;
-    m_thread_index = 0;
+    boost::interprocess::ipcdetail::atomic_write32(&m_stop, 0);
+    boost::interprocess::ipcdetail::atomic_write32(&m_thread_index, 0);
     set_is_background_mining_enabled(do_background);
     set_ignore_battery(ignore_battery);
     
@@ -434,7 +435,7 @@ namespace cryptonote
   //-----------------------------------------------------------------------------------------------------
   void miner::send_stop_signal()
   {
-    m_stop = true;
+    boost::interprocess::ipcdetail::atomic_write32(&m_stop, 1);
   }
   extern "C" void rx_stop_mining(void);
   //-----------------------------------------------------------------------------------------------------
@@ -523,7 +524,7 @@ namespace cryptonote
   //-----------------------------------------------------------------------------------------------------
   bool miner::worker_thread()
   {
-    const uint32_t th_local_index = m_thread_index++; // atomically increment, getting value before increment
+    uint32_t th_local_index = boost::interprocess::ipcdetail::atomic_inc32(&m_thread_index);
     MLOG_SET_THREAD_NAME(std::string("[miner ") + std::to_string(th_local_index) + "]");
     MGINFO("Miner thread was started ["<< th_local_index << "]");
     uint32_t nonce = m_starter_nonce + th_local_index;

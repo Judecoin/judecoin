@@ -31,7 +31,23 @@ set(mnemonics_sources
 
 set(mnemonics_headers)
 
-jude_find_all_headers(mnemonics_private_headers "${CMAKE_CURRENT_SOURCE_DIR}")
+set(mnemonics_private_headers
+  electrum-words.h
+  chinese_simplified.h
+  english.h
+  dutch.h
+  french.h
+  german.h
+  italian.h
+  japanese.h
+  language_base.h
+  english_old.h
+  portuguese.h
+  russian.h
+  singleton.h
+  spanish.h
+  esperanto.h
+  lojban.h)
 
 jude_private_headers(mnemonics
   ${mnemonics_private_headers})

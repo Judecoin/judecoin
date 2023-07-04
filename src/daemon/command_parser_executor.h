@@ -40,6 +40,7 @@
 
 #include "daemon/rpc_command_executor.h"
 #include "common/common_fwd.h"
+#include "net/net_fwd.h"
 #include "rpc/core_rpc_server.h"
 
 namespace daemonize {

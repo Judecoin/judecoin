@@ -31,7 +31,8 @@ set(serialization_sources
 
 set(serialization_headers)
 
-jude_find_all_headers(serialization_private_headers "${CMAKE_CURRENT_SOURCE_DIR}")
+set(serialization_private_headers
+  json_object.h)
 
 jude_private_headers(serialization
   ${serialization_private_headers})

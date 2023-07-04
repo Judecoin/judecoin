@@ -1,5 +1,4 @@
-// Copyright (c) 2020-2023, The Jude Project
-
+// Copyright (c) 2023, The Jude Project
 //
 // All rights reserved.
  //

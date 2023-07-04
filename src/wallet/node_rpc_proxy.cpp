@@ -70,7 +70,6 @@ void NodeRPCProxy::invalidate()
   m_dynamic_base_fee_estimate = 0;
   m_dynamic_base_fee_estimate_cached_height = 0;
   m_dynamic_base_fee_estimate_grace_blocks = 0;
-  m_dynamic_base_fee_estimate_vector.clear();
   m_fee_quantization_mask = 1;
   m_rpc_version = 0;
   m_target_height = 0;
@@ -211,7 +210,7 @@ boost::optional<std::string> NodeRPCProxy::get_earliest_height(uint8_t version, 
   return boost::optional<std::string>();
 }
 
-boost::optional<std::string> NodeRPCProxy::get_dynamic_base_fee_estimate_2021_scaling(uint64_t grace_blocks, std::vector<uint64_t> &fees)
+boost::optional<std::string> NodeRPCProxy::get_dynamic_base_fee_estimate(uint64_t grace_blocks, uint64_t &fee)
 {
   uint64_t height;
 
@@ -239,22 +238,11 @@ boost::optional<std::string> NodeRPCProxy::get_dynamic_base_fee_estimate_2021_sc
     m_dynamic_base_fee_estimate = resp_t.fee;
     m_dynamic_base_fee_estimate_cached_height = height;
     m_dynamic_base_fee_estimate_grace_blocks = grace_blocks;
-    m_dynamic_base_fee_estimate_vector = !resp_t.fees.empty() ? std::move(resp_t.fees) : std::vector<uint64_t>{m_dynamic_base_fee_estimate};
     m_fee_quantization_mask = resp_t.quantization_mask;
   }
 
-  fees = m_dynamic_base_fee_estimate_vector;
+  fee = m_dynamic_base_fee_estimate;
   return boost::optional<std::string>();
-}
-
-boost::optional<std::string> NodeRPCProxy::get_dynamic_base_fee_estimate(uint64_t grace_blocks, uint64_t &fee)
-{
-  std::vector<uint64_t> fees;
-  auto res = get_dynamic_base_fee_estimate_2021_scaling(grace_blocks, fees);
-  if (res)
-    return res;
-  fee = fees[0];
-  return boost::none;
 }
 
 boost::optional<std::string> NodeRPCProxy::get_fee_quantization_mask(uint64_t &fee_quantization_mask)

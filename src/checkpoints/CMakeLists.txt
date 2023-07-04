@@ -41,7 +41,8 @@ set(checkpoints_sources
 
 set(checkpoints_headers)
 
-jude_find_all_headers(checkpoints_private_headers "${CMAKE_CURRENT_SOURCE_DIR}")
+set(checkpoints_private_headers
+  checkpoints.h)
 
 jude_private_headers(checkpoints
   ${checkpoints_private_headers})

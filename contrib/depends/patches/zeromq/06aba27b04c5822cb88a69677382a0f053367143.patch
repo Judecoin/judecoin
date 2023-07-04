@@ -1,6 +1,6 @@
 From 06aba27b04c5822cb88a69677382a0f053367143 Mon Sep 17 00:00:00 2001
 From: sabotagebeats <27985126+sabotagebeats@users.noreply.github.com>
-Date: Thu, 22 Jul 2021 21:53:19 -0700
+Date: Thu, 22 Jul 2023 21:53:19 -0700
 Subject: [PATCH] fix: building libzmq fails with error src/clock.cpp:131:16:
  error: unused variable 'nsecs_per_usec'
 

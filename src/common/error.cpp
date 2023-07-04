@@ -1,5 +1,4 @@
-// Copyright (c) 2018-2023, The Jude Project
-
+// Copyright (c) 2018, The Jude Project
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification, are

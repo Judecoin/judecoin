@@ -43,7 +43,6 @@
 #include "rct.h"
 #include "multisig.h"
 #include "bulletproofs.h"
-#include "bulletproof_plus.h"
 #include "rct2.h"
 /************************************************************************/
 /*                                                                      */

@@ -34,7 +34,10 @@ set(multisig_sources
 
 set(multisig_headers)
 
-jude_find_all_headers(multisig_private_headers "${CMAKE_CURRENT_SOURCE_DIR}")
+set(multisig_private_headers
+  multisig.h
+  multisig_account.h
+  multisig_kex_msg.h)
 
 jude_private_headers(multisig
   ${multisig_private_headers})

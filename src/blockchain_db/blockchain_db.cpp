@@ -241,15 +241,8 @@ void BlockchainDB::add_transaction(const crypto::hash& blk_hash, const std::pair
     }
     else
     {
-      rct::key commitment;
-      if (tx.version > 1)
-      {
-        commitment = tx.rct_signatures.outPk[i].mask;
-        if (rct::is_rct_bulletproof_plus(tx.rct_signatures.type))
-          commitment = rct::scalarmult8(commitment);
-      }
       amount_output_indices[i] = add_output(tx_hash, tx.vout[i], i, tx.unlock_time,
-        tx.version > 1 ? &commitment : NULL);
+        tx.version > 1 ? &tx.rct_signatures.outPk[i].mask : NULL);
     }
   }
   add_tx_amount_output_indices(tx_id, amount_output_indices);
@@ -535,7 +528,7 @@ void BlockchainDB::fixup()
       "4a0c3aa6cef36f44edf08ad8fb1533d7e1186e317da8a3afb3d81af072043233",
       "104b3e1af37cf10b663a7ec8452ea882082018c4d5be4cd49e7f532e2fea64e5",
       "e723a46bf9684b4476c3005eb5c26511c58b7eb3c708ddf7470ee30a40834b32",
-      "18e6f0fa3aa779a73ceefabea27bff3202003fd2c558ec5f5d07920528947d57",
+      "18e6f0fa3aa779a73ceefabea27bff3202303fd2c558ec5f5d07920528947d57",
       "c97e73eb593ff39e63307220796cc64974c0c8adac860a2559ab47c49bc0c860",
       "13c363a962955b00db6d5a68b8307cd900ae9202d9b2deb357b8d433545244ac",
       "76a488865151fab977d3639bac6cba4ba9b52aa17d28ac3580775ed0bff393e4",

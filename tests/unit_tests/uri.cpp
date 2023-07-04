@@ -209,7 +209,7 @@ TEST(uri, percent_without_url_encoding)
 
 TEST(uri, url_encoded_once)
 {
-  PARSE_URI("jude:" TEST_ADDRESS"?tx_description=foo%2020", true);
+  PARSE_URI("jude:" TEST_ADDRESS"?tx_description=foo%2023", true);
   ASSERT_EQ(description, "foo 20");
 }
 
