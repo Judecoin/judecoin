@@ -1,21 +1,21 @@
 // Copyright (c) 2014-2023, The Jude Project
-// 
+//
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without modification, are
 // permitted provided that the following conditions are met:
-// 
+//
 // 1. Redistributions of source code must retain the above copyright notice, this list of
 //    conditions and the following disclaimer.
-// 
+//
 // 2. Redistributions in binary form must reproduce the above copyright notice, this list
 //    of conditions and the following disclaimer in the documentation and/or other
 //    materials provided with the distribution.
-// 
+//
 // 3. Neither the name of the copyright holder nor the names of its contributors may be
 //    used to endorse or promote products derived from this software without specific
 //    prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
 // EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
 // MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
@@ -25,10 +25,10 @@
 // INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// 
+//
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
-/*! \file serialization.h 
+/*! \file serialization.h
  *  \brief Simple DSL AAPI based on
  *
  * \detailed is_blob_type and  has_free_serializer are
@@ -50,7 +50,7 @@
 #include <boost/type_traits/integral_constant.hpp>
 #include <boost/mpl/bool.hpp>
 
-/*! \struct is_blob_type 
+/*! \struct is_blob_type
  *
  * \brief a descriptor for dispatching serialize
  */
@@ -79,7 +79,7 @@ struct is_basic_type<std::string> { typedef boost::true_type type; };
 /*! \struct serializer
  *
  * \brief ... wouldn't a class be better?
- * 
+ *
  * \detailed The logic behind serializing data. Places the archive
  * data into the supplied parameter. This dispatches based on the
  * supplied \a T template parameter's traits of is_blob_type or it is
@@ -132,55 +132,48 @@ inline bool do_serialize(Archive &ar, bool &v)
   return true;
 }
 
-// Never used in the code base
-// #ifndef __GNUC__
-// #ifndef constexpr
-// #define constexpr
-// #endif
-// #endif
-
 /* the following add a trait to a set and define the serialization DSL*/
 
 /*! \macro BLOB_SERIALIZER
  *
  * \brief makes the type have a blob serializer trait defined
  */
-#define BLOB_SERIALIZER(T)						\
-  template<>								\
-  struct is_blob_type<T> {						\
-    typedef boost::true_type type;					\
+#define BLOB_SERIALIZER(T)                        \
+  template<>                                \
+  struct is_blob_type<T> {                        \
+    typedef boost::true_type type;                    \
   }
 
 /*! \macro FREE_SERIALIZER
  *
  * \brief adds the has_free_serializer to the type
  */
-#define FREE_SERIALIZER(T)						\
-  template<>								\
-  struct has_free_serializer<T> {					\
-    typedef boost::true_type type;					\
+#define FREE_SERIALIZER(T)                        \
+  template<>                                \
+  struct has_free_serializer<T> {                    \
+    typedef boost::true_type type;                    \
   }
 
 /*! \macro VARIANT_TAG
  *
  * \brief Adds the tag \tag to the \a Archive of \a Type
  */
-#define VARIANT_TAG(Archive, Type, Tag)					\
-  template <bool W>							\
-  struct variant_serialization_traits<Archive<W>, Type> {		\
-    static inline typename Archive<W>::variant_tag_type get_tag() {	\
-      return Tag;							\
-    }									\
+#define VARIANT_TAG(Archive, Type, Tag)                    \
+  template <bool W>                            \
+  struct variant_serialization_traits<Archive<W>, Type> {        \
+    static inline typename Archive<W>::variant_tag_type get_tag() {    \
+      return Tag;                            \
+    }                                    \
   }
 
 /*! \macro BEGIN_SERIALIZE
- * 
+ *
  * \brief Begins the environment of the DSL
  * \detailed for describing how to
  * serialize an of an archive type
  */
-#define BEGIN_SERIALIZE()						\
-  template <bool W, template <bool> class Archive>			\
+#define BEGIN_SERIALIZE()                        \
+  template <bool W, template <bool> class Archive>            \
   bool do_serialize(Archive<W> &ar) {
 
 /*! \macro BEGIN_SERIALIZE_OBJECT
@@ -188,116 +181,116 @@ inline bool do_serialize(Archive &ar, bool &v)
  *  \brief begins the environment of the DSL
  *  \detailed for described the serialization of an object
  */
-#define BEGIN_SERIALIZE_OBJECT()					\
-  template <bool W, template <bool> class Archive>			\
-  bool do_serialize(Archive<W> &ar) {					\
-    ar.begin_object();							\
-    bool r = do_serialize_object(ar);					\
-    ar.end_object();							\
-    return r;								\
-  }									\
-  template <bool W, template <bool> class Archive>			\
+#define BEGIN_SERIALIZE_OBJECT()                    \
+  template <bool W, template <bool> class Archive>            \
+  bool do_serialize(Archive<W> &ar) {                    \
+    ar.begin_object();                            \
+    bool r = do_serialize_object(ar);                    \
+    ar.end_object();                            \
+    return r;                                \
+  }                                    \
+  template <bool W, template <bool> class Archive>            \
   bool do_serialize_object(Archive<W> &ar){
 
 /*! \macro PREPARE_CUSTOM_VECTOR_SERIALIZATION
  */
-#define PREPARE_CUSTOM_VECTOR_SERIALIZATION(size, vec)			\
+#define PREPARE_CUSTOM_VECTOR_SERIALIZATION(size, vec)            \
   ::serialization::detail::prepare_custom_vector_serialization(size, vec, typename Archive<W>::is_saving())
 
 /*! \macro PREPARE_CUSTOM_DEQUE_SERIALIZATION
  */
-#define PREPARE_CUSTOM_DEQUE_SERIALIZATION(size, vec)			\
+#define PREPARE_CUSTOM_DEQUE_SERIALIZATION(size, vec)            \
   ::serialization::detail::prepare_custom_deque_serialization(size, vec, typename Archive<W>::is_saving())
 
 /*! \macro END_SERIALIZE
  * \brief self-explanatory
  */
-#define END_SERIALIZE()				\
-  return ar.good();				\
+#define END_SERIALIZE()                \
+  return ar.good();                \
   }
 
 /*! \macro VALUE(f)
  * \brief the same as FIELD(f)
  */
-#define VALUE(f)					\
-  do {							\
-    ar.tag(#f);						\
-    bool r = ::do_serialize(ar, f);			\
-    if (!r || !ar.good()) return false;			\
+#define VALUE(f)                    \
+  do {                            \
+    ar.tag(#f);                        \
+    bool r = ::do_serialize(ar, f);            \
+    if (!r || !ar.good()) return false;            \
   } while(0);
 
 /*! \macro FIELD_N(t,f)
  *
- * \brief serializes a field \a f tagged \a t  
+ * \brief serializes a field \a f tagged \a t
  */
-#define FIELD_N(t, f)					\
-  do {							\
-    ar.tag(t);						\
-    bool r = ::do_serialize(ar, f);			\
-    if (!r || !ar.good()) return false;			\
+#define FIELD_N(t, f)                    \
+  do {                            \
+    ar.tag(t);                        \
+    bool r = ::do_serialize(ar, f);            \
+    if (!r || !ar.good()) return false;            \
   } while(0);
 
 /*! \macro FIELD(f)
  *
  * \brief tags the field with the variable name and then serializes it
  */
-#define FIELD(f)					\
-  do {							\
-    ar.tag(#f);						\
-    bool r = ::do_serialize(ar, f);			\
-    if (!r || !ar.good()) return false;			\
+#define FIELD(f)                    \
+  do {                            \
+    ar.tag(#f);                        \
+    bool r = ::do_serialize(ar, f);            \
+    if (!r || !ar.good()) return false;            \
   } while(0);
 
 /*! \macro FIELDS(f)
  *
  * \brief does not add a tag to the serialized value
  */
-#define FIELDS(f)							\
-  do {									\
-    bool r = ::do_serialize(ar, f);					\
-    if (!r || !ar.good()) return false;					\
+#define FIELDS(f)                            \
+  do {                                    \
+    bool r = ::do_serialize(ar, f);                    \
+    if (!r || !ar.good()) return false;                    \
   } while(0);
 
 /*! \macro VARINT_FIELD(f)
  *  \brief tags and serializes the varint \a f
  */
-#define VARINT_FIELD(f)				\
-  do {						\
-    ar.tag(#f);					\
-    ar.serialize_varint(f);			\
-    if (!ar.good()) return false;		\
+#define VARINT_FIELD(f)                \
+  do {                        \
+    ar.tag(#f);                    \
+    ar.serialize_varint(f);            \
+    if (!ar.good()) return false;        \
   } while(0);
 
 /*! \macro VARINT_FIELD_N(t, f)
  *
  * \brief tags (as \a t) and serializes the varint \a f
  */
-#define VARINT_FIELD_N(t, f)			\
-  do {						\
-    ar.tag(t);					\
-    ar.serialize_varint(f);			\
-    if (!ar.good()) return false;		\
+#define VARINT_FIELD_N(t, f)            \
+  do {                        \
+    ar.tag(t);                    \
+    ar.serialize_varint(f);            \
+    if (!ar.good()) return false;        \
   } while(0);
 
 /*! \macro MAGIC_FIELD(m)
  */
-#define MAGIC_FIELD(m)				\
-  std::string magic = m;			\
-  do {						\
-    ar.tag("magic");				\
+#define MAGIC_FIELD(m)                \
+  std::string magic = m;            \
+  do {                        \
+    ar.tag("magic");                \
     ar.serialize_blob((void*)magic.data(), magic.size()); \
-    if (!ar.good()) return false;		\
-    if (magic != m) return false;		\
+    if (!ar.good()) return false;        \
+    if (magic != m) return false;        \
   } while(0);
 
 /*! \macro VERSION_FIELD(v)
  */
-#define VERSION_FIELD(v)			\
-  uint32_t version = v;				\
-  do {						\
-    ar.tag("version");				\
-    ar.serialize_varint(version);		\
-    if (!ar.good()) return false;		\
+#define VERSION_FIELD(v)            \
+  uint32_t version = v;                \
+  do {                        \
+    ar.tag("version");                \
+    ar.serialize_varint(version);        \
+    if (!ar.good()) return false;        \
   } while(0);
 
 
@@ -355,9 +348,9 @@ namespace serialization {
     {
       bool result = false;
       if (ar.good())
-	{
-	  result = noeof || ar.eof();
-	}
+    {
+      result = noeof || ar.eof();
+    }
       return result;
     }
   }
