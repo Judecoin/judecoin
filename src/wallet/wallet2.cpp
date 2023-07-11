@@ -7343,8 +7343,8 @@ uint64_t wallet2::get_base_fee()
 //----------------------------------------------------------------------------------------------------
 uint64_t wallet2::get_base_fee(uint32_t priority)
 {
-  const bool use_2021_scaling = use_fork_rules(HF_VERSION_2021_SCALING, -30 * 1);
-  if (use_2021_scaling)
+  const bool use_2023_scaling = use_fork_rules(HF_VERSION_2023_SCALING, -30 * 1);
+  if (use_2023_scaling)
   {
     // clamp and map to 0..3 indices, mapping 0 (default, but should not end up here) to 0, and 1..4 to 0..3
     if (priority == 0)
@@ -7354,7 +7354,7 @@ uint64_t wallet2::get_base_fee(uint32_t priority)
     --priority;
 
     std::vector<uint64_t> fees;
-    boost::optional<std::string> result = m_node_rpc_proxy.get_dynamic_base_fee_estimate_2021_scaling(FEE_ESTIMATE_GRACE_BLOCKS, fees);
+    boost::optional<std::string> result = m_node_rpc_proxy.get_dynamic_base_fee_estimate_2023_scaling(FEE_ESTIMATE_GRACE_BLOCKS, fees);
     if (result)
     {
       MERROR("Failed to determine base fee, using default");
@@ -7868,6 +7868,7 @@ void wallet2::light_wallet_get_outs(std::vector<std::vector<tools::wallet2::get_
     m_daemon_rpc_mutex.unlock();
     THROW_WALLET_EXCEPTION_IF(!r, error::no_connection_to_daemon, "get_random_outs");
     THROW_WALLET_EXCEPTION_IF(ores.amount_outs.empty() , error::wallet_internal_error, "No outputs received from light wallet node. Error: " + ores.Error);
+    size_t n_outs = 0; for (const auto &e: ores.amount_outs) n_outs += e.outputs.size();
   }
   
   // Check if we got enough outputs for each amount
@@ -9670,7 +9671,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryp
   std::vector<std::pair<uint32_t, std::vector<size_t>>> unused_transfers_indices_per_subaddr;
   std::vector<std::pair<uint32_t, std::vector<size_t>>> unused_dust_indices_per_subaddr;
   uint64_t needed_money;
-  uint64_t accumulated_fee, accumulated_change;
+  uint64_t accumulated_fee, accumulated_outputs, accumulated_change;
   struct TX {
     std::vector<size_t> selected_transfers;
     std::vector<cryptonote::tx_destination_entry> dsts;
@@ -9861,6 +9862,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryp
   // start with an empty tx
   txes.push_back(TX());
   accumulated_fee = 0;
+  accumulated_outputs = 0;
   accumulated_change = 0;
   adding_fee = false;
   needed_fee = 0;
@@ -9873,6 +9875,8 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryp
   // the destination, and one for change.
   LOG_PRINT_L2("checking preferred");
   std::vector<size_t> preferred_inputs;
+  uint64_t rct_outs_needed = 2 * (fake_outs_count + 1);
+  rct_outs_needed += 100; // some fudge factor since we don't know how many are locked
   if (use_rct)
   {
     // this is used to build a tx that's 1 or 2 inputs, and 2 outputs, which
@@ -9977,6 +9981,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryp
     // add this output to the list to spend
     tx.selected_transfers.push_back(idx);
     uint64_t available_amount = td.amount();
+    accumulated_outputs += available_amount;
 
     // clear any fake outs we'd already gathered, since we'll need a new set
     outs.clear();

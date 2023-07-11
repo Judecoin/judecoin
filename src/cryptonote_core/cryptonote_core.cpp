@@ -879,6 +879,16 @@ namespace cryptonote
     return true;
   }
   //-----------------------------------------------------------------------------------------------
+  static bool is_canonical_bulletproof_plus_layout(const std::vector<rct::BulletproofPlus> &proofs)
+  {
+    if (proofs.size() != 1)
+      return false;
+    const size_t sz = proofs[0].V.size();
+    if (sz == 0 || sz > BULLETPROOF_PLUS_MAX_OUTPUTS)
+      return false;
+    return true;
+  }
+  //-----------------------------------------------------------------------------------------------
   bool core::handle_incoming_tx_accumulated_batch(std::vector<tx_verification_batch_info> &tx_info, bool keeped_by_block)
   {
     bool ret = true;
@@ -943,6 +953,17 @@ namespace cryptonote
           }
           rvv.push_back(&rv); // delayed batch verification
           break;
+        case rct::RCTTypeBulletproofPlus:
+          if (!is_canonical_bulletproof_plus_layout(rv.p.bulletproofs_plus))
+          {
+            MERROR_VER("Bulletproof_plus does not have canonical form");
+            set_semantics_failed(tx_info[n].tx_hash);
+            tx_info[n].tvc.m_verifivation_failed = true;
+            tx_info[n].result = false;
+            break;
+          }
+          rvv.push_back(&rv); // delayed batch verification
+          break;
         default:
           MERROR_VER("Unknown rct type: " << rv.type);
           set_semantics_failed(tx_info[n].tx_hash);
@@ -960,7 +981,7 @@ namespace cryptonote
       {
         if (!tx_info[n].result)
           continue;
-        if (tx_info[n].tx->rct_signatures.type != rct::RCTTypeBulletproof && tx_info[n].tx->rct_signatures.type != rct::RCTTypeBulletproof2 && tx_info[n].tx->rct_signatures.type != rct::RCTTypeCLSAG)
+        if (tx_info[n].tx->rct_signatures.type != rct::RCTTypeBulletproof && tx_info[n].tx->rct_signatures.type != rct::RCTTypeBulletproof2 && tx_info[n].tx->rct_signatures.type != rct::RCTTypeCLSAG && tx_info[n].tx->rct_signatures.type != rct::RCTTypeBulletproofPlus)
           continue;
         if (assumed_bad || !rct::verRctSemanticsSimple(tx_info[n].tx->rct_signatures))
         {
@@ -1156,7 +1177,8 @@ namespace cryptonote
       return false;
     }
 
-    if (!check_tx_inputs_ring_members_diff(tx))
+    const uint8_t hf_version = m_blockchain_storage.get_current_hard_fork_version();
+    if (!check_tx_inputs_ring_members_diff(tx, hf_version))
     {
       MERROR_VER("tx uses duplicate ring members");
       return false;
@@ -1165,6 +1187,12 @@ namespace cryptonote
     if (!check_tx_inputs_keyimages_domain(tx))
     {
       MERROR_VER("tx uses key image not in the valid domain");
+      return false;
+    }
+
+    if (!check_output_types(tx, hf_version))
+    {
+      MERROR_VER("tx does not use valid output type(s)");
       return false;
     }
 
@@ -1274,10 +1302,9 @@ namespace cryptonote
     return true;
   }
   //-----------------------------------------------------------------------------------------------
-  bool core::check_tx_inputs_ring_members_diff(const transaction& tx) const
+  bool core::check_tx_inputs_ring_members_diff(const transaction& tx, const uint8_t hf_version) const
   {
-    const uint8_t version = m_blockchain_storage.get_current_hard_fork_version();
-    if (version >= 6)
+    if (hf_version >= 6)
     {
       for(const auto& in: tx.vin)
       {

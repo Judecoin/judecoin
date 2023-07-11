@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2019-2023 The Jude Project
+# Copyright (c) 2019-2023, The Jude Project
 # 
 # All rights reserved.
 # 
@@ -82,11 +82,11 @@ class TransferTest():
         res = daemon.get_info()
         height = res.height
 
-        daemon.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 80)
+        daemon.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 100)
         for i in range(len(self.wallet)):
             self.wallet[i].refresh()
             res = self.wallet[i].get_height()
-            assert res.height == height + 80
+            assert res.height == height + 100
 
     def transfer(self):
         daemon = Daemon()
@@ -110,23 +110,23 @@ class TransferTest():
 
         print ('Checking short payment IDs cannot be used when not in an integrated address')
         ok = False
-        try: self.wallet[0].transfer([dst], ring_size = 11, payment_id = '1234567812345678', get_tx_key = False)
+        try: self.wallet[0].transfer([dst], ring_size = 16, payment_id = '1234567812345678', get_tx_key = False)
         except: ok = True
         assert ok
 
         print ('Checking long payment IDs are rejected')
         ok = False
-        try: self.wallet[0].transfer([dst], ring_size = 11, payment_id = payment_id, get_tx_key = False, get_tx_hex = True)
+        try: self.wallet[0].transfer([dst], ring_size = 16, payment_id = payment_id, get_tx_key = False, get_tx_hex = True)
         except: ok = True
         assert ok
 
         print ('Checking empty destination is rejected')
         ok = False
-        try: self.wallet[0].transfer([], ring_size = 11, get_tx_key = False)
+        try: self.wallet[0].transfer([], ring_size = 16, get_tx_key = False)
         except: ok = True
         assert ok
 
-        res = self.wallet[0].transfer([dst], ring_size = 11, get_tx_key = False, get_tx_hex = True)
+        res = self.wallet[0].transfer([dst], ring_size = 16, get_tx_key = False, get_tx_hex = True)
         assert len(res.tx_hash) == 32*2
         txid = res.tx_hash
         assert len(res.tx_key) == 0
@@ -171,7 +171,7 @@ class TransferTest():
         assert e.double_spend_seen == False
         assert not 'confirmations' in e or e.confirmations == 0
 
-        running_balances[0] -= 1000000000000 + fee
+        running_balances[0] -= fee
 
         res = self.wallet[0].get_balance()
         assert res.balance == running_balances[0]
@@ -182,8 +182,6 @@ class TransferTest():
         res = daemon.getlastblockheader()
         running_balances[0] += res.block_header.reward
         self.wallet[0].refresh()
-
-        running_balances[0] += 1000000000000
 
         res = self.wallet[0].get_transfers()
         assert len(res['in']) == height # coinbases
@@ -233,7 +231,7 @@ class TransferTest():
         print("Creating transfer to another, manual relay")
 
         dst = {'address': '44Kbx4sJ7JDRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUTp6BW', 'amount': 1000000000000}
-        res = self.wallet[0].transfer([dst], ring_size = 11, get_tx_key = True, do_not_relay = True, get_tx_hex = True)
+        res = self.wallet[0].transfer([dst], ring_size = 16, get_tx_key = True, do_not_relay = True, get_tx_hex = True)
         assert len(res.tx_hash) == 32*2
         txid = res.tx_hash
         assert len(res.tx_key) == 32*2
@@ -323,7 +321,7 @@ class TransferTest():
         dst0 = {'address': '42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 'amount': 1000000000000}
         dst1 = {'address': '44Kbx4sJ7JDRDV5aAhLJzQCjDz2ViLRduE3ijDZu3osWKBjMGkV1XPk4pfDUMqt1Aiezvephdqm6YD19GKFD9ZcXVUTp6BW', 'amount': 1100000000000}
         dst2 = {'address': '46r4nYSevkfBUMhuykdK3gQ98XDqDTYW1hNLaXNvjpsJaSbNtdXh1sKMsdVgqkaihChAzEy29zEDPMR3NHQvGoZCLGwTerK', 'amount': 1200000000000}
-        res = self.wallet[0].transfer([dst0, dst1, dst2], ring_size = 11, get_tx_key = True)
+        res = self.wallet[0].transfer([dst0, dst1, dst2], ring_size = 16, get_tx_key = True)
         assert len(res.tx_hash) == 32*2
         txid = res.tx_hash
         assert len(res.tx_key) == 32*2
@@ -337,7 +335,7 @@ class TransferTest():
         assert len(res.unsigned_txset) == 0
         unsigned_txset = res.unsigned_txset
 
-        running_balances[0] -= 1000000000000 + 1100000000000 + 1200000000000 + fee
+        running_balances[0] -= 1100000000000 + 1200000000000 + fee
 
         res = self.wallet[0].get_balance()
         assert res.balance == running_balances[0]
@@ -347,7 +345,6 @@ class TransferTest():
         daemon.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 1)
         res = daemon.getlastblockheader()
         running_balances[0] += res.block_header.reward
-        running_balances[0] += 1000000000000
         running_balances[1] += 1100000000000
         running_balances[2] += 1200000000000
         self.wallet[0].refresh()

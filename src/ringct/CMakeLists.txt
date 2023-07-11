@@ -31,13 +31,10 @@ set(ringct_basic_sources
   rctTypes.cpp
   rctCryptoOps.c
   multiexp.cc
-  bulletproofs.cc)
+  bulletproofs.cc
+  bulletproofs_plus.cc)
 
-set(ringct_basic_private_headers
-  rctOps.h
-  rctTypes.h
-  multiexp.h
-  bulletproofs.h)
+jude_find_all_headers(ringct_basic_private_headers "${CMAKE_CURRENT_SOURCE_DIR}")
 
 jude_private_headers(ringct_basic
   ${crypto_private_headers})

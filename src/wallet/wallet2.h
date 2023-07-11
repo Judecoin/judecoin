@@ -347,7 +347,12 @@ private:
 
       bool is_rct() const { return m_rct; }
       uint64_t amount() const { return m_amount; }
-      const crypto::public_key &get_public_key() const { return boost::get<const cryptonote::txout_to_key>(m_tx.vout[m_internal_output_index].target).key; }
+      const crypto::public_key get_public_key() const {
+        crypto::public_key output_public_key;
+        THROW_WALLET_EXCEPTION_IF(!get_output_public_key(m_tx.vout[m_internal_output_index], output_public_key),
+          error::wallet_internal_error, "Unable to get output public key from output");
+        return output_public_key;
+      };
 
       BEGIN_SERIALIZE_OBJECT()
         FIELD(m_block_height)
@@ -370,6 +375,40 @@ private:
         FIELD(m_multisig_k)
         FIELD(m_multisig_info)
         FIELD(m_uses)
+      END_SERIALIZE()
+    };
+
+    struct exported_transfer_details
+    {
+      crypto::public_key m_pubkey;
+      uint64_t m_internal_output_index;
+      uint64_t m_global_output_index;
+      crypto::public_key m_tx_pubkey;
+      union
+      {
+        struct
+        {
+          uint8_t m_spent: 1;
+          uint8_t m_frozen: 1;
+          uint8_t m_rct: 1;
+          uint8_t m_key_image_known: 1;
+          uint8_t m_key_image_request: 1; // view wallets: we want to request it; cold wallets: it was requested
+          uint8_t m_key_image_partial: 1;
+        };
+        uint8_t flags;
+      } m_flags;
+      uint64_t m_amount;
+      std::vector<crypto::public_key> m_additional_tx_keys;
+
+      BEGIN_SERIALIZE_OBJECT()
+        VERSION_FIELD(0)
+        FIELD(m_pubkey)
+        VARINT_FIELD(m_internal_output_index)
+        VARINT_FIELD(m_global_output_index)
+        FIELD(m_tx_pubkey)
+        FIELD(m_flags.flags)
+        VARINT_FIELD(m_amount)
+        FIELD(m_additional_tx_keys)
       END_SERIALIZE()
     };
 
@@ -495,9 +534,20 @@ private:
       uint64_t unlock_time;
       bool use_rct;
       rct::RCTConfig rct_config;
+      bool use_view_tags;
       std::vector<cryptonote::tx_destination_entry> dests; // original setup, does not include change
       uint32_t subaddr_account;   // subaddress account of your wallet to be used in this transfer
       std::set<uint32_t> subaddr_indices;  // set of address indices used as inputs in this transfer
+
+      enum construction_flags_ : uint8_t
+      {
+        _use_rct          = 1 << 0, // 00000001
+        _use_view_tags    = 1 << 1  // 00000010
+        // next flag      = 1 << 2  // 00000100
+        // ...
+        // final flag     = 1 << 7  // 10000000
+      };
+      uint8_t construction_flags;
 
       BEGIN_SERIALIZE_OBJECT()
         FIELD(sources)
@@ -506,7 +556,26 @@ private:
         FIELD(selected_transfers)
         FIELD(extra)
         FIELD(unlock_time)
-        FIELD(use_rct)
+
+        // converted `use_rct` field into construction_flags when view tags
+        // were introduced to maintain backwards compatibility
+        if (!typename Archive<W>::is_saving())
+        {
+          FIELD_N("use_rct", construction_flags)
+          use_rct = (construction_flags & _use_rct) > 0;
+          use_view_tags = (construction_flags & _use_view_tags) > 0;
+        }
+        else
+        {
+          construction_flags = 0;
+          if (use_rct)
+            construction_flags ^= _use_rct;
+          if (use_view_tags)
+            construction_flags ^= _use_view_tags;
+
+          FIELD_N("use_rct", construction_flags)
+        }
+
         FIELD(rct_config)
         FIELD(dests)
         FIELD(subaddr_account)
@@ -575,11 +644,15 @@ private:
     {
       std::vector<tx_construction_data> txes;
       std::pair<size_t, wallet2::transfer_container> transfers;
+      std::pair<size_t, std::vector<wallet2::exported_transfer_details>> new_transfers;
 
       BEGIN_SERIALIZE_OBJECT()
-        VERSION_FIELD(0)
+        VERSION_FIELD(1)
         FIELD(txes)
-        FIELD(transfers)
+        if (version >= 1)
+          FIELD(new_transfers)
+        else
+          FIELD(transfers)
       END_SERIALIZE()
     };
 
@@ -929,10 +1002,10 @@ private:
     template<typename T>
     void transfer_selected(const std::vector<cryptonote::tx_destination_entry>& dsts, const std::vector<size_t>& selected_transfers, size_t fake_outputs_count,
       std::vector<std::vector<tools::wallet2::get_outs_entry>> &outs,
-      uint64_t unlock_time, uint64_t fee, const std::vector<uint8_t>& extra, T destination_split_strategy, const tx_dust_policy& dust_policy, cryptonote::transaction& tx, pending_tx &ptx);
+      uint64_t unlock_time, uint64_t fee, const std::vector<uint8_t>& extra, T destination_split_strategy, const tx_dust_policy& dust_policy, cryptonote::transaction& tx, pending_tx &ptx, const bool use_view_tags);
     void transfer_selected_rct(std::vector<cryptonote::tx_destination_entry> dsts, const std::vector<size_t>& selected_transfers, size_t fake_outputs_count,
       std::vector<std::vector<tools::wallet2::get_outs_entry>> &outs,
-      uint64_t unlock_time, uint64_t fee, const std::vector<uint8_t>& extra, cryptonote::transaction& tx, pending_tx &ptx, const rct::RCTConfig &rct_config);
+      uint64_t unlock_time, uint64_t fee, const std::vector<uint8_t>& extra, cryptonote::transaction& tx, pending_tx &ptx, const rct::RCTConfig &rct_config, const bool use_view_tags);
 
     void commit_tx(pending_tx& ptx_vector);
     void commit_tx(std::vector<pending_tx>& ptx_vector);
@@ -1052,9 +1125,7 @@ private:
         for (size_t i = 0; i < m_transfers.size(); ++i)
         {
           const transfer_details &td = m_transfers[i];
-          const cryptonote::tx_out &out = td.m_tx.vout[td.m_internal_output_index];
-          const cryptonote::txout_to_key &o = boost::get<const cryptonote::txout_to_key>(out.target);
-          m_pub_keys.emplace(o.key, i);
+          m_pub_keys.emplace(td.get_public_key(), i);
         }
         return;
       }
@@ -1204,6 +1275,8 @@ private:
     void ignore_outputs_below(uint64_t value) { m_ignore_outputs_below = value; }
     bool track_uses() const { return m_track_uses; }
     void track_uses(bool value) { m_track_uses = value; }
+    bool show_wallet_name_when_locked() const { return m_show_wallet_name_when_locked; }
+    void show_wallet_name_when_locked(bool value) { m_show_wallet_name_when_locked = value; }
     BackgroundMiningSetupType setup_background_mining() const { return m_setup_background_mining; }
     void setup_background_mining(BackgroundMiningSetupType value) { m_setup_background_mining = value; }
     uint32_t inactivity_lock_timeout() const { return m_inactivity_lock_timeout; }
@@ -1231,6 +1304,7 @@ private:
     void check_tx_key(const crypto::hash &txid, const crypto::secret_key &tx_key, const std::vector<crypto::secret_key> &additional_tx_keys, const cryptonote::account_public_address &address, uint64_t &received, bool &in_pool, uint64_t &confirmations);
     void check_tx_key_helper(const crypto::hash &txid, const crypto::key_derivation &derivation, const std::vector<crypto::key_derivation> &additional_derivations, const cryptonote::account_public_address &address, uint64_t &received, bool &in_pool, uint64_t &confirmations);
     void check_tx_key_helper(const cryptonote::transaction &tx, const crypto::key_derivation &derivation, const std::vector<crypto::key_derivation> &additional_derivations, const cryptonote::account_public_address &address, uint64_t &received) const;
+    bool is_out_to_acc(const cryptonote::account_public_address &address, const crypto::public_key& out_key, const crypto::key_derivation &derivation, const std::vector<crypto::key_derivation> &additional_derivations, const size_t output_index, const boost::optional<crypto::view_tag> &view_tag_opt, crypto::key_derivation &found_derivation) const;
     std::string get_tx_proof(const crypto::hash &txid, const cryptonote::account_public_address &address, bool is_subaddress, const std::string &message);
     std::string get_tx_proof(const cryptonote::transaction &tx, const crypto::secret_key &tx_key, const std::vector<crypto::secret_key> &additional_tx_keys, const cryptonote::account_public_address &address, bool is_subaddress, const std::string &message) const;
     bool check_tx_proof(const crypto::hash &txid, const cryptonote::account_public_address &address, bool is_subaddress, const std::string &message, const std::string &sig_str, uint64_t &received, bool &in_pool, uint64_t &confirmations);
@@ -1347,8 +1421,9 @@ private:
     bool verify_with_public_key(const std::string &data, const crypto::public_key &public_key, const std::string &signature) const;
 
     // Import/Export wallet data
-    std::pair<uint64_t, std::vector<tools::wallet2::transfer_details>> export_outputs(bool all = false) const;
+    std::pair<uint64_t, std::vector<tools::wallet2::exported_transfer_details>> export_outputs(bool all = false) const;
     std::string export_outputs_to_str(bool all = false) const;
+    size_t import_outputs(const std::pair<uint64_t, std::vector<tools::wallet2::exported_transfer_details>> &outputs);
     size_t import_outputs(const std::pair<uint64_t, std::vector<tools::wallet2::transfer_details>> &outputs);
     size_t import_outputs_from_str(const std::string &outputs_st);
     payment_container export_payments() const;
@@ -1386,8 +1461,9 @@ private:
     std::vector<std::pair<uint64_t, uint64_t>> estimate_backlog(const std::vector<std::pair<double, double>> &fee_levels);
     std::vector<std::pair<uint64_t, uint64_t>> estimate_backlog(uint64_t min_tx_weight, uint64_t max_tx_weight, const std::vector<uint64_t> &fees);
 
-    uint64_t estimate_fee(bool use_per_byte_fee, bool use_rct, int n_inputs, int mixin, int n_outputs, size_t extra_size, bool bulletproof, bool clsag, uint64_t base_fee, uint64_t fee_multiplier, uint64_t fee_quantization_mask) const;
+    uint64_t estimate_fee(bool use_per_byte_fee, bool use_rct, int n_inputs, int mixin, int n_outputs, size_t extra_size, bool bulletproof, bool clsag, bool bulletproof_plus, bool use_view_tags, uint64_t base_fee, uint64_t fee_quantization_mask) const;
     uint64_t get_fee_multiplier(uint32_t priority, int fee_algorithm = -1);
+    uint64_t get_base_fee(uint32_t priority);
     uint64_t get_base_fee();
     uint64_t get_fee_quantization_mask();
     uint64_t get_min_ring_size();
@@ -1717,6 +1793,7 @@ private:
     uint64_t m_ignore_outputs_above;
     uint64_t m_ignore_outputs_below;
     bool m_track_uses;
+    bool m_show_wallet_name_when_locked;
     uint32_t m_inactivity_lock_timeout;
     BackgroundMiningSetupType m_setup_background_mining;
     bool m_persistent_rpc_client_id;

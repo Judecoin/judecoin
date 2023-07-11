@@ -350,23 +350,12 @@ namespace cryptonote
 
     bool store_ssl_key = !restricted && rpc_config->ssl_options && rpc_config->ssl_options.auth.certificate_path.empty();
     const auto ssl_base_path = (boost::filesystem::path{data_dir} / "rpc_ssl").string();
-    const bool ssl_cert_file_exists = boost::filesystem::exists(ssl_base_path + ".crt");
-    const bool ssl_pkey_file_exists = boost::filesystem::exists(ssl_base_path + ".key");
-    if (store_ssl_key)
+    if (store_ssl_key && boost::filesystem::exists(ssl_base_path + ".crt"))
     {
-      // .key files are often given different read permissions as their corresponding .crt files.
-      // Consequently, sometimes the .key file wont't get copied, while the .crt file will.
-      if (ssl_cert_file_exists != ssl_pkey_file_exists)
-      {
-        MFATAL("Certificate (.crt) and private key (.key) files must both exist or both not exist at path: " << ssl_base_path);
-        return false;
-      }
-      else if (ssl_cert_file_exists) { // and ssl_pkey_file_exists
-        // load key from previous run, password prompted by OpenSSL
-        store_ssl_key = false;
-        rpc_config->ssl_options.auth =
-          epee::net_utils::ssl_authentication_t{ssl_base_path + ".key", ssl_base_path + ".crt"};
-      }
+      // load key from previous run, password prompted by OpenSSL
+      store_ssl_key = false;
+      rpc_config->ssl_options.auth =
+        epee::net_utils::ssl_authentication_t{ssl_base_path + ".key", ssl_base_path + ".crt"};
     }
 
     auto rng = [](size_t len, uint8_t *ptr){ return crypto::rand(len, ptr); };
@@ -2906,9 +2895,9 @@ namespace cryptonote
     CHECK_PAYMENT(req, res, COST_PER_FEE_ESTIMATE);
 
     const uint8_t version = m_core.get_blockchain_storage().get_current_hard_fork_version();
-    if (version >= HF_VERSION_2021_SCALING)
+    if (version >= HF_VERSION_2023_SCALING)
     {
-      m_core.get_blockchain_storage().get_dynamic_base_fee_estimate_2021_scaling(req.grace_blocks, res.fees);
+      m_core.get_blockchain_storage().get_dynamic_base_fee_estimate_2023_scaling(req.grace_blocks, res.fees);
       res.fee = res.fees[0];
     }
     else
@@ -3038,7 +3027,7 @@ namespace cryptonote
       return true;
     }
 
-    static const char software[] = "monero";
+    static const char software[] = "jude";
 #ifdef BUILD_TAG
     static const char buildtag[] = BOOST_PP_STRINGIZE(BUILD_TAG);
     static const char subdir[] = "cli";

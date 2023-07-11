@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2018 The Jude Project
+# Copyright (c) 2018-2023, The Jude Project
+
 # 
 # All rights reserved.
 # 
@@ -80,10 +81,10 @@ class BlockchainTest():
         assert ok
 
         res = daemon.get_fee_estimate()
-        assert res.fee == 234562
+        assert res.fee == 1200000
         assert res.quantization_mask == 10000
         res = daemon.get_fee_estimate(10)
-        assert res.fee <= 234562
+        assert res.fee <= 1200000
 
         # generate blocks
         res_generateblocks = daemon.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', blocks)
@@ -242,10 +243,10 @@ class BlockchainTest():
             assert res.histogram[i].recent_instances == 0
 
         res = daemon.get_fee_estimate()
-        assert res.fee == 234560
+        assert res.fee == 1200000
         assert res.quantization_mask == 10000
         res = daemon.get_fee_estimate(10)
-        assert res.fee <= 234560
+        assert res.fee <= 1200000
 
     def _test_alt_chains(self):
         print('Testing alt chains')

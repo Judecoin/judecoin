@@ -230,6 +230,9 @@ void fromJsonValue(const rapidjson::Value& val, cryptonote::txout_to_scripthash&
 void toJsonValue(rapidjson::Writer<epee::byte_stream>& dest, const cryptonote::txout_to_key& txout);
 void fromJsonValue(const rapidjson::Value& val, cryptonote::txout_to_key& txout);
 
+void toJsonValue(rapidjson::Writer<epee::byte_stream>& dest, const cryptonote::txout_to_tagged_key& txout);
+void fromJsonValue(const rapidjson::Value& val, cryptonote::txout_to_tagged_key& txout);
+
 void toJsonValue(rapidjson::Writer<epee::byte_stream>& dest, const cryptonote::tx_out& txout);
 void fromJsonValue(const rapidjson::Value& val, cryptonote::tx_out& txout);
 
@@ -291,6 +294,9 @@ void fromJsonValue(const rapidjson::Value& val, rct::rangeSig& sig);
 
 void toJsonValue(rapidjson::Writer<epee::byte_stream>& dest, const rct::Bulletproof& p);
 void fromJsonValue(const rapidjson::Value& val, rct::Bulletproof& p);
+
+void toJsonValue(rapidjson::Writer<epee::byte_stream>& dest, const rct::BulletproofPlus& p);
+void fromJsonValue(const rapidjson::Value& val, rct::BulletproofPlus& p);
 
 void toJsonValue(rapidjson::Writer<epee::byte_stream>& dest, const rct::boroSig& sig);
 void fromJsonValue(const rapidjson::Value& val, rct::boroSig& sig);
