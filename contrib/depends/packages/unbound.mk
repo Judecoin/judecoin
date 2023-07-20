@@ -13,7 +13,7 @@ define $(package)_set_vars
 endef
 
 define $(package)_config_cmds
-  $($(package)_autoconf)
+  $($(package)_autoconf) $($(package)_config_opts)
 endef
 
 define $(package)_build_cmds
