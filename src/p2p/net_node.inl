@@ -2463,7 +2463,7 @@ namespace nodetool
     network_zone& zone = m_network_zones.at(zone_type);
 
     std::vector<peerlist_entry> local_peerlist_new;
-    zone.m_peerlist.get_peerlist_head(local_peerlist_new, true, P2P_DEFAULT_PEERS_IN_HANDSHAKE);
+    zone.m_peerlist.get_peerlist_head(local_peerlist_new, true, max_peerlist_size);
 
     //only include out peers we did not already send
     rsp.local_peerlist_new.reserve(local_peerlist_new.size());
@@ -2483,7 +2483,7 @@ namespace nodetool
     etc., because someone could give faulty addresses over Tor/I2P to get the
     real peer with that identity banned/blacklisted. */
 
-    if(!context.m_is_income && zone.m_our_address.get_zone() == zone_type)
+      if(outgoing_to_same_zone)
       rsp.local_peerlist_new.push_back(peerlist_entry{zone.m_our_address, zone.m_config.m_peer_id, std::time(nullptr)});
 
     LOG_DEBUG_CC(context, "COMMAND_TIMED_SYNC");
