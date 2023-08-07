@@ -79,6 +79,7 @@ namespace
 
         return rct::Bulletproof{rct::keyV(n_outs, I), I, I, I, I, I, I, rct::keyV(nrl, I), rct::keyV(nrl, I), I, I, I};
     }
+
     rct::BulletproofPlus make_dummy_bulletproof_plus(const std::vector<uint64_t> &outamounts, rct::keyV &C, rct::keyV &masks)
     {
         const size_t n_outs = outamounts.size();
@@ -108,6 +109,13 @@ namespace
         }
 
         return rct::BulletproofPlus{rct::keyV(n_outs, I), I, I, I, I, I, I, rct::keyV(nrl, I), rct::keyV(nrl, I)};
+    }
+
+    rct::clsag make_dummy_clsag(size_t ring_size)
+    {
+        const rct::key I = rct::identity();
+        const size_t n_scalars = ring_size;
+        return rct::clsag{rct::keyV(n_scalars, I), I, I, I};
     }
 }
 
@@ -1034,12 +1042,12 @@ namespace rct {
     tuple<ctkeyM, jude_amount> populateFromBlockchain(ctkeyV inPk, int mixin) {
         int rows = inPk.size();
         ctkeyM rv(mixin + 1, inPk);
-        int index = randJUDEAmount(mixin);
+        int index = randJudeAmount(mixin);
         int i = 0, j = 0;
         for (i = 0; i <= mixin; i++) {
             if (i != index) {
                 for (j = 0; j < rows; j++) {
-                    getKeyFromBlockchain(rv[i][j], (size_t)randJUDEAmount);
+                    getKeyFromBlockchain(rv[i][j], (size_t)randJudeAmount);
                 }
             }
         }
@@ -1052,11 +1060,11 @@ namespace rct {
     //populateFromBlockchain creates a keymatrix with "mixin" columns and one of the columns is inPk
     //   the return value are the key matrix, and the index where inPk was put (random).     
     jude_amount populateFromBlockchainSimple(ctkeyV & mixRing, const ctkey & inPk, int mixin) {
-        int index = randJUDEAmount(mixin);
+        int index = randJudeAmount(mixin);
         int i = 0;
         for (i = 0; i <= mixin; i++) {
             if (i != index) {
-                getKeyFromBlockchain(mixRing[i], (size_t)randJUDEAmount(1000));
+                getKeyFromBlockchain(mixRing[i], (size_t)randJudeAmount(1000));
             } else {
                 mixRing[i] = inPk;
             }
@@ -1323,7 +1331,10 @@ namespace rct {
         {
             if (is_rct_clsag(rv.type))
             {
-                rv.p.CLSAGs[i] = proveRctCLSAGSimple(full_message, rv.mixRing[i], inSk[i], a[i], pseudoOuts[i], kLRki ? &(*kLRki)[i]: NULL, msout ? &msout->c[i] : NULL, msout ? &msout->mu_p[i] : NULL, index[i], hwdev);
+                if (hwdev.get_mode() == hw::device::TRANSACTION_CREATE_FAKE)
+                    rv.p.CLSAGs[i] = make_dummy_clsag(rv.mixRing[i].size());
+                else
+                    rv.p.CLSAGs[i] = proveRctCLSAGSimple(full_message, rv.mixRing[i], inSk[i], a[i], pseudoOuts[i], kLRki ? &(*kLRki)[i]: NULL, msout ? &msout->c[i] : NULL, msout ? &msout->mu_p[i] : NULL, index[i], hwdev);
             }
             else
             {
