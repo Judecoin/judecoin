@@ -1216,7 +1216,8 @@ wallet2::wallet2(network_type nettype, uint64_t kdf_rounds, bool unattended, std
   m_rpc_version(0),
   m_export_format(ExportFormat::Binary),
   m_load_deprecated_formats(false),
-  m_credits_target(0)
+  m_credits_target(0),
+  m_enable_multisig(false)
 {
   set_rpc_client_secret_key(rct::rct2sk(rct::skGen()));
 }
@@ -4051,6 +4052,9 @@ boost::optional<wallet2::keys_file_data> wallet2::get_keys_file_data(const epee:
   value2.SetUint64(m_credits_target);
   json.AddMember("credits_target", value2, json.GetAllocator());
 
+  value2.SetInt(m_enable_multisig ? 1 : 0);
+  json.AddMember("enable_multisig", value2, json.GetAllocator());
+
   // Serialize the JSON object
   rapidjson::StringBuffer buffer;
   rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
@@ -4199,6 +4203,7 @@ bool wallet2::load_keys_buf(const std::string& keys_buf, const epee::wipeable_st
     m_persistent_rpc_client_id = false;
     m_auto_mine_for_rpc_payment_threshold = -1.0f;
     m_credits_target = 0;
+    m_enable_multisig = false;
   }
   else if(json.IsObject())
   {
@@ -4431,6 +4436,8 @@ bool wallet2::load_keys_buf(const std::string& keys_buf, const epee::wipeable_st
     m_auto_mine_for_rpc_payment_threshold = field_auto_mine_for_rpc_payment;
     GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, credits_target, uint64_t, Uint64, false, 0);
     m_credits_target = field_credits_target;
+    GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, enable_multisig, int, Int, false, false);
+    m_enable_multisig = field_enable_multisig;
   }
   else
   {
@@ -7890,7 +7897,6 @@ void wallet2::light_wallet_get_outs(std::vector<std::vector<tools::wallet2::get_
     m_daemon_rpc_mutex.unlock();
     THROW_WALLET_EXCEPTION_IF(!r, error::no_connection_to_daemon, "get_random_outs");
     THROW_WALLET_EXCEPTION_IF(ores.amount_outs.empty() , error::wallet_internal_error, "No outputs received from light wallet node. Error: " + ores.Error);
-    size_t n_outs = 0; for (const auto &e: ores.amount_outs) n_outs += e.outputs.size();
   }
   
   // Check if we got enough outputs for each amount
@@ -9726,7 +9732,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryp
   std::vector<std::pair<uint32_t, std::vector<size_t>>> unused_transfers_indices_per_subaddr;
   std::vector<std::pair<uint32_t, std::vector<size_t>>> unused_dust_indices_per_subaddr;
   uint64_t needed_money;
-  uint64_t accumulated_fee, accumulated_outputs, accumulated_change;
+  uint64_t accumulated_fee, accumulated_change;
   struct TX {
     std::vector<size_t> selected_transfers;
     std::vector<cryptonote::tx_destination_entry> dsts;
@@ -9918,7 +9924,6 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryp
   // start with an empty tx
   txes.push_back(TX());
   accumulated_fee = 0;
-  accumulated_outputs = 0;
   accumulated_change = 0;
   adding_fee = false;
   needed_fee = 0;
@@ -9931,8 +9936,6 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryp
   // the destination, and one for change.
   LOG_PRINT_L2("checking preferred");
   std::vector<size_t> preferred_inputs;
-  uint64_t rct_outs_needed = 2 * (fake_outs_count + 1);
-  rct_outs_needed += 100; // some fudge factor since we don't know how many are locked
   if (use_rct)
   {
     // this is used to build a tx that's 1 or 2 inputs, and 2 outputs, which
@@ -10037,7 +10040,6 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryp
     // add this output to the list to spend
     tx.selected_transfers.push_back(idx);
     uint64_t available_amount = td.amount();
-    accumulated_outputs += available_amount;
 
     // clear any fake outs we'd already gathered, since we'll need a new set
     outs.clear();

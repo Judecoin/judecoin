@@ -1042,12 +1042,12 @@ namespace rct {
     tuple<ctkeyM, jude_amount> populateFromBlockchain(ctkeyV inPk, int mixin) {
         int rows = inPk.size();
         ctkeyM rv(mixin + 1, inPk);
-        int index = randjudeAmount(mixin);
+        int index = randJUDEAmount(mixin);
         int i = 0, j = 0;
         for (i = 0; i <= mixin; i++) {
             if (i != index) {
                 for (j = 0; j < rows; j++) {
-                    getKeyFromBlockchain(rv[i][j], (size_t)randjudeAmount);
+                    getKeyFromBlockchain(rv[i][j], (size_t)randJUDEAmount);
                 }
             }
         }
@@ -1060,11 +1060,11 @@ namespace rct {
     //populateFromBlockchain creates a keymatrix with "mixin" columns and one of the columns is inPk
     //   the return value are the key matrix, and the index where inPk was put (random).     
     jude_amount populateFromBlockchainSimple(ctkeyV & mixRing, const ctkey & inPk, int mixin) {
-        int index = randjudeAmount(mixin);
+        int index = randJUDEAmount(mixin);
         int i = 0;
         for (i = 0; i <= mixin; i++) {
             if (i != index) {
-                getKeyFromBlockchain(mixRing[i], (size_t)randjudeAmount(1000));
+                getKeyFromBlockchain(mixRing[i], (size_t)randJUDEAmount(1000));
             } else {
                 mixRing[i] = inPk;
             }
