@@ -85,7 +85,7 @@ using namespace epee;
 #include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
 #include <boost/format.hpp>
-#include <openssl/evp.h>
+#include <openssl/sha.h>
 
 #undef JUDE_DEFAULT_LOG_CATEGORY
 #define JUDE_DEFAULT_LOG_CATEGORY "util"
@@ -941,7 +941,14 @@ std::string get_nix_version_display_string()
 
   bool sha256sum(const uint8_t *data, size_t len, crypto::hash &hash)
   {
-    return EVP_Digest(data, len, (unsigned char*) hash.data, NULL, EVP_sha256(), NULL) != 0;
+    SHA256_CTX ctx;
+    if (!SHA256_Init(&ctx))
+      return false;
+    if (!SHA256_Update(&ctx, data, len))
+      return false;
+    if (!SHA256_Final((unsigned char*)hash.data, &ctx))
+      return false;
+    return true;
   }
 
   bool sha256sum(const std::string &filename, crypto::hash &hash)
@@ -954,8 +961,8 @@ std::string get_nix_version_display_string()
     if (!f)
       return false;
     std::ifstream::pos_type file_size = f.tellg();
-    std::unique_ptr<EVP_MD_CTX, decltype(&EVP_MD_CTX_free)> ctx(EVP_MD_CTX_new(), &EVP_MD_CTX_free);
-    if (!EVP_DigestInit_ex(ctx.get(), EVP_sha256(), nullptr))
+    SHA256_CTX ctx;
+    if (!SHA256_Init(&ctx))
       return false;
     size_t size_left = file_size;
     f.seekg(0, std::ios::beg);
@@ -966,12 +973,12 @@ std::string get_nix_version_display_string()
       f.read(buf, read_size);
       if (!f || !f.good())
         return false;
-      if (!EVP_DigestUpdate(ctx.get(), buf, read_size))
+      if (!SHA256_Update(&ctx, buf, read_size))
         return false;
       size_left -= read_size;
     }
     f.close();
-    if (!EVP_DigestFinal_ex(ctx.get(), (unsigned char*)hash.data, nullptr))
+    if (!SHA256_Final((unsigned char*)hash.data, &ctx))
       return false;
     return true;
   }

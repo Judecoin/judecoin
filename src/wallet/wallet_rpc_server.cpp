@@ -61,17 +61,6 @@ using namespace epee;
 
 #define DEFAULT_AUTO_REFRESH_PERIOD 20 // seconds
 
-#define CHECK_MULTISIG_ENABLED() \
-  do \
-  { \
-    if (m_wallet->multisig() && !m_wallet->is_multisig_enabled()) \
-    { \
-      er.code = WALLET_RPC_ERROR_CODE_DISABLED; \
-      er.message = "This wallet is multisig, and multisig is disabled. Multisig is an experimental feature and may have bugs. Things that could go wrong include: funds sent to a multisig wallet can't be spent at all, can only be spent with the participation of a malicious group member, or can be stolen by a malicious group member. You can enable it by running this once in jude-wallet-cli: set enable-multisig-experimental 1"; \
-      return false; \
-    } \
-  } while(0)
-
 namespace
 {
   const command_line::arg_descriptor<std::string, true> arg_rpc_bind_port = {"rpc-bind-port", "Sets bind port for server"};
@@ -1068,8 +1057,6 @@ namespace tools
       return false;
     }
 
-    CHECK_MULTISIG_ENABLED();
-
     // validate the transfer requested and populate dsts & extra
     if (!validate_transfer(req.destinations, req.payment_id, dsts, extra, true, er))
     {
@@ -1121,8 +1108,6 @@ namespace tools
       er.message = "Command unavailable in restricted mode.";
       return false;
     }
-
-    CHECK_MULTISIG_ENABLED();
 
     // validate the transfer requested and populate dsts & extra; RPC_TRANSFER::request and RPC_TRANSFER_SPLIT::request are identical types.
     if (!validate_transfer(req.destinations, req.payment_id, dsts, extra, true, er))
@@ -1177,8 +1162,6 @@ namespace tools
       er.message = "command not supported by watch-only wallet";
       return false;
     }
-
-    CHECK_MULTISIG_ENABLED();
 
     cryptonote::blobdata blob;
     if (!epee::string_tools::parse_hexstr_to_binbuff(req.unsigned_txset, blob))
@@ -1528,8 +1511,6 @@ namespace tools
       return false;
     }
 
-    CHECK_MULTISIG_ENABLED();
-
     try
     {
       std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_unmixable_sweep_transactions();
@@ -1557,8 +1538,6 @@ namespace tools
       er.message = "Command unavailable in restricted mode.";
       return false;
     }
-
-    CHECK_MULTISIG_ENABLED();
 
     // validate the transfer requested and populate dsts & extra
     std::list<wallet_rpc::transfer_destination> destination;
@@ -1624,8 +1603,6 @@ namespace tools
       er.message = "Amount of outputs should be greater than 0.";
       return  false;
     }
-
-    CHECK_MULTISIG_ENABLED();
 
     // validate the transfer requested and populate dsts & extra
     std::list<wallet_rpc::transfer_destination> destination;
@@ -3956,9 +3933,6 @@ namespace tools
       er.message = "This wallet is already multisig";
       return false;
     }
-    if (req.enable_multisig_experimental)
-      m_wallet->enable_multisig(true);
-    CHECK_MULTISIG_ENABLED();
     if (m_wallet->watch_only())
     {
       er.code = WALLET_RPC_ERROR_CODE_WATCH_ONLY;
@@ -3985,7 +3959,6 @@ namespace tools
       er.message = "This wallet is already multisig";
       return false;
     }
-    CHECK_MULTISIG_ENABLED();
     if (m_wallet->watch_only())
     {
       er.code = WALLET_RPC_ERROR_CODE_WATCH_ONLY;
@@ -4030,7 +4003,6 @@ namespace tools
       er.message = "This wallet is multisig, but not yet finalized";
       return false;
     }
-    CHECK_MULTISIG_ENABLED();
 
     cryptonote::blobdata info;
     try
@@ -4072,7 +4044,6 @@ namespace tools
       er.message = "This wallet is multisig, but not yet finalized";
       return false;
     }
-    CHECK_MULTISIG_ENABLED();
 
     if (req.info.size() < threshold - 1)
     {
@@ -4125,7 +4096,6 @@ namespace tools
   //------------------------------------------------------------------------------------------------------------------------------
   bool wallet_rpc_server::on_finalize_multisig(const wallet_rpc::COMMAND_RPC_FINALIZE_MULTISIG::request& req, wallet_rpc::COMMAND_RPC_FINALIZE_MULTISIG::response& res, epee::json_rpc::error& er, const connection_context *ctx)
   {
-    CHECK_MULTISIG_ENABLED();
     return false;
   }
   //------------------------------------------------------------------------------------------------------------------------------
@@ -4153,7 +4123,6 @@ namespace tools
       er.message = "This wallet is multisig, and already finalized";
       return false;
     }
-    CHECK_MULTISIG_ENABLED();
 
     if (req.multisig_info.size() + 1 < total)
     {
@@ -4203,7 +4172,6 @@ namespace tools
       er.message = "This wallet is multisig, but not yet finalized";
       return false;
     }
-    CHECK_MULTISIG_ENABLED();
 
     cryptonote::blobdata blob;
     if (!epee::string_tools::parse_hexstr_to_binbuff(req.tx_data_hex, blob))
@@ -4273,7 +4241,6 @@ namespace tools
       er.message = "This wallet is multisig, but not yet finalized";
       return false;
     }
-    CHECK_MULTISIG_ENABLED();
 
     cryptonote::blobdata blob;
     if (!epee::string_tools::parse_hexstr_to_binbuff(req.tx_data_hex, blob))

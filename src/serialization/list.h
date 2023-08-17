@@ -1,5 +1,4 @@
-// Copyright (c) 2018-2023, The Jude Project
-
+// Copyright (c) 2014-2023, The Jude Project
 // 
 // All rights reserved.
 // 
@@ -26,44 +25,34 @@
 // INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// 
+// Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
 #pragma once
 
-#include <string>
-#include <vector>
-#include <lmdb.h>
-#include "wipeable_string.h"
-#include "crypto/crypto.h"
-#include "cryptonote_basic/cryptonote_basic.h"
+#include <list>
 
-namespace tools
+template <template <bool> class Archive, class T>
+bool do_serialize(Archive<false> &ar, std::list<T> &v);
+template <template <bool> class Archive, class T>
+bool do_serialize(Archive<true> &ar, std::list<T> &v);
+
+namespace serialization
 {
-  class ringdb
+  namespace detail
   {
-  public:
-    ringdb(std::string filename, const std::string &genesis);
-    void close();
-    ~ringdb();
-
-    bool add_rings(const crypto::chacha_key &chacha_key, const cryptonote::transaction_prefix &tx);
-    bool remove_rings(const crypto::chacha_key &chacha_key, const std::vector<crypto::key_image> &key_images);
-    bool remove_rings(const crypto::chacha_key &chacha_key, const cryptonote::transaction_prefix &tx);
-    bool get_ring(const crypto::chacha_key &chacha_key, const crypto::key_image &key_image, std::vector<uint64_t> &outs);
-    bool set_ring(const crypto::chacha_key &chacha_key, const crypto::key_image &key_image, const std::vector<uint64_t> &outs, bool relative);
-
-    bool blackball(const std::pair<uint64_t, uint64_t> &output);
-    bool blackball(const std::vector<std::pair<uint64_t, uint64_t>> &outputs);
-    bool unblackball(const std::pair<uint64_t, uint64_t> &output);
-    bool blackballed(const std::pair<uint64_t, uint64_t> &output);
-    bool clear_blackballs();
-
-  private:
-    bool blackball_worker(const std::vector<std::pair<uint64_t, uint64_t>> &outputs, int op);
-
-  private:
-    std::string filename;
-    MDB_env *env;
-    MDB_dbi dbi_rings;
-    MDB_dbi dbi_blackballs;
-  };
+    template <typename T>
+    void do_add(std::list<T> &c, T &&e)
+    {
+      c.emplace_back(std::forward<T>(e));
+    }
+  }
 }
+
+#include "serialization.h"
+
+template <template <bool> class Archive, class T>
+bool do_serialize(Archive<false> &ar, std::list<T> &v) { return do_serialize_container(ar, v); }
+template <template <bool> class Archive, class T>
+bool do_serialize(Archive<true> &ar, std::list<T> &v) { return do_serialize_container(ar, v); }
+
