@@ -538,7 +538,7 @@ namespace nodetool
     if ( !set_max_out_peers(public_zone, command_line::get_arg(vm, arg_out_peers) ) )
       return false;
     else
-      m_payload_handler.set_max_out_peers(epee::net_utils::zone::public_, public_zone.m_config.m_net_config.max_out_connection_count);
+      m_payload_handler.set_max_out_peers(public_zone.m_config.m_net_config.max_out_connection_count);
 
 
     if ( !set_max_in_peers(public_zone, command_line::get_arg(vm, arg_in_peers) ) )
@@ -575,8 +575,6 @@ namespace nodetool
 
       if (!set_max_out_peers(zone, proxy.max_connections))
         return false;
-      else
-        m_payload_handler.set_max_out_peers(proxy.zone, proxy.max_connections);
 
       epee::byte_slice this_noise = nullptr;
       if (proxy.noise)
@@ -2469,7 +2467,6 @@ namespace nodetool
     const uint32_t max_peerlist_size = P2P_DEFAULT_PEERS_IN_HANDSHAKE - (outgoing_to_same_zone ? 1 : 0);
 
     std::vector<peerlist_entry> local_peerlist_new;
-    zone.m_peerlist.get_peerlist_head(local_peerlist_new, true, P2P_DEFAULT_PEERS_IN_HANDSHAKE);
     zone.m_peerlist.get_peerlist_head(local_peerlist_new, true, max_peerlist_size);
 
     //only include out peers we did not already send
@@ -2765,7 +2762,7 @@ namespace nodetool
       public_zone->second.m_config.m_net_config.max_out_connection_count = count;
       if(current > count)
         public_zone->second.m_net_server.get_config_object().del_out_connections(current - count);
-      m_payload_handler.set_max_out_peers(epee::net_utils::zone::public_, count);
+      m_payload_handler.set_max_out_peers(count);
     }
   }
 
@@ -2894,12 +2891,10 @@ namespace nodetool
   {
     if (m_offline) return true;
     if (!m_exclusive_peers.empty()) return true;
+    if (m_payload_handler.needs_new_sync_connections()) return true;
 
     for (auto& zone : m_network_zones)
     {
-      if (m_payload_handler.needs_new_sync_connections(zone.first))
-        continue;
-
       if (zone.second.m_net_server.is_stop_signal_sent())
         return false;
 
