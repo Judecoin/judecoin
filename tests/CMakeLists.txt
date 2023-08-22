@@ -78,6 +78,7 @@ file(COPY
   data/outputs
   data/unsigned_jude_tx
   data/signed_jude_tx
+  data/sha256sum
   DESTINATION data)
 
 if (CMAKE_BUILD_TYPE STREQUAL "fuzz" OR OSSFUZZ)
