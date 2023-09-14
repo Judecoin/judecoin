@@ -60,7 +60,17 @@ using namespace epee;
 #define JUDE_DEFAULT_LOG_CATEGORY "wallet.rpc"
 
 #define DEFAULT_AUTO_REFRESH_PERIOD 20 // seconds
-#define REFRESH_INFICATIVE_BLOCK_CHUNK_SIZE 256    // just to split refresh in separate calls to play nicer with other threads
+
+#define CHECK_MULTISIG_ENABLED() \
+  do \
+  { \
+    if (m_wallet->multisig() && !m_wallet->is_multisig_enabled()) \
+    { \
+      er.code = WALLET_RPC_ERROR_CODE_DISABLED; \
+      er.message = "This wallet is multisig, and multisig is disabled. Multisig is an experimental feature and may have bugs. Things that could go wrong include: funds sent to a multisig wallet can't be spent at all, can only be spent with the participation of a malicious group member, or can be stolen by a malicious group member. You can enable it by running this once in jude-wallet-cli: set enable-multisig-experimental 1"; \
+      return false; \
+    } \
+  } while(0)
 
 namespace
 {
@@ -69,7 +79,6 @@ namespace
   const command_line::arg_descriptor<bool> arg_restricted = {"restricted-rpc", "Restricts to view-only commands", false};
   const command_line::arg_descriptor<std::string> arg_wallet_dir = {"wallet-dir", "Directory for newly created wallets"};
   const command_line::arg_descriptor<bool> arg_prompt_for_password = {"prompt-for-password", "Prompts for password when not provided", false};
-  const command_line::arg_descriptor<bool> arg_no_initial_sync = {"no-initial-sync", "Skips the initial sync before listening for connections", false};
 
   constexpr const char default_rpc_username[] = "jude";
 
@@ -140,17 +149,12 @@ namespace tools
         return true;
       if (boost::posix_time::microsec_clock::universal_time() < m_last_auto_refresh_time + boost::posix_time::seconds(m_auto_refresh_period))
         return true;
-      uint64_t blocks_fetched = 0;
       try {
-        bool received_money = false;
-        if (m_wallet) m_wallet->refresh(m_wallet->is_trusted_daemon(), 0, blocks_fetched, received_money, true, REFRESH_INFICATIVE_BLOCK_CHUNK_SIZE);
+        if (m_wallet) m_wallet->refresh(m_wallet->is_trusted_daemon());
       } catch (const std::exception& ex) {
         LOG_ERROR("Exception at while refreshing, what=" << ex.what());
       }
-      // if we got the max amount of blocks, do not set the last refresh time, we did only part of the refresh and will
-      // continue asap, and only set the last refresh time once the refresh is actually finished
-      if (blocks_fetched < REFRESH_INFICATIVE_BLOCK_CHUNK_SIZE)
-        m_last_auto_refresh_time = boost::posix_time::microsec_clock::universal_time();
+      m_last_auto_refresh_time = boost::posix_time::microsec_clock::universal_time();
       return true;
     }, 1000);
     m_net_server.add_idle_handler([this](){
@@ -1064,6 +1068,8 @@ namespace tools
       return false;
     }
 
+    CHECK_MULTISIG_ENABLED();
+
     // validate the transfer requested and populate dsts & extra
     if (!validate_transfer(req.destinations, req.payment_id, dsts, extra, true, er))
     {
@@ -1115,6 +1121,8 @@ namespace tools
       er.message = "Command unavailable in restricted mode.";
       return false;
     }
+
+    CHECK_MULTISIG_ENABLED();
 
     // validate the transfer requested and populate dsts & extra; RPC_TRANSFER::request and RPC_TRANSFER_SPLIT::request are identical types.
     if (!validate_transfer(req.destinations, req.payment_id, dsts, extra, true, er))
@@ -1169,6 +1177,8 @@ namespace tools
       er.message = "command not supported by watch-only wallet";
       return false;
     }
+
+    CHECK_MULTISIG_ENABLED();
 
     cryptonote::blobdata blob;
     if (!epee::string_tools::parse_hexstr_to_binbuff(req.unsigned_txset, blob))
@@ -1518,6 +1528,8 @@ namespace tools
       return false;
     }
 
+    CHECK_MULTISIG_ENABLED();
+
     try
     {
       std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_unmixable_sweep_transactions();
@@ -1545,6 +1557,8 @@ namespace tools
       er.message = "Command unavailable in restricted mode.";
       return false;
     }
+
+    CHECK_MULTISIG_ENABLED();
 
     // validate the transfer requested and populate dsts & extra
     std::list<wallet_rpc::transfer_destination> destination;
@@ -1610,6 +1624,8 @@ namespace tools
       er.message = "Amount of outputs should be greater than 0.";
       return  false;
     }
+
+    CHECK_MULTISIG_ENABLED();
 
     // validate the transfer requested and populate dsts & extra
     std::list<wallet_rpc::transfer_destination> destination;
@@ -3940,6 +3956,9 @@ namespace tools
       er.message = "This wallet is already multisig";
       return false;
     }
+    if (req.enable_multisig_experimental)
+      m_wallet->enable_multisig(true);
+    CHECK_MULTISIG_ENABLED();
     if (m_wallet->watch_only())
     {
       er.code = WALLET_RPC_ERROR_CODE_WATCH_ONLY;
@@ -3966,6 +3985,7 @@ namespace tools
       er.message = "This wallet is already multisig";
       return false;
     }
+    CHECK_MULTISIG_ENABLED();
     if (m_wallet->watch_only())
     {
       er.code = WALLET_RPC_ERROR_CODE_WATCH_ONLY;
@@ -4010,6 +4030,7 @@ namespace tools
       er.message = "This wallet is multisig, but not yet finalized";
       return false;
     }
+    CHECK_MULTISIG_ENABLED();
 
     cryptonote::blobdata info;
     try
@@ -4051,6 +4072,7 @@ namespace tools
       er.message = "This wallet is multisig, but not yet finalized";
       return false;
     }
+    CHECK_MULTISIG_ENABLED();
 
     if (req.info.size() < threshold - 1)
     {
@@ -4103,6 +4125,7 @@ namespace tools
   //------------------------------------------------------------------------------------------------------------------------------
   bool wallet_rpc_server::on_finalize_multisig(const wallet_rpc::COMMAND_RPC_FINALIZE_MULTISIG::request& req, wallet_rpc::COMMAND_RPC_FINALIZE_MULTISIG::response& res, epee::json_rpc::error& er, const connection_context *ctx)
   {
+    CHECK_MULTISIG_ENABLED();
     return false;
   }
   //------------------------------------------------------------------------------------------------------------------------------
@@ -4130,6 +4153,7 @@ namespace tools
       er.message = "This wallet is multisig, and already finalized";
       return false;
     }
+    CHECK_MULTISIG_ENABLED();
 
     if (req.multisig_info.size() + 1 < total)
     {
@@ -4179,6 +4203,7 @@ namespace tools
       er.message = "This wallet is multisig, but not yet finalized";
       return false;
     }
+    CHECK_MULTISIG_ENABLED();
 
     cryptonote::blobdata blob;
     if (!epee::string_tools::parse_hexstr_to_binbuff(req.tx_data_hex, blob))
@@ -4248,6 +4273,7 @@ namespace tools
       er.message = "This wallet is multisig, but not yet finalized";
       return false;
     }
+    CHECK_MULTISIG_ENABLED();
 
     cryptonote::blobdata blob;
     if (!epee::string_tools::parse_hexstr_to_binbuff(req.tx_data_hex, blob))
@@ -4502,7 +4528,6 @@ public:
       const auto password_file = command_line::get_arg(vm, arg_password_file);
       const auto prompt_for_password = command_line::get_arg(vm, arg_prompt_for_password);
       const auto password_prompt = prompt_for_password ? password_prompter : nullptr;
-      const auto no_initial_sync = command_line::get_arg(vm, arg_no_initial_sync);
 
       if(!wallet_file.empty() && !from_json.empty())
       {
@@ -4571,8 +4596,7 @@ public:
 
       try
       {
-        if (!no_initial_sync)
-          wal->refresh(wal->is_trusted_daemon());
+        wal->refresh(wal->is_trusted_daemon());
       }
       catch (const std::exception& e)
       {
@@ -4683,7 +4707,6 @@ int main(int argc, char** argv) {
   command_line::add_arg(desc_params, arg_wallet_dir);
   command_line::add_arg(desc_params, arg_prompt_for_password);
   command_line::add_arg(desc_params, arg_rpc_client_secret_key);
-  command_line::add_arg(desc_params, arg_no_initial_sync);
 
   daemonizer::init_options(hidden_options, desc_params);
   desc_params.add(hidden_options);

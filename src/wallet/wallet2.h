@@ -974,7 +974,7 @@ private:
     bool is_deprecated() const;
     void refresh(bool trusted_daemon);
     void refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blocks_fetched);
-    void refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blocks_fetched, bool& received_money, bool check_pool = true, uint64_t max_blocks = std::numeric_limits<uint64_t>::max());
+    void refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blocks_fetched, bool& received_money, bool check_pool = true);
     bool refresh(bool trusted_daemon, uint64_t & blocks_fetched, bool& received_money, bool& ok);
 
     void set_refresh_type(RefreshType refresh_type) { m_refresh_type = refresh_type; }
@@ -1297,6 +1297,8 @@ private:
     void set_rpc_client_secret_key(const crypto::secret_key &key) { m_rpc_client_secret_key = key; m_node_rpc_proxy.set_client_secret_key(key); }
     uint64_t credits_target() const { return m_credits_target; }
     void credits_target(uint64_t threshold) { m_credits_target = threshold; }
+    bool is_multisig_enabled() const { return m_enable_multisig; }
+    void enable_multisig(bool enable) { m_enable_multisig = enable; }
 
     bool get_tx_key_cached(const crypto::hash &txid, crypto::secret_key &tx_key, std::vector<crypto::secret_key> &additional_tx_keys) const;
     void set_tx_key(const crypto::hash &txid, const crypto::secret_key &tx_key, const std::vector<crypto::secret_key> &additional_tx_keys, const boost::optional<cryptonote::account_public_address> &single_destination_subaddress = boost::none);
@@ -1813,6 +1815,7 @@ private:
     crypto::secret_key m_rpc_client_secret_key;
     rpc_payment_state_t m_rpc_payment_state;
     uint64_t m_credits_target;
+    bool m_enable_multisig;
 
     // Aux transaction data from device
     serializable_unordered_map<crypto::hash, std::string> m_tx_device;
