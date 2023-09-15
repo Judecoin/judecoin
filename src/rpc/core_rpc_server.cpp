@@ -492,6 +492,7 @@ namespace cryptonote
     }
 
     CHECK_PAYMENT_MIN1(req, res, COST_PER_GET_INFO, false);
+    db_rtxn_guard rtxn_guard(&m_core.get_blockchain_storage().get_db());
 
     const bool restricted = m_restricted && ctx;
 
@@ -597,6 +598,7 @@ namespace cryptonote
     }
 
     CHECK_PAYMENT(req, res, 1);
+    db_rtxn_guard rtxn_guard(&m_core.get_blockchain_storage().get_db());
 
     // quick check for noop
     if (!req.block_ids.empty())
@@ -607,7 +609,7 @@ namespace cryptonote
       if (last_block_hash == req.block_ids.front())
       {
         res.start_height = 0;
-        res.current_height = m_core.get_current_blockchain_height();
+        res.current_height = last_block_height + 1;
         res.status = CORE_RPC_STATUS_OK;
         return true;
       }
@@ -728,6 +730,7 @@ namespace cryptonote
     res.blocks.clear();
     res.blocks.reserve(req.heights.size());
     CHECK_PAYMENT_MIN1(req, res, req.heights.size() * COST_PER_BLOCK, false);
+    db_rtxn_guard rtxn_guard(&m_core.get_blockchain_storage().get_db());
     for (uint64_t height : req.heights)
     {
       block blk;
@@ -1589,6 +1592,7 @@ namespace cryptonote
       return r;
 
     CHECK_PAYMENT(req, res, 1);
+    db_rtxn_guard rtxn_guard(&m_core.get_blockchain_storage().get_db());
 
     const bool restricted = m_restricted && ctx;
     const bool request_has_rpc_origin = ctx != NULL;
@@ -1613,6 +1617,7 @@ namespace cryptonote
       return r;
 
     CHECK_PAYMENT(req, res, 1);
+    db_rtxn_guard rtxn_guard(&m_core.get_blockchain_storage().get_db());
 
     const bool restricted = m_restricted && ctx;
     const bool request_has_rpc_origin = ctx != NULL;
@@ -1715,11 +1720,14 @@ namespace cryptonote
       error_resp.message = "Wrong parameters, expected height";
       return false;
     }
+    db_rtxn_guard rtxn_guard(&m_core.get_blockchain_storage().get_db());
     uint64_t h = req[0];
-    if(m_core.get_current_blockchain_height() <= h)
+    uint64_t blockchain_height = m_core.get_current_blockchain_height();
+    if(blockchain_height <= h)
     {
       error_resp.code = CORE_RPC_ERROR_CODE_TOO_BIG_HEIGHT;
-      error_resp.message = std::string("Requested block height: ") + std::to_string(h) + " greater than current top block height: " +  std::to_string(m_core.get_current_blockchain_height() - 1);
+      error_resp.message = std::string("Requested block height: ") + std::to_string(h) + " greater than current top block height: " +  std::to_string(blockchain_height - 1);
+      return false;
     }
     res = string_tools::pod_to_hex(m_core.get_block_id_by_height(h));
     return true;
@@ -1869,6 +1877,7 @@ namespace cryptonote
         return false;
       }
     }
+    db_rtxn_guard rtxn_guard(&m_core.get_blockchain_storage().get_db());
     crypto::hash seed_hash, next_seed_hash;
     if (!get_block_template(info.address, req.prev_block.empty() ? NULL : &prev_block, blob_reserve, reserved_offset, wdiff, res.height, res.expected_reward, b, res.seed_height, seed_hash, next_seed_hash, error_resp))
       return false;
@@ -2342,6 +2351,7 @@ namespace cryptonote
 
     CHECK_CORE_READY();
     CHECK_PAYMENT_MIN1(req, res, COST_PER_BLOCK_HEADER, false);
+    db_rtxn_guard rtxn_guard(&m_core.get_blockchain_storage().get_db());
     uint64_t last_block_height;
     crypto::hash last_block_hash;
     m_core.get_blockchain_top(last_block_height, last_block_hash);
@@ -2381,6 +2391,8 @@ namespace cryptonote
       error_resp.message = "Too many block headers requested in restricted mode";
       return false;
     }
+
+    db_rtxn_guard rtxn_guard(&m_core.get_blockchain_storage().get_db());
 
     auto get = [this](const std::string &hash, bool fill_pow_hash, block_header_response &block_header, bool restricted, epee::json_rpc::error& error_resp) -> bool {
       crypto::hash block_hash;
@@ -2441,13 +2453,6 @@ namespace cryptonote
     if (use_bootstrap_daemon_if_necessary<COMMAND_RPC_GET_BLOCK_HEADERS_RANGE>(invoke_http_mode::JON_RPC, "getblockheadersrange", req, res, r))
       return r;
 
-    const uint64_t bc_height = m_core.get_current_blockchain_height();
-    if (req.start_height >= bc_height || req.end_height >= bc_height || req.start_height > req.end_height)
-    {
-      error_resp.code = CORE_RPC_ERROR_CODE_TOO_BIG_HEIGHT;
-      error_resp.message = "Invalid start/end heights.";
-      return false;
-    }
     const bool restricted = m_restricted && ctx;
     if (restricted && req.end_height - req.start_height > RESTRICTED_BLOCK_HEADER_RANGE)
     {
@@ -2457,6 +2462,16 @@ namespace cryptonote
     }
 
     CHECK_PAYMENT_MIN1(req, res, (req.end_height - req.start_height + 1) * COST_PER_BLOCK_HEADER, false);
+    db_rtxn_guard rtxn_guard(&m_core.get_blockchain_storage().get_db());
+
+    const uint64_t bc_height = m_core.get_current_blockchain_height();
+    if (req.start_height >= bc_height || req.end_height >= bc_height || req.start_height > req.end_height)
+    {
+      error_resp.code = CORE_RPC_ERROR_CODE_TOO_BIG_HEIGHT;
+      error_resp.message = "Invalid start/end heights.";
+      return false;
+    }
+
     for (uint64_t h = req.start_height; h <= req.end_height; ++h)
     {
       crypto::hash block_hash = m_core.get_block_id_by_height(h);
@@ -2501,10 +2516,12 @@ namespace cryptonote
     if (use_bootstrap_daemon_if_necessary<COMMAND_RPC_GET_BLOCK_HEADER_BY_HEIGHT>(invoke_http_mode::JON_RPC, "getblockheaderbyheight", req, res, r))
       return r;
 
-    if(m_core.get_current_blockchain_height() <= req.height)
+    db_rtxn_guard rtxn_guard(&m_core.get_blockchain_storage().get_db());
+    uint64_t blockchain_height = m_core.get_current_blockchain_height();
+    if(blockchain_height <= req.height)
     {
       error_resp.code = CORE_RPC_ERROR_CODE_TOO_BIG_HEIGHT;
-      error_resp.message = std::string("Requested block height: ") + std::to_string(req.height) + " greater than current top block height: " +  std::to_string(m_core.get_current_blockchain_height() - 1);
+      error_resp.message = std::string("Requested block height: ") + std::to_string(req.height) + " greater than current top block height: " +  std::to_string(blockchain_height - 1);
       return false;
     }
     CHECK_PAYMENT_MIN1(req, res, COST_PER_BLOCK_HEADER, false);
@@ -2537,6 +2554,7 @@ namespace cryptonote
       return r;
 
     CHECK_PAYMENT_MIN1(req, res, COST_PER_BLOCK, false);
+    db_rtxn_guard rtxn_guard(&m_core.get_blockchain_storage().get_db());
 
     crypto::hash block_hash;
     if (!req.hash.empty())
@@ -2551,10 +2569,11 @@ namespace cryptonote
     }
     else
     {
-      if(m_core.get_current_blockchain_height() <= req.height)
+      uint64_t blockchain_height = m_core.get_current_blockchain_height();
+      if(blockchain_height <= req.height)
       {
         error_resp.code = CORE_RPC_ERROR_CODE_TOO_BIG_HEIGHT;
-        error_resp.message = std::string("Requested block height: ") + std::to_string(req.height) + " greater than current top block height: " +  std::to_string(m_core.get_current_blockchain_height() - 1);
+        error_resp.message = std::string("Requested block height: ") + std::to_string(req.height) + " greater than current top block height: " +  std::to_string(blockchain_height - 1);
         return false;
       }
       block_hash = m_core.get_block_id_by_height(req.height);
@@ -2862,6 +2881,7 @@ namespace cryptonote
   bool core_rpc_server::on_get_coinbase_tx_sum(const COMMAND_RPC_GET_COINBASE_TX_SUM::request& req, COMMAND_RPC_GET_COINBASE_TX_SUM::response& res, epee::json_rpc::error& error_resp, const connection_context *ctx)
   {
     RPC_TRACKER(get_coinbase_tx_sum);
+    db_rtxn_guard rtxn_guard(&m_core.get_blockchain_storage().get_db());
     const uint64_t bc_height = m_core.get_current_blockchain_height();
     if (req.height >= bc_height || req.count > bc_height)
     {
@@ -2886,9 +2906,9 @@ namespace cryptonote
     CHECK_PAYMENT(req, res, COST_PER_FEE_ESTIMATE);
 
     const uint8_t version = m_core.get_blockchain_storage().get_current_hard_fork_version();
-    if (version >= HF_VERSION_2021_SCALING)
+    if (version >= HF_VERSION_2023_SCALING)
     {
-      m_core.get_blockchain_storage().get_dynamic_base_fee_estimate_2021_scaling(req.grace_blocks, res.fees);
+      m_core.get_blockchain_storage().get_dynamic_base_fee_estimate_2023_scaling(req.grace_blocks, res.fees);
       res.fee = res.fees[0];
     }
     else
@@ -2903,6 +2923,7 @@ namespace cryptonote
   bool core_rpc_server::on_get_alternate_chains(const COMMAND_RPC_GET_ALTERNATE_CHAINS::request& req, COMMAND_RPC_GET_ALTERNATE_CHAINS::response& res, epee::json_rpc::error& error_resp, const connection_context *ctx)
   {
     RPC_TRACKER(get_alternate_chains);
+    db_rtxn_guard rtxn_guard(&m_core.get_blockchain_storage().get_db());
     try
     {
       std::vector<std::pair<Blockchain::block_extended_info, std::vector<crypto::hash>>> chains = m_core.get_blockchain_storage().get_alternative_chains();
@@ -3205,6 +3226,7 @@ namespace cryptonote
     bool r;
     if (use_bootstrap_daemon_if_necessary<COMMAND_RPC_GET_TRANSACTION_POOL_BACKLOG>(invoke_http_mode::JON_RPC, "get_txpool_backlog", req, res, r))
       return r;
+    db_rtxn_guard rtxn_guard(&m_core.get_blockchain_storage().get_db());
     size_t n_txes = m_core.get_pool_transactions_count();
     CHECK_PAYMENT_MIN1(req, res, COST_PER_TX_POOL_STATS * n_txes, false);
 
