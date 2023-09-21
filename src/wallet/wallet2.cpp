@@ -3159,14 +3159,18 @@ void wallet2::update_pool_state(std::vector<std::tuple<cryptonote::transaction, 
     }
   }
 
-  // get those txes
-  if (!txids.empty())
+  // get_transaction_pool_hashes.bin may return more transactions than we're allowed to request in restricted mode
+  const size_t SLICE_SIZE = 100; // RESTRICTED_TRANSACTIONS_COUNT as defined in rpc/core_rpc_server.cpp
+  for (size_t offset = 0; offset < txids.size(); offset += SLICE_SIZE)
   {
     cryptonote::COMMAND_RPC_GET_TRANSACTIONS::request req;
     cryptonote::COMMAND_RPC_GET_TRANSACTIONS::response res;
-    for (const auto &p: txids)
-      req.txs_hashes.push_back(epee::string_tools::pod_to_hex(p.first));
-    MDEBUG("asking for " << txids.size() << " transactions");
+
+    const size_t n_txids = std::min<size_t>(SLICE_SIZE, txids.size() - offset);
+    for (size_t n = offset; n < (offset + n_txids); ++n) {
+      req.txs_hashes.push_back(epee::string_tools::pod_to_hex(txids.at(n).first));
+    }
+    MDEBUG("asking for " << req.txs_hashes.size() << " transactions");
     req.decode_as_json = false;
     req.prune = true;
 
@@ -3183,7 +3187,7 @@ void wallet2::update_pool_state(std::vector<std::tuple<cryptonote::transaction, 
     MDEBUG("Got " << r << " and " << res.status);
     if (r && res.status == CORE_RPC_STATUS_OK)
     {
-      if (res.txs.size() == txids.size())
+      if (res.txs.size() == req.txs_hashes.size())
       {
         for (const auto &tx_entry: res.txs)
         {
@@ -3219,7 +3223,7 @@ void wallet2::update_pool_state(std::vector<std::tuple<cryptonote::transaction, 
       }
       else
       {
-        LOG_PRINT_L0("Expected " << txids.size() << " tx(es), got " << res.txs.size());
+        LOG_PRINT_L0("Expected " << n_txids << " out of " << txids.size() << " tx(es), got " << res.txs.size());
       }
     }
     else
@@ -7360,7 +7364,7 @@ uint64_t wallet2::get_base_fee(uint32_t priority)
     --priority;
 
     std::vector<uint64_t> fees;
-    boost::optional<std::string> result = m_node_rpc_proxy.get_dynamic_base_fee_estimate_2023_scaling(FEE_ESTIMATE_GRACE_BLOCKS, fees);
+    boost::optional<std::string> result = m_node_rpc_proxy.get_dynamic_base_fee_estimate_2021_scaling(FEE_ESTIMATE_GRACE_BLOCKS, fees);
     if (result)
     {
       MERROR("Failed to determine base fee, using default");
@@ -8049,13 +8053,8 @@ void wallet2::get_outs(std::vector<std::vector<tools::wallet2::get_outs_entry>> 
         has_rct = true;
         max_rct_index = std::max(max_rct_index, m_transfers[idx].m_global_output_index);
       }
-
-    if (has_rct && rct_offsets.empty()) {
-      THROW_WALLET_EXCEPTION_IF(!get_rct_distribution(rct_start_height, rct_offsets),
-          error::get_output_distribution, "Could not obtain output distribution.");
-    }
-
-    if (has_rct)
+    const bool has_rct_distribution = has_rct && (!rct_offsets.empty() || get_rct_distribution(rct_start_height, rct_offsets));
+    if (has_rct_distribution)
     {
       // check we're clear enough of rct start, to avoid corner cases below
       THROW_WALLET_EXCEPTION_IF(rct_offsets.size() <= CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE,
@@ -8067,11 +8066,11 @@ void wallet2::get_outs(std::vector<std::vector<tools::wallet2::get_outs_entry>> 
     // get histogram for the amounts we need
     cryptonote::COMMAND_RPC_GET_OUTPUT_HISTOGRAM::request req_t = AUTO_VAL_INIT(req_t);
     cryptonote::COMMAND_RPC_GET_OUTPUT_HISTOGRAM::response resp_t = AUTO_VAL_INIT(resp_t);
-    // request histogram for all pre-rct outputs
+    // request histogram for all outputs, except 0 if we have the rct distribution
     req_t.amounts.reserve(selected_transfers.size());
     for(size_t idx: selected_transfers)
-      if (!m_transfers[idx].is_rct())
-        req_t.amounts.push_back(m_transfers[idx].amount());
+      if (!m_transfers[idx].is_rct() || !has_rct_distribution)
+        req_t.amounts.push_back(m_transfers[idx].is_rct() ? 0 : m_transfers[idx].amount());
     if (!req_t.amounts.empty())
     {
       std::sort(req_t.amounts.begin(), req_t.amounts.end());
@@ -8171,7 +8170,7 @@ void wallet2::get_outs(std::vector<std::vector<tools::wallet2::get_outs_entry>> 
     COMMAND_RPC_GET_OUTPUTS_BIN::response daemon_resp = AUTO_VAL_INIT(daemon_resp);
 
     std::unique_ptr<gamma_picker> gamma;
-    if (has_rct)
+    if (has_rct_distribution)
       gamma.reset(new gamma_picker(rct_offsets));
 
     size_t num_selected_transfers = 0;
@@ -8186,7 +8185,7 @@ void wallet2::get_outs(std::vector<std::vector<tools::wallet2::get_outs_entry>> 
       // request more for rct in base recent (locked) coinbases are picked, since they're locked for longer
       size_t requested_outputs_count = base_requested_outputs_count + (td.is_rct() ? CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW - CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE : 0);
       size_t start = req.outputs.size();
-      bool use_histogram = amount != 0;
+      bool use_histogram = amount != 0 || !has_rct_distribution;
 
       const bool output_is_pre_fork = td.m_block_height < segregation_fork_height;
       uint64_t num_outs = 0, num_recent_outs = 0;
@@ -8373,7 +8372,7 @@ void wallet2::get_outs(std::vector<std::vector<tools::wallet2::get_outs_entry>> 
 
           uint64_t i;
           const char *type = "";
-          if (amount == 0)
+          if (amount == 0 && has_rct_distribution)
           {
             THROW_WALLET_EXCEPTION_IF(!gamma, error::wallet_internal_error, "No gamma picker");
             // gamma distribution
@@ -8535,7 +8534,7 @@ void wallet2::get_outs(std::vector<std::vector<tools::wallet2::get_outs_entry>> 
           break;
         }
       }
-      bool use_histogram = amount != 0;
+      bool use_histogram = amount != 0 || !has_rct_distribution;
       if (!use_histogram)
         num_outs = rct_offsets[rct_offsets.size() - CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE];
 
