@@ -2208,7 +2208,7 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
             }
 	    LOG_PRINT_L0("Received money: " << print_money(td.amount()) << ", with tx: " << txid);
 	    if (0 != m_callback)
-	      m_callback->on_money_received(height, txid, tx, td.m_amount, td.m_subaddr_index, spends_one_of_ours(tx), td.m_tx.unlock_time);
+	      m_callback->on_money_received(height, txid, tx, td.m_amount, 0, td.m_subaddr_index, spends_one_of_ours(tx), td.m_tx.unlock_time);
           }
           total_received_1 += amount;
           notify = true;
@@ -2242,7 +2242,8 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
           tx_money_got_in_outs[tx_scan_info[o].received->index] -= m_transfers[kit->second].amount();
 
           uint64_t amount = tx.vout[o].amount ? tx.vout[o].amount : tx_scan_info[o].amount;
-          uint64_t extra_amount = amount - m_transfers[kit->second].amount();
+          uint64_t burnt = m_transfers[kit->second].amount();
+          uint64_t extra_amount = amount - burnt;
           if (!pool)
           {
             transfer_details &td = m_transfers[kit->second];
@@ -2285,7 +2286,7 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
 
 	    LOG_PRINT_L0("Received money: " << print_money(td.amount()) << ", with tx: " << txid);
 	    if (0 != m_callback)
-	      m_callback->on_money_received(height, txid, tx, td.m_amount, td.m_subaddr_index, spends_one_of_ours(tx), td.m_tx.unlock_time);
+	      m_callback->on_money_received(height, txid, tx, td.m_amount, burnt, td.m_subaddr_index, spends_one_of_ours(tx), td.m_tx.unlock_time);
           }
           total_received_1 += extra_amount;
           notify = true;
@@ -7349,8 +7350,8 @@ uint64_t wallet2::get_base_fee()
 //----------------------------------------------------------------------------------------------------
 uint64_t wallet2::get_base_fee(uint32_t priority)
 {
-  const bool use_2021_scaling = use_fork_rules(HF_VERSION_2021_SCALING, -30 * 1);
-  if (use_2021_scaling)
+  const bool use_2023_scaling = use_fork_rules(HF_VERSION_2023_SCALING, -30 * 1);
+  if (use_2023_scaling)
   {
     // clamp and map to 0..3 indices, mapping 0 (default, but should not end up here) to 0, and 1..4 to 0..3
     if (priority == 0)
@@ -7360,7 +7361,7 @@ uint64_t wallet2::get_base_fee(uint32_t priority)
     --priority;
 
     std::vector<uint64_t> fees;
-    boost::optional<std::string> result = m_node_rpc_proxy.get_dynamic_base_fee_estimate_2021_scaling(FEE_ESTIMATE_GRACE_BLOCKS, fees);
+    boost::optional<std::string> result = m_node_rpc_proxy.get_dynamic_base_fee_estimate_2023_scaling(FEE_ESTIMATE_GRACE_BLOCKS, fees);
     if (result)
     {
       MERROR("Failed to determine base fee, using default");
@@ -14022,6 +14023,43 @@ uint64_t wallet2::get_segregation_fork_height() const
   if (m_segregation_height > 0)
     return m_segregation_height;
 
+  if (m_use_dns && !m_offline)
+  {
+    // All four JudePulse domains have DNSSEC on and valid
+    static const std::vector<std::string> dns_urls = {
+        "segheights.judepulse.org",
+        "segheights.judepulse.net",
+        "segheights.judepulse.co",
+        "segheights.judepulse.se"
+    };
+
+    const uint64_t current_height = get_blockchain_current_height();
+    uint64_t best_diff = std::numeric_limits<uint64_t>::max(), best_height = 0;
+    std::vector<std::string> records;
+    if (tools::dns_utils::load_txt_records_from_dns(records, dns_urls))
+    {
+      for (const auto& record : records)
+      {
+        std::vector<std::string> fields;
+        boost::split(fields, record, boost::is_any_of(":"));
+        if (fields.size() != 2)
+          continue;
+        uint64_t height;
+        if (!string_tools::get_xtype_from_string(height, fields[1]))
+          continue;
+
+        MINFO("Found segregation height via DNS: " << fields[0] << " fork height at " << height);
+        uint64_t diff = height > current_height ? height - current_height : current_height - height;
+        if (diff < best_diff)
+        {
+          best_diff = diff;
+          best_height = height;
+        }
+      }
+      if (best_height)
+        return best_height;
+    }
+  }
   return SEGREGATION_FORK_HEIGHT;
 }
 //----------------------------------------------------------------------------------------------------
