@@ -137,7 +137,7 @@ private:
   public:
     // Full wallet callbacks
     virtual void on_new_block(uint64_t height, const cryptonote::block& block) {}
-    virtual void on_money_received(uint64_t height, const crypto::hash &txid, const cryptonote::transaction& tx, uint64_t amount, const cryptonote::subaddress_index& subaddr_index, bool is_change, uint64_t unlock_time) {}
+    virtual void on_money_received(uint64_t height, const crypto::hash &txid, const cryptonote::transaction& tx, uint64_t amount, uint64_t burnt, const cryptonote::subaddress_index& subaddr_index, bool is_change, uint64_t unlock_time) {}
     virtual void on_unconfirmed_money_received(uint64_t height, const crypto::hash &txid, const cryptonote::transaction& tx, uint64_t amount, const cryptonote::subaddress_index& subaddr_index) {}
     virtual void on_money_spent(uint64_t height, const crypto::hash &txid, const cryptonote::transaction& in_tx, uint64_t amount, const cryptonote::transaction& spend_tx, const cryptonote::subaddress_index& subaddr_index) {}
     virtual void on_skip_transaction(uint64_t height, const crypto::hash &txid, const cryptonote::transaction& tx) {}
@@ -349,8 +349,6 @@ private:
       uint64_t amount() const { return m_amount; }
       const crypto::public_key get_public_key() const {
         crypto::public_key output_public_key;
-        THROW_WALLET_EXCEPTION_IF(m_tx.vout.size() <= m_internal_output_index,
-          error::wallet_internal_error, "Too few outputs, outputs may be corrupted");
         THROW_WALLET_EXCEPTION_IF(!get_output_public_key(m_tx.vout[m_internal_output_index], output_public_key),
           error::wallet_internal_error, "Unable to get output public key from output");
         return output_public_key;

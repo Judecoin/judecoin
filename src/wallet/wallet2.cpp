@@ -3160,18 +3160,14 @@ void wallet2::update_pool_state(std::vector<std::tuple<cryptonote::transaction, 
     }
   }
 
-  // get_transaction_pool_hashes.bin may return more transactions than we're allowed to request in restricted mode
-  const size_t SLICE_SIZE = 100; // RESTRICTED_TRANSACTIONS_COUNT as defined in rpc/core_rpc_server.cpp
-  for (size_t offset = 0; offset < txids.size(); offset += SLICE_SIZE)
+  // get those txes
+  if (!txids.empty())
   {
     cryptonote::COMMAND_RPC_GET_TRANSACTIONS::request req;
     cryptonote::COMMAND_RPC_GET_TRANSACTIONS::response res;
-
-    const size_t n_txids = std::min<size_t>(SLICE_SIZE, txids.size() - offset);
-    for (size_t n = offset; n < (offset + n_txids); ++n) {
-      req.txs_hashes.push_back(epee::string_tools::pod_to_hex(txids.at(n).first));
-    }
-    MDEBUG("asking for " << req.txs_hashes.size() << " transactions");
+    for (const auto &p: txids)
+      req.txs_hashes.push_back(epee::string_tools::pod_to_hex(p.first));
+    MDEBUG("asking for " << txids.size() << " transactions");
     req.decode_as_json = false;
     req.prune = true;
 
@@ -3188,7 +3184,7 @@ void wallet2::update_pool_state(std::vector<std::tuple<cryptonote::transaction, 
     MDEBUG("Got " << r << " and " << res.status);
     if (r && res.status == CORE_RPC_STATUS_OK)
     {
-      if (res.txs.size() == req.txs_hashes.size())
+      if (res.txs.size() == txids.size())
       {
         for (const auto &tx_entry: res.txs)
         {
@@ -3224,7 +3220,7 @@ void wallet2::update_pool_state(std::vector<std::tuple<cryptonote::transaction, 
       }
       else
       {
-        LOG_PRINT_L0("Expected " << n_txids << " out of " << txids.size() << " tx(es), got " << res.txs.size());
+        LOG_PRINT_L0("Expected " << txids.size() << " tx(es), got " << res.txs.size());
       }
     }
     else
@@ -14027,6 +14023,43 @@ uint64_t wallet2::get_segregation_fork_height() const
   if (m_segregation_height > 0)
     return m_segregation_height;
 
+  if (m_use_dns && !m_offline)
+  {
+    // All four JudePulse domains have DNSSEC on and valid
+    static const std::vector<std::string> dns_urls = {
+        "segheights.judepulse.org",
+        "segheights.judepulse.net",
+        "segheights.judepulse.co",
+        "segheights.judepulse.se"
+    };
+
+    const uint64_t current_height = get_blockchain_current_height();
+    uint64_t best_diff = std::numeric_limits<uint64_t>::max(), best_height = 0;
+    std::vector<std::string> records;
+    if (tools::dns_utils::load_txt_records_from_dns(records, dns_urls))
+    {
+      for (const auto& record : records)
+      {
+        std::vector<std::string> fields;
+        boost::split(fields, record, boost::is_any_of(":"));
+        if (fields.size() != 2)
+          continue;
+        uint64_t height;
+        if (!string_tools::get_xtype_from_string(height, fields[1]))
+          continue;
+
+        MINFO("Found segregation height via DNS: " << fields[0] << " fork height at " << height);
+        uint64_t diff = height > current_height ? height - current_height : current_height - height;
+        if (diff < best_diff)
+        {
+          best_diff = diff;
+          best_height = height;
+        }
+      }
+      if (best_height)
+        return best_height;
+    }
+  }
   return SEGREGATION_FORK_HEIGHT;
 }
 //----------------------------------------------------------------------------------------------------
