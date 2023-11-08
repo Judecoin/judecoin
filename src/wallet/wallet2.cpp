@@ -2208,7 +2208,7 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
             }
 	    LOG_PRINT_L0("Received money: " << print_money(td.amount()) << ", with tx: " << txid);
 	    if (0 != m_callback)
-	      m_callback->on_money_received(height, txid, tx, td.m_amount, 0, td.m_subaddr_index, spends_one_of_ours(tx), td.m_tx.unlock_time);
+	      m_callback->on_money_received(height, txid, tx, td.m_amount, td.m_subaddr_index, spends_one_of_ours(tx), td.m_tx.unlock_time);
           }
           total_received_1 += amount;
           notify = true;
@@ -2242,8 +2242,7 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
           tx_money_got_in_outs[tx_scan_info[o].received->index] -= m_transfers[kit->second].amount();
 
           uint64_t amount = tx.vout[o].amount ? tx.vout[o].amount : tx_scan_info[o].amount;
-          uint64_t burnt = m_transfers[kit->second].amount();
-          uint64_t extra_amount = amount - burnt;
+          uint64_t extra_amount = amount - m_transfers[kit->second].amount();
           if (!pool)
           {
             transfer_details &td = m_transfers[kit->second];
@@ -2286,7 +2285,7 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
 
 	    LOG_PRINT_L0("Received money: " << print_money(td.amount()) << ", with tx: " << txid);
 	    if (0 != m_callback)
-	      m_callback->on_money_received(height, txid, tx, td.m_amount, burnt, td.m_subaddr_index, spends_one_of_ours(tx), td.m_tx.unlock_time);
+	      m_callback->on_money_received(height, txid, tx, td.m_amount, td.m_subaddr_index, spends_one_of_ours(tx), td.m_tx.unlock_time);
           }
           total_received_1 += extra_amount;
           notify = true;
@@ -3160,18 +3159,14 @@ void wallet2::update_pool_state(std::vector<std::tuple<cryptonote::transaction, 
     }
   }
 
-  // get_transaction_pool_hashes.bin may return more transactions than we're allowed to request in restricted mode
-  const size_t SLICE_SIZE = 100; // RESTRICTED_TRANSACTIONS_COUNT as defined in rpc/core_rpc_server.cpp
-  for (size_t offset = 0; offset < txids.size(); offset += SLICE_SIZE)
+  // get those txes
+  if (!txids.empty())
   {
     cryptonote::COMMAND_RPC_GET_TRANSACTIONS::request req;
     cryptonote::COMMAND_RPC_GET_TRANSACTIONS::response res;
-
-    const size_t n_txids = std::min<size_t>(SLICE_SIZE, txids.size() - offset);
-    for (size_t n = offset; n < (offset + n_txids); ++n) {
-      req.txs_hashes.push_back(epee::string_tools::pod_to_hex(txids.at(n).first));
-    }
-    MDEBUG("asking for " << req.txs_hashes.size() << " transactions");
+    for (const auto &p: txids)
+      req.txs_hashes.push_back(epee::string_tools::pod_to_hex(p.first));
+    MDEBUG("asking for " << txids.size() << " transactions");
     req.decode_as_json = false;
     req.prune = true;
 
@@ -3188,7 +3183,7 @@ void wallet2::update_pool_state(std::vector<std::tuple<cryptonote::transaction, 
     MDEBUG("Got " << r << " and " << res.status);
     if (r && res.status == CORE_RPC_STATUS_OK)
     {
-      if (res.txs.size() == req.txs_hashes.size())
+      if (res.txs.size() == txids.size())
       {
         for (const auto &tx_entry: res.txs)
         {
@@ -3224,7 +3219,7 @@ void wallet2::update_pool_state(std::vector<std::tuple<cryptonote::transaction, 
       }
       else
       {
-        LOG_PRINT_L0("Expected " << n_txids << " out of " << txids.size() << " tx(es), got " << res.txs.size());
+        LOG_PRINT_L0("Expected " << txids.size() << " tx(es), got " << res.txs.size());
       }
     }
     else
@@ -12095,8 +12090,7 @@ bool wallet2::check_reserve_proof(const cryptonote::account_public_address &addr
     crypto::key_derivation derivation;
     THROW_WALLET_EXCEPTION_IF(!crypto::generate_key_derivation(proof.shared_secret, rct::rct2sk(rct::I), derivation), error::wallet_internal_error, "Failed to generate key derivation");
     crypto::public_key subaddr_spendkey;
-    THROW_WALLET_EXCEPTION_IF(!crypto::derive_subaddress_public_key(output_public_key, derivation, proof.index_in_tx, subaddr_spendkey),
-        error::wallet_internal_error, "Failed to derive subaddress public key");
+    crypto::derive_subaddress_public_key(output_public_key, derivation, proof.index_in_tx, subaddr_spendkey);
     THROW_WALLET_EXCEPTION_IF(subaddr_spendkeys.count(subaddr_spendkey) == 0, error::wallet_internal_error,
       "The address doesn't seem to have received the fund");
 
