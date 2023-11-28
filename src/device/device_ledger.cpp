@@ -694,8 +694,7 @@ namespace hw {
         log_hexbuffer("derive_subaddress_public_key: [[IN]]  pub       ", pub_x.data, 32);
         log_hexbuffer("derive_subaddress_public_key: [[IN]]  derivation", derivation_x.data, 32);
         log_message  ("derive_subaddress_public_key: [[IN]]  index     ", std::to_string((int)output_index_x));
-        if (!this->controle_device->derive_subaddress_public_key(pub_x, derivation_x,output_index_x,derived_pub_x))
-          return false;
+        this->controle_device->derive_subaddress_public_key(pub_x, derivation_x,output_index_x,derived_pub_x);
         log_hexbuffer("derive_subaddress_public_key: [[OUT]] derived_pub", derived_pub_x.data, 32);
         #endif
 
@@ -703,8 +702,7 @@ namespace hw {
         //If we are in TRANSACTION_PARSE, the given derivation has been retrieved uncrypted (wihtout the help
         //of the device), so continue that way.
         MDEBUG( "derive_subaddress_public_key  : PARSE mode with known viewkey");     
-        if (!crypto::derive_subaddress_public_key(pub, derivation, output_index,derived_pub))
-          return false;
+        crypto::derive_subaddress_public_key(pub, derivation, output_index,derived_pub);
       } else {
         AUTO_LOCK_CMD();
         int offset = set_command_header_noopt(INS_DERIVE_SUBADDRESS_PUBLIC_KEY);
@@ -1054,8 +1052,7 @@ namespace hw {
         crypto::key_derivation derivation_x;
         log_hexbuffer("generate_key_derivation: [[IN]]  pub       ", pub_x.data, 32);
         log_hexbuffer("generate_key_derivation: [[IN]]  sec       ", sec_x.data, 32);
-        if (!this->controle_device->generate_key_derivation(pub_x, sec_x, derivation_x))
-            return false;
+        this->controle_device->generate_key_derivation(pub_x, sec_x, derivation_x);
         log_hexbuffer("generate_key_derivation: [[OUT]] derivation", derivation_x.data, 32);
         #endif
 
@@ -1210,8 +1207,7 @@ namespace hw {
         log_hexbuffer("derive_public_key: [[IN]]  derivation  ", derivation_x.data, 32);
         log_message  ("derive_public_key: [[IN]]  output_index", std::to_string(output_index_x));
         log_hexbuffer("derive_public_key: [[IN]]  pub         ", pub_x.data, 32);
-        if (!this->controle_device->derive_public_key(derivation_x, output_index_x, pub_x, derived_pub_x))
-          return false;
+        this->controle_device->derive_public_key(derivation_x, output_index_x, pub_x, derived_pub_x);
         log_hexbuffer("derive_public_key: [[OUT]] derived_pub ", derived_pub_x.data, 32);
         #endif
 
