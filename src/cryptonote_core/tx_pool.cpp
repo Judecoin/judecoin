@@ -820,10 +820,8 @@ namespace cryptonote
     return true;
   }
   //---------------------------------------------------------------------------------
-  void tx_memory_pool::set_relayed(const epee::span<const crypto::hash> hashes, const relay_method method, std::vector<bool> &just_broadcasted)
+  void tx_memory_pool::set_relayed(const epee::span<const crypto::hash> hashes, const relay_method method)
   {
-    just_broadcasted.clear();
-
     crypto::random_poisson_seconds embargo_duration{dandelionpp_embargo_average};
     const auto now = std::chrono::system_clock::now();
     uint64_t next_relay = uint64_t{std::numeric_limits<time_t>::max()};
@@ -833,14 +831,12 @@ namespace cryptonote
     LockedTXN lock(m_blockchain.get_db());
     for (const auto& hash : hashes)
     {
-      bool was_just_broadcasted = false;
       try
       {
         txpool_tx_meta_t meta;
         if (m_blockchain.get_txpool_tx_meta(hash, meta))
         {
           // txes can be received as "stem" or "fluff" in either order
-          const bool already_broadcasted = meta.matches(relay_category::broadcasted);
           meta.upgrade_relay_method(method);
           meta.relayed = true;
 
@@ -853,9 +849,6 @@ namespace cryptonote
             meta.last_relayed_time = std::chrono::system_clock::to_time_t(now);
 
           m_blockchain.update_txpool_tx(hash, meta);
-
-          // wait until db update succeeds to ensure tx is visible in the pool
-          was_just_broadcasted = !already_broadcasted && meta.matches(relay_category::broadcasted);
         }
       }
       catch (const std::exception &e)
@@ -863,7 +856,6 @@ namespace cryptonote
         MERROR("Failed to update txpool transaction metadata: " << e.what());
         // continue
       }
-      just_broadcasted.emplace_back(was_just_broadcasted);
     }
     lock.commit();
     set_if_less(m_next_check, time_t(next_relay));
@@ -925,26 +917,61 @@ namespace cryptonote
   {
     CRITICAL_REGION_LOCAL(m_transactions_lock);
     CRITICAL_REGION_LOCAL1(m_blockchain);
-    const relay_category category = include_sensitive ? relay_category::all : relay_category::broadcasted;
-    backlog.reserve(m_blockchain.get_txpool_tx_count(include_sensitive));
-    txpool_tx_meta_t tmp_meta;
-    m_blockchain.for_all_txpool_txes([this, &backlog, &tmp_meta](const crypto::hash &txid, const txpool_tx_meta_t &meta, const cryptonote::blobdata_ref *bd){
-      transaction tx;
-      if (!(meta.pruned ? parse_and_validate_tx_base_from_blob(*bd, tx) : parse_and_validate_tx_from_blob(*bd, tx)))
-      {
-        MERROR("Failed to parse tx from txpool");
-        // continue
-        return true;
-      }
-      tx.set_hash(txid);
 
-      tmp_meta = meta;
+    std::vector<tx_block_template_backlog_entry> tmp;
+    uint64_t total_weight = 0;
 
-      if (is_transaction_ready_to_go(tmp_meta, txid, *bd, tx))
-        backlog.push_back({txid, meta.weight, meta.fee});
-
+    // First get everything from the mempool, filter it later
+    m_blockchain.for_all_txpool_txes([&tmp, &total_weight](const crypto::hash &txid, const txpool_tx_meta_t &meta, const cryptonote::blobdata_ref*){
+      tmp.emplace_back(tx_block_template_backlog_entry{txid, meta.weight, meta.fee});
+      total_weight += meta.weight;
       return true;
-    }, true, category);
+    }, false, include_sensitive ? relay_category::all : relay_category::broadcasted);
+
+    // Limit backlog to 112.5% of current median weight. This is enough to mine a full block with the optimal block reward
+    const uint64_t median_weight = m_blockchain.get_current_cumulative_block_weight_median();
+    const uint64_t max_backlog_weight = median_weight + (median_weight / 8);
+
+    // If the total weight is too high, choose the best paying transactions
+    if (total_weight > max_backlog_weight)
+      std::sort(tmp.begin(), tmp.end(), [](const auto& a, const auto& b){ return a.fee * b.weight > b.fee * a.weight; });
+
+    backlog.clear();
+    uint64_t w = 0;
+
+    std::unordered_set<crypto::key_image> k_images;
+
+    for (const tx_block_template_backlog_entry& e : tmp)
+    {
+      try
+      {
+        txpool_tx_meta_t meta;
+        if (!m_blockchain.get_txpool_tx_meta(e.id, meta))
+          continue;
+
+        cryptonote::blobdata txblob;
+        if (!m_blockchain.get_txpool_tx_blob(e.id, txblob, relay_category::all))
+          continue;
+
+        cryptonote::transaction tx;
+        if (is_transaction_ready_to_go(meta, e.id, txblob, tx))
+        {
+          if (have_key_images(k_images, tx))
+            continue;
+          append_key_images(k_images, tx);
+
+          backlog.push_back(e);
+          w += e.weight;
+          if (w > max_backlog_weight)
+            break;
+        }
+      }
+      catch (const std::exception &e)
+      {
+        MERROR("Failed to check transaction readiness: " << e.what());
+        // continue, not fatal
+      }
+    }
   }
   //------------------------------------------------------------------
   void tx_memory_pool::get_transaction_stats(struct txpool_stats& stats, bool include_sensitive) const
