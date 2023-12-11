@@ -13161,7 +13161,7 @@ std::string wallet2::export_outputs_to_str(bool all) const
 size_t wallet2::import_outputs(const std::pair<uint64_t, std::vector<tools::wallet2::transfer_details>> &outputs)
 {
   PERF_TIMER(import_outputs);
-
+  THROW_WALLET_EXCEPTION_IF(watch_only(), error::wallet_internal_error, "Hot wallets cannot import outputs");
   THROW_WALLET_EXCEPTION_IF(outputs.first > m_transfers.size(), error::wallet_internal_error,
       "Imported outputs omit more outputs that we know of");
 
