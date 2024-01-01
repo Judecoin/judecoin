@@ -43,6 +43,10 @@ namespace hw {
 
   #ifdef WITH_DEVICE_LEDGER
 
+    namespace {
+        bool apdu_verbose =true;
+    }
+
     #undef JUDE_DEFAULT_LOG_CATEGORY
     #define JUDE_DEFAULT_LOG_CATEGORY "device.ledger"
 
