@@ -2792,7 +2792,7 @@ namespace tools
 
     try
     {
-      res.outputs_data_hex = epee::string_tools::buff_to_hex_nodelimer(m_wallet->export_outputs_to_str(req.all, req.start, req.count));
+      res.outputs_data_hex = epee::string_tools::buff_to_hex_nodelimer(m_wallet->export_outputs_to_str(req.all));
     }
     catch (const std::exception &e)
     {

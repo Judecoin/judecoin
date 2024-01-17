@@ -40,9 +40,8 @@ except:
 N_JUDEDS = 4
 
 # 4 wallets connected to the main offline juded
-# 1 wallet connected to the first local online juded
-# 1 offline wallet
-N_WALLETS = 6
+# a wallet connected to the first local online juded
+N_WALLETS = 5
 
 WALLET_DIRECTORY = builddir + "/functional-tests-directory"
 FUNCTIONAL_TESTS_DIRECTORY = builddir + "/tests/functional_tests"
@@ -62,7 +61,6 @@ wallet_extra = [
   ["--daemon-port", "18180"],
   ["--daemon-port", "18180"],
   ["--daemon-port", "18182"],
-  ["--offline"],
 ]
 
 command_lines = []
