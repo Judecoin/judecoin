@@ -122,19 +122,7 @@ As with many development projects, the repository on Github is considered to be 
 
 judecoin is a 100% community-sponsored endeavor. If you want to join our efforts, the easiest thing you can do is support the project financially. Both judecoin and Bitcoin donations can be made to **donate.getjudecoin.org** if using a client that supports the [OpenAlias](https://openalias.org) standard. Alternatively, you can send JUDE to the judecoin donation address via the `donate` command (type `help` in the command-line wallet for details).
 
-The judecoin donation address is: `888tNkZrPN6JsEgekjMnABU4TBzc2Dt29EPAvkRxbANsAnjyPbb3iQ1YBRk1UXcdRsiKc9dhwMVgN5S9cQUiyoogDavup3H` (viewkey: `f359631075708155cc3d92a32b75a7d02a5dcf27756707b47a2b31b21c389501`)
-
-The Bitcoin donation address is: `1KTexdemPdxSBcG55heUuTjDRYqbC5ZL8H`
-
-Core development funding and/or some supporting services are also graciously provided by [sponsors](https://www.getjudecoin.org/community/sponsorships/):
-
-[<img width="150" src="https://www.getjudecoin.org/img/sponsors/tarilabs.png"/>](https://tarilabs.com/)
-[<img width="150" src="https://www.getjudecoin.org/img/sponsors/globee.png"/>](https://globee.com/)
-[<img width="150" src="https://www.getjudecoin.org/img/sponsors/symas.png"/>](https://symas.com/)
-[<img width="150" src="https://www.getjudecoin.org/img/sponsors/forked_logo.png"/>](http://www.forked.net/)
-[<img width="150" src="https://www.getjudecoin.org/img/sponsors/macstadium.png"/>](https://www.macstadium.com/)
-
-There are also several mining pools that kindly donate a portion of their fees, [a list of them can be found on our Bitcointalk post](https://bitcointalk.org/index.php?topic=583449.0).
+The judecoin donation address is: `J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF`
 
 ## License
 
