@@ -341,7 +341,7 @@ const u64b_t SKEIN_256_IV_128[] =
 /* blkSize =  256 bits. hashSize =  160 bits */
 const u64b_t SKEIN_256_IV_160[] =
     {
-    MK_64(0x14202314,0x72825E98),
+    MK_64(0x14202414,0x72825E98),
     MK_64(0x2AC4E9A2,0x5A77E590),
     MK_64(0xD47A5856,0x8838D63E),
     MK_64(0x2DD2E496,0x8586AB7D)

@@ -1,5 +1,5 @@
 // Copyright (c) 2013, Sergey Lyubka
-// Copyright (c) 2017-2023, The Jude Project
+// Copyright (c) 2017-2024, The Jude Project
 // All rights reserved.
 // Released under the MIT license.
 

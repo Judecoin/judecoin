@@ -471,7 +471,7 @@ case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
     VAX*:ULTRIX*:*:*)
 	echo vax-dec-ultrix${UNAME_RELEASE}
 	exit ;;
-    2023:CLIX:*:* | 2430:CLIX:*:*)
+    2024:CLIX:*:* | 2430:CLIX:*:*)
 	echo clipper-intergraph-clix${UNAME_RELEASE}
 	exit ;;
     mips:*:*:UMIPS | mips:*:*:RISCos)

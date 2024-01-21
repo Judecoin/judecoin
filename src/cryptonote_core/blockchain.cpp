@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2023, The Jude Project
+// Copyright (c) 2014-2024, The Jude Project
 //
 // All rights reserved.
 //
@@ -3729,10 +3729,10 @@ uint64_t Blockchain::get_dynamic_base_fee(uint64_t block_reward, size_t median_b
   {
     lo = mul128(block_reward, DYNAMIC_FEE_REFERENCE_TRANSACTION_WEIGHT, &hi);
     div128_64(hi, lo, median_block_weight, &hi, &lo, NULL, NULL);
-    if (version >= HF_VERSION_2023_SCALING)
+    if (version >= HF_VERSION_2024_SCALING)
     {
       // min_fee_per_byte = round_up( 0.95 * block_reward * ref_weight / (fee_median^2) )
-      // note: since hardfork HF_VERSION_2023_SCALING, fee_median (a.k.a. median_block_weight) equals effective long term median
+      // note: since hardfork HF_VERSION_2024_SCALING, fee_median (a.k.a. median_block_weight) equals effective long term median
       div128_64(hi, lo, median_block_weight, &hi, &lo, NULL, NULL);
       assert(hi == 0);
       lo -= lo / 20;
@@ -3818,9 +3818,9 @@ bool Blockchain::check_fee(size_t tx_weight, uint64_t fee) const
 }
 
 //------------------------------------------------------------------
-void Blockchain::get_dynamic_base_fee_estimate_2023_scaling(uint64_t grace_blocks, uint64_t base_reward, uint64_t Mnw, uint64_t Mlw, std::vector<uint64_t> &fees) const
+void Blockchain::get_dynamic_base_fee_estimate_2024_scaling(uint64_t grace_blocks, uint64_t base_reward, uint64_t Mnw, uint64_t Mlw, std::vector<uint64_t> &fees) const
 {
-  // variable names and calculations as per https://github.com/ArticMine/Jude-Documents/blob/master/JudeScaling2023-02.pdf
+  // variable names and calculations as per https://github.com/ArticMine/Jude-Documents/blob/master/JudeScaling2024-02.pdf
   // from (earlier than) this fork, the base fee is per byte
   const uint64_t Mfw = std::min(Mnw, Mlw);
 
@@ -3847,13 +3847,13 @@ void Blockchain::get_dynamic_base_fee_estimate_2023_scaling(uint64_t grace_block
   const uint64_t Fh = std::max<uint64_t>(4 * Fm, 4 * Fm * Mfw / (32 * DYNAMIC_FEE_REFERENCE_TRANSACTION_WEIGHT * Mnw / CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V5));
 
   fees.resize(4);
-  fees[0] = cryptonote::round_money_up(Fl, CRYPTONOTE_SCALING_2023_FEE_ROUNDING_PLACES);
-  fees[1] = cryptonote::round_money_up(Fn, CRYPTONOTE_SCALING_2023_FEE_ROUNDING_PLACES);
-  fees[2] = cryptonote::round_money_up(Fm, CRYPTONOTE_SCALING_2023_FEE_ROUNDING_PLACES);
-  fees[3] = cryptonote::round_money_up(Fh, CRYPTONOTE_SCALING_2023_FEE_ROUNDING_PLACES);
+  fees[0] = cryptonote::round_money_up(Fl, CRYPTONOTE_SCALING_2024_FEE_ROUNDING_PLACES);
+  fees[1] = cryptonote::round_money_up(Fn, CRYPTONOTE_SCALING_2024_FEE_ROUNDING_PLACES);
+  fees[2] = cryptonote::round_money_up(Fm, CRYPTONOTE_SCALING_2024_FEE_ROUNDING_PLACES);
+  fees[3] = cryptonote::round_money_up(Fh, CRYPTONOTE_SCALING_2024_FEE_ROUNDING_PLACES);
 }
 
-void Blockchain::get_dynamic_base_fee_estimate_2023_scaling(uint64_t grace_blocks, std::vector<uint64_t> &fees) const
+void Blockchain::get_dynamic_base_fee_estimate_2024_scaling(uint64_t grace_blocks, std::vector<uint64_t> &fees) const
 {
   const uint8_t version = get_current_hard_fork_version();
   const uint64_t db_height = m_db->height();
@@ -3871,7 +3871,7 @@ void Blockchain::get_dynamic_base_fee_estimate_2023_scaling(uint64_t grace_block
   const uint64_t Mlw_penalty_free_zone_for_wallet = std::max<uint64_t>(rm.median(), CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V5);
 
   // Msw: median over [100 - grace blocks] past + [grace blocks] future blocks
-  CHECK_AND_ASSERT_THROW_MES(grace_blocks <= 100, "Grace blocks invalid In 2023 fee scaling estimate.");
+  CHECK_AND_ASSERT_THROW_MES(grace_blocks <= 100, "Grace blocks invalid In 2024 fee scaling estimate.");
   std::vector<uint64_t> weights;
   get_last_n_blocks_weights(weights, 100 - grace_blocks);
   weights.reserve(100);
@@ -3889,7 +3889,7 @@ void Blockchain::get_dynamic_base_fee_estimate_2023_scaling(uint64_t grace_block
     base_reward = BLOCK_REWARD_OVERESTIMATE;
   }
 
-  get_dynamic_base_fee_estimate_2023_scaling(grace_blocks, base_reward, Mnw, Mlw_penalty_free_zone_for_wallet, fees);
+  get_dynamic_base_fee_estimate_2024_scaling(grace_blocks, base_reward, Mnw, Mlw_penalty_free_zone_for_wallet, fees);
 }
 
 //------------------------------------------------------------------
@@ -3904,10 +3904,10 @@ uint64_t Blockchain::get_dynamic_base_fee_estimate(uint64_t grace_blocks) const
   if (grace_blocks >= CRYPTONOTE_REWARD_BLOCKS_WINDOW)
     grace_blocks = CRYPTONOTE_REWARD_BLOCKS_WINDOW - 1;
 
-  if (version >= HF_VERSION_2023_SCALING)
+  if (version >= HF_VERSION_2024_SCALING)
   {
     std::vector<uint64_t> fees;
-    get_dynamic_base_fee_estimate_2023_scaling(grace_blocks, fees);
+    get_dynamic_base_fee_estimate_2024_scaling(grace_blocks, fees);
     return fees[0];
   }
 
@@ -4587,7 +4587,7 @@ bool Blockchain::check_blockchain_pruning()
   return m_db->check_pruning();
 }
 //------------------------------------------------------------------
-// returns min(Mb, 1.7*Ml) as per https://github.com/ArticMine/Jude-Documents/blob/master/JudeScaling2023-02.pdf from HF_VERSION_LONG_TERM_BLOCK_WEIGHT
+// returns min(Mb, 1.7*Ml) as per https://github.com/ArticMine/Jude-Documents/blob/master/JudeScaling2024-02.pdf from HF_VERSION_LONG_TERM_BLOCK_WEIGHT
 uint64_t Blockchain::get_next_long_term_block_weight(uint64_t block_weight) const
 {
   PERF_TIMER(get_next_long_term_block_weight);
@@ -4603,7 +4603,7 @@ uint64_t Blockchain::get_next_long_term_block_weight(uint64_t block_weight) cons
   uint64_t long_term_effective_median_block_weight = std::max<uint64_t>(CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V5, long_term_median);
 
   uint64_t short_term_constraint;
-  if (hf_version >= HF_VERSION_2023_SCALING)
+  if (hf_version >= HF_VERSION_2024_SCALING)
   {
     // long_term_block_weight = block_weight bounded to range [long-term-median/1.7, long-term-median*1.7]
     block_weight = std::max<uint64_t>(block_weight, long_term_effective_median_block_weight * 10 / 17);
@@ -4656,7 +4656,7 @@ bool Blockchain::update_next_cumulative_weight_limit(uint64_t *long_term_effecti
     m_long_term_effective_median_block_weight = std::max<uint64_t>(CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE_V5, long_term_median);
 
     uint64_t short_term_constraint = m_long_term_effective_median_block_weight;
-    if (hf_version >= HF_VERSION_2023_SCALING)
+    if (hf_version >= HF_VERSION_2024_SCALING)
       short_term_constraint += m_long_term_effective_median_block_weight * 7 / 10;
     else
       short_term_constraint += m_long_term_effective_median_block_weight * 2 / 5;
@@ -4679,7 +4679,7 @@ bool Blockchain::update_next_cumulative_weight_limit(uint64_t *long_term_effecti
 
     uint64_t short_term_median = epee::misc_utils::median(weights);
     uint64_t effective_median_block_weight;
-    if (hf_version >= HF_VERSION_2023_SCALING)
+    if (hf_version >= HF_VERSION_2024_SCALING)
     {
       // effective median = short_term_median bounded to range [long_term_median, 50*long_term_median], but it can't be smaller than the
       // minimum penalty free zone (a.k.a. 'full reward zone')

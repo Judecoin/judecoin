@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2023, The Jude Project
+// Copyright (c) 2019-2024, The Jude Project
 // 
 // All rights reserved.
 // 
@@ -27,7 +27,7 @@
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // References:
-// - https://github.com/ArticMine/Jude-Documents/blob/master/JudeScaling2023.pdf
+// - https://github.com/ArticMine/Jude-Documents/blob/master/JudeScaling2024.pdf
 // - https://github.com/jude-project/research-lab/issues/70
 
 #define IN_UNIT_TESTS
@@ -67,32 +67,32 @@ public:
 
 #define PREFIX(hf_version) PREFIX_WINDOW(hf_version, TEST_LONG_TERM_BLOCK_WEIGHT_WINDOW)
 
-TEST(fee_2023_scaling, relay_fee_cases_from_pdf)
+TEST(fee_2024_scaling, relay_fee_cases_from_pdf)
 {
-  PREFIX_WINDOW(HF_VERSION_2023_SCALING, CRYPTONOTE_LONG_TERM_BLOCK_WEIGHT_WINDOW_SIZE);
+  PREFIX_WINDOW(HF_VERSION_2024_SCALING, CRYPTONOTE_LONG_TERM_BLOCK_WEIGHT_WINDOW_SIZE);
 
-  ASSERT_EQ(bc->get_dynamic_base_fee(1200000000000, 300000, HF_VERSION_2023_SCALING-1), 8000);
-  ASSERT_EQ(bc->get_dynamic_base_fee(1200000000000, 300000, HF_VERSION_2023_SCALING), 38000);
-  ASSERT_EQ(bc->get_dynamic_base_fee(1200000000000, 1425000, HF_VERSION_2023_SCALING-1), 1684 /*1680*/);
-  ASSERT_EQ(bc->get_dynamic_base_fee(1200000000000, 1425000, HF_VERSION_2023_SCALING), 1684 /*1680*/);
-  ASSERT_EQ(bc->get_dynamic_base_fee(1200000000000, 1500000, HF_VERSION_2023_SCALING-1), 1600);
-  ASSERT_EQ(bc->get_dynamic_base_fee(1200000000000, 1500000, HF_VERSION_2023_SCALING), 1520);
+  ASSERT_EQ(bc->get_dynamic_base_fee(1200000000000, 300000, HF_VERSION_2024_SCALING-1), 8000);
+  ASSERT_EQ(bc->get_dynamic_base_fee(1200000000000, 300000, HF_VERSION_2024_SCALING), 38000);
+  ASSERT_EQ(bc->get_dynamic_base_fee(1200000000000, 1425000, HF_VERSION_2024_SCALING-1), 1684 /*1680*/);
+  ASSERT_EQ(bc->get_dynamic_base_fee(1200000000000, 1425000, HF_VERSION_2024_SCALING), 1684 /*1680*/);
+  ASSERT_EQ(bc->get_dynamic_base_fee(1200000000000, 1500000, HF_VERSION_2024_SCALING-1), 1600);
+  ASSERT_EQ(bc->get_dynamic_base_fee(1200000000000, 1500000, HF_VERSION_2024_SCALING), 1520);
 
-  ASSERT_EQ(bc->get_dynamic_base_fee(600000000000, 300000, HF_VERSION_2023_SCALING-1), 4000);
-  ASSERT_EQ(bc->get_dynamic_base_fee(600000000000, 300000, HF_VERSION_2023_SCALING), 19000);
-  ASSERT_EQ(bc->get_dynamic_base_fee(600000000000, 1425000, HF_VERSION_2023_SCALING-1), 842 /*840*/);
-  ASSERT_EQ(bc->get_dynamic_base_fee(600000000000, 1425000, HF_VERSION_2023_SCALING), 842 /*840*/);
-  ASSERT_EQ(bc->get_dynamic_base_fee(600000000000, 1500000, HF_VERSION_2023_SCALING-1), 800);
-  ASSERT_EQ(bc->get_dynamic_base_fee(600000000000, 1500000, HF_VERSION_2023_SCALING), 760);
+  ASSERT_EQ(bc->get_dynamic_base_fee(600000000000, 300000, HF_VERSION_2024_SCALING-1), 4000);
+  ASSERT_EQ(bc->get_dynamic_base_fee(600000000000, 300000, HF_VERSION_2024_SCALING), 19000);
+  ASSERT_EQ(bc->get_dynamic_base_fee(600000000000, 1425000, HF_VERSION_2024_SCALING-1), 842 /*840*/);
+  ASSERT_EQ(bc->get_dynamic_base_fee(600000000000, 1425000, HF_VERSION_2024_SCALING), 842 /*840*/);
+  ASSERT_EQ(bc->get_dynamic_base_fee(600000000000, 1500000, HF_VERSION_2024_SCALING-1), 800);
+  ASSERT_EQ(bc->get_dynamic_base_fee(600000000000, 1500000, HF_VERSION_2024_SCALING), 760);
 }
 
-TEST(fee_2023_scaling, wallet_fee_cases_from_pdf)
+TEST(fee_2024_scaling, wallet_fee_cases_from_pdf)
 {
-  PREFIX_WINDOW(HF_VERSION_2023_SCALING, CRYPTONOTE_LONG_TERM_BLOCK_WEIGHT_WINDOW_SIZE);
+  PREFIX_WINDOW(HF_VERSION_2024_SCALING, CRYPTONOTE_LONG_TERM_BLOCK_WEIGHT_WINDOW_SIZE);
   std::vector<uint64_t> fees;
 
   fees.clear();
-  bc->get_dynamic_base_fee_estimate_2023_scaling(10, 600000000000, 300000, 300000, fees);
+  bc->get_dynamic_base_fee_estimate_2024_scaling(10, 600000000000, 300000, 300000, fees);
   ASSERT_EQ(fees.size(), 4);
   ASSERT_EQ(fees[0], 20000);
   ASSERT_EQ(fees[1], 80000);
@@ -100,7 +100,7 @@ TEST(fee_2023_scaling, wallet_fee_cases_from_pdf)
   ASSERT_EQ(fees[3], 4000000);
 
   fees.clear();
-  bc->get_dynamic_base_fee_estimate_2023_scaling(10, 600000000000, 15000000, 300000, fees);
+  bc->get_dynamic_base_fee_estimate_2024_scaling(10, 600000000000, 15000000, 300000, fees);
   ASSERT_EQ(fees.size(), 4);
   ASSERT_EQ(fees[0], 20000);
   ASSERT_EQ(fees[1], 80000);
@@ -108,7 +108,7 @@ TEST(fee_2023_scaling, wallet_fee_cases_from_pdf)
   ASSERT_EQ(fees[3], 1300000);
 
   fees.clear();
-  bc->get_dynamic_base_fee_estimate_2023_scaling(10, 600000000000, 1425000, 1425000, fees);
+  bc->get_dynamic_base_fee_estimate_2024_scaling(10, 600000000000, 1425000, 1425000, fees);
   ASSERT_EQ(fees.size(), 4);
   ASSERT_EQ(fees[0], 890);
   ASSERT_EQ(fees[1], 3600);
@@ -116,7 +116,7 @@ TEST(fee_2023_scaling, wallet_fee_cases_from_pdf)
   ASSERT_EQ(fees[3], 850000 /* 842000 */);
 
   fees.clear();
-  bc->get_dynamic_base_fee_estimate_2023_scaling(10, 600000000000, 1500000, 1500000, fees);
+  bc->get_dynamic_base_fee_estimate_2024_scaling(10, 600000000000, 1500000, 1500000, fees);
   ASSERT_EQ(fees.size(), 4);
   ASSERT_EQ(fees[0], 800);
   ASSERT_EQ(fees[1], 3200);
@@ -124,7 +124,7 @@ TEST(fee_2023_scaling, wallet_fee_cases_from_pdf)
   ASSERT_EQ(fees[3], 800000);
 
   fees.clear();
-  bc->get_dynamic_base_fee_estimate_2023_scaling(10, 600000000000, 75000000, 1500000, fees);
+  bc->get_dynamic_base_fee_estimate_2024_scaling(10, 600000000000, 75000000, 1500000, fees);
   ASSERT_EQ(fees.size(), 4);
   ASSERT_EQ(fees[0], 800);
   ASSERT_EQ(fees[1], 3200);
@@ -132,7 +132,7 @@ TEST(fee_2023_scaling, wallet_fee_cases_from_pdf)
   ASSERT_EQ(fees[3], 260000);
 }
 
-TEST(fee_2023_scaling, rounding)
+TEST(fee_2024_scaling, rounding)
 {
   ASSERT_EQ(cryptonote::round_money_up("27810", 3), "27900.000000000000");
   ASSERT_EQ(cryptonote::round_money_up("37.94", 3), "38.000000000000");

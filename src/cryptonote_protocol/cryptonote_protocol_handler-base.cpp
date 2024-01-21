@@ -2,7 +2,7 @@
 /// @author rfree (current maintainer in jude.cc project)
 /// @brief This is the place to implement our handlers for protocol network actions, e.g. for ratelimit for download-requests
 
-// Copyright (c) 2014-2023, The Jude Project
+// Copyright (c) 2014-2024, The Jude Project
 // 
 // All rights reserved.
 // 

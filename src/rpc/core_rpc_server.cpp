@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2023, The Jude Project
+// Copyright (c) 2014-2024, The Jude Project
 // 
 // All rights reserved.
 // 
@@ -2892,9 +2892,9 @@ namespace cryptonote
     CHECK_PAYMENT(req, res, COST_PER_FEE_ESTIMATE);
 
     const uint8_t version = m_core.get_blockchain_storage().get_current_hard_fork_version();
-    if (version >= HF_VERSION_2023_SCALING)
+    if (version >= HF_VERSION_2024_SCALING)
     {
-      m_core.get_blockchain_storage().get_dynamic_base_fee_estimate_2023_scaling(req.grace_blocks, res.fees);
+      m_core.get_blockchain_storage().get_dynamic_base_fee_estimate_2024_scaling(req.grace_blocks, res.fees);
       res.fee = res.fees[0];
     }
     else

@@ -1,4 +1,4 @@
-// Copyright (c) 2016-2023, The Jude Project
+// Copyright (c) 2016-2024, The Jude Project
 // 
 // All rights reserved.
 // 
@@ -209,7 +209,7 @@ TEST(uri, percent_without_url_encoding)
 
 TEST(uri, url_encoded_once)
 {
-  PARSE_URI("jude:" TEST_ADDRESS"?tx_description=foo%2023", true);
+  PARSE_URI("jude:" TEST_ADDRESS"?tx_description=foo%2024", true);
   ASSERT_EQ(description, "foo 20");
 }
 

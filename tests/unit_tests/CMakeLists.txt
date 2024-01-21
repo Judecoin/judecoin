@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2023, The Jude Project
+# Copyright (c) 2014-2024, The Jude Project
 #
 # All rights reserved.
 #
@@ -77,7 +77,7 @@ set(unit_tests_sources
   pruning.cpp
   random.cpp
   rolling_median.cpp
-  scaling_2023.cpp
+  scaling_2024.cpp
   serialization.cpp
   sha256.cpp
   slow_memmem.cpp

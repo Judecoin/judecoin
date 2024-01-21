@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2018-2023, The Jude Project
+# Copyright (c) 2018-2024, The Jude Project
 
 # 
 # All rights reserved.

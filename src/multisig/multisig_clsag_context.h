@@ -1,4 +1,4 @@
-// Copyright (c) 2023, The Jude Project
+// Copyright (c) 2024, The Jude Project
 // 
 // All rights reserved.
 // 
@@ -29,7 +29,7 @@
 ////
 // References
 // - CLSAG (base signature scheme): https://eprint.iacr.org/2019/654
-// - MuSig2 (style for multisig signing): https://eprint.iacr.org/2023/1261
+// - MuSig2 (style for multisig signing): https://eprint.iacr.org/2024/1261
 ///
 
 

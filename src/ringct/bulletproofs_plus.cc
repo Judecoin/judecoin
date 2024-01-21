@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2023, The Jude Project
+// Copyright (c) 2017-2024, The Jude Project
 // 
 // All rights reserved.
 // 
@@ -28,7 +28,7 @@
 
 // Implements the Bulletproofs+ prover and verifier algorithms
 //
-// Preprint: https://eprint.iacr.org/2023/735, version 17 Jun 2023
+// Preprint: https://eprint.iacr.org/2024/735, version 17 Jun 2024
 //
 // NOTE ON NOTATION:
 //  In the signature constructions used in Jude, commitments to zero are treated as
