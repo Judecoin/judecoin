@@ -3424,6 +3424,10 @@ void wallet2::refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blo
   uint64_t blocks_start_height;
   std::vector<cryptonote::block_complete_entry> blocks;
   std::vector<parsed_block> parsed_blocks;
+  // TODO judemooo-jude says this about the "refreshed" variable:
+  // "I had to reorder some code to fix... a timing info leak IIRC. In turn, this undid something I had fixed before, ... a subtle race condition with the txpool.
+  // It was pretty subtle IIRC, and so I needed time to think about how to refix it after the move, and I never got to it."
+  // https://github.com/jude-project/jude/pull/6097
   bool refreshed = false;
   std::shared_ptr<std::map<std::pair<uint64_t, uint64_t>, size_t>> output_tracker_cache;
   hw::device &hwdev = m_account.get_device();
@@ -13395,7 +13399,7 @@ size_t wallet2::import_outputs_from_str(const std::string &outputs_st)
   }
   catch (const std::exception &e)
   {
-    THROW_WALLET_EXCEPTION(error::wallet_internal_error, std::string("Failed to import outputs: ") + e.what());
+    THROW_WALLET_EXCEPTION(error::wallet_internal_error, std::string("Failed to import outputs") + e.what());
   }
 
   return imported_outputs;
