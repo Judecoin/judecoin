@@ -1146,8 +1146,8 @@ UnsignedTransaction *WalletImpl::loadUnsignedTx(const std::string &unsigned_file
   
   // Check tx data and construct confirmation message
   std::string extra_message;
-  if (!transaction->m_unsigned_tx_set.transfers.second.empty())
-    extra_message = (boost::format("%u outputs to import. ") % (unsigned)transaction->m_unsigned_tx_set.transfers.second.size()).str();
+  if (!std::get<2>(transaction->m_unsigned_tx_set.transfers).empty())
+    extra_message = (boost::format("%u outputs to import. ") % (unsigned)std::get<2>(transaction->m_unsigned_tx_set.transfers).size()).str();
   transaction->checkLoadedTx([&transaction](){return transaction->m_unsigned_tx_set.txes.size();}, [&transaction](size_t n)->const tools::wallet2::tx_construction_data&{return transaction->m_unsigned_tx_set.txes[n];}, extra_message);
   setStatus(transaction->status(), transaction->errorString());
     
@@ -2173,9 +2173,15 @@ bool WalletImpl::connectToDaemon()
 Wallet::ConnectionStatus WalletImpl::connected() const
 {
     uint32_t version = 0;
-    m_is_connected = m_wallet->check_connection(&version, NULL, DEFAULT_CONNECTION_TIMEOUT_MILLIS);
+    bool wallet_is_outdated, daemon_is_outdated = false;
+    m_is_connected = m_wallet->check_connection(&version, NULL, DEFAULT_CONNECTION_TIMEOUT_MILLIS, &wallet_is_outdated, &daemon_is_outdated);
     if (!m_is_connected)
-        return Wallet::ConnectionStatus_Disconnected;
+    {
+        if (!m_wallet->light_wallet() && (wallet_is_outdated || daemon_is_outdated))
+            return Wallet::ConnectionStatus_WrongVersion;
+        else
+            return Wallet::ConnectionStatus_Disconnected;
+    }
     // Version check is not implemented in light wallets nodes/wallets
     if (!m_wallet->light_wallet() && (version >> 16) != CORE_RPC_VERSION_MAJOR)
         return Wallet::ConnectionStatus_WrongVersion;

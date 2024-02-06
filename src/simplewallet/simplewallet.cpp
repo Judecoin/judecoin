@@ -181,7 +181,6 @@ namespace
   const command_line::arg_descriptor<bool> arg_restore_from_seed = {"restore-from-seed", sw::tr("alias for --restore-deterministic-wallet"), false};
   const command_line::arg_descriptor<bool> arg_restore_multisig_wallet = {"restore-multisig-wallet", sw::tr("Recover multisig wallet using Electrum-style mnemonic seed"), false};
   const command_line::arg_descriptor<bool> arg_non_deterministic = {"non-deterministic", sw::tr("Generate non-deterministic view and spend keys"), false};
-  const command_line::arg_descriptor<bool> arg_allow_mismatched_daemon_version = {"allow-mismatched-daemon-version", sw::tr("Allow communicating with a daemon that uses a different RPC version"), false};
   const command_line::arg_descriptor<uint64_t> arg_restore_height = {"restore-height", sw::tr("Restore from specific blockchain height"), 0};
   const command_line::arg_descriptor<std::string> arg_restore_date = {"restore-date", sw::tr("Restore from estimated blockchain height on specified date"), ""};
   const command_line::arg_descriptor<bool> arg_do_not_relay = {"do-not-relay", sw::tr("The newly created transaction will not be relayed to the jude network"), false};
@@ -3233,8 +3232,7 @@ bool simple_wallet::scan_tx(const std::vector<std::string> &args)
 }
 
 simple_wallet::simple_wallet()
-  : m_allow_mismatched_daemon_version(false)
-  , m_refresh_progress_reporter(*this)
+  : m_refresh_progress_reporter(*this)
   , m_idle_run(true)
   , m_auto_refresh_enabled(false)
   , m_auto_refresh_refreshing(false)
@@ -4118,6 +4116,7 @@ bool simple_wallet::init(const boost::program_options::variables_map& vm)
 
   epee::wipeable_string multisig_keys;
   epee::wipeable_string password;
+  epee::wipeable_string seed_pass;
 
   if (!handle_command_line(vm))
     return false;
@@ -4132,6 +4131,17 @@ bool simple_wallet::init(const boost::program_options::variables_map& vm)
   else if (m_generate_new.empty() && m_wallet_file.empty() && m_generate_from_device.empty() && m_generate_from_view_key.empty() && m_generate_from_spend_key.empty() && m_generate_from_keys.empty() && m_generate_from_multisig_keys.empty() && m_generate_from_json.empty())
   {
     if(!ask_wallet_create_if_needed()) return false;
+  }
+
+  bool enable_multisig = false;
+  if (m_restore_multisig_wallet) {
+    fail_msg_writer() << tr("Multisig is disabled.");
+    fail_msg_writer() << tr("Multisig is an experimental feature and may have bugs. Things that could go wrong include: funds sent to a multisig wallet can't be spent at all, can only be spent with the participation of a malicious group member, or can be stolen by a malicious group member.");
+    if (!command_line::is_yes(input_line("Do you want to continue restoring a multisig wallet?", true))) {
+      message_writer() << tr("You have canceled restoring a multisig wallet.");
+      return false;
+    }
+    enable_multisig = true;
   }
 
   if (!m_generate_new.empty() || m_restoring)
@@ -4213,19 +4223,9 @@ bool simple_wallet::init(const boost::program_options::variables_map& vm)
       auto pwd_container = password_prompter(tr("Enter seed offset passphrase, empty if none"), false);
       if (std::cin.eof() || !pwd_container)
         return false;
-      epee::wipeable_string seed_pass = pwd_container->password();
-      if (!seed_pass.empty())
-      {
-        if (m_restore_multisig_wallet)
-        {
-          crypto::secret_key key;
-          crypto::cn_slow_hash(seed_pass.data(), seed_pass.size(), (crypto::hash&)key);
-          sc_reduce32((unsigned char*)key.data);
-          multisig_keys = m_wallet->decrypt<epee::wipeable_string>(std::string(multisig_keys.data(), multisig_keys.size()), key, true);
-        }
-        else
-          m_recovery_key = cryptonote::decrypt_key(m_recovery_key, seed_pass);
-      }
+      seed_pass = pwd_container->password();
+      if (!seed_pass.empty() && !m_restore_multisig_wallet)
+        m_recovery_key = cryptonote::decrypt_key(m_recovery_key, seed_pass);
     }
     if (!m_generate_from_view_key.empty())
     {
@@ -4568,7 +4568,7 @@ bool simple_wallet::init(const boost::program_options::variables_map& vm)
       m_wallet_file = m_generate_new;
       boost::optional<epee::wipeable_string> r;
       if (m_restore_multisig_wallet)
-        r = new_wallet(vm, multisig_keys, old_language);
+        r = new_wallet(vm, multisig_keys, seed_pass, old_language);
       else
         r = new_wallet(vm, m_recovery_key, m_restore_deterministic_wallet, m_non_deterministic, old_language);
       CHECK_AND_ASSERT_MES(r, false, tr("account creation failed"));
@@ -4667,6 +4667,8 @@ bool simple_wallet::init(const boost::program_options::variables_map& vm)
       }
       m_wallet->set_refresh_from_block_height(m_restore_height);
     }
+    if (enable_multisig)
+      m_wallet->enable_multisig(true);
     m_wallet->rewrite(m_wallet_file, password);
   }
   else
@@ -4755,7 +4757,6 @@ bool simple_wallet::handle_command_line(const boost::program_options::variables_
   m_restore_deterministic_wallet  = command_line::get_arg(vm, arg_restore_deterministic_wallet) || command_line::get_arg(vm, arg_restore_from_seed);
   m_restore_multisig_wallet       = command_line::get_arg(vm, arg_restore_multisig_wallet);
   m_non_deterministic             = command_line::get_arg(vm, arg_non_deterministic);
-  m_allow_mismatched_daemon_version = command_line::get_arg(vm, arg_allow_mismatched_daemon_version);
   m_restore_height                = command_line::get_arg(vm, arg_restore_height);
   m_restore_date                  = command_line::get_arg(vm, arg_restore_date);
   m_do_not_relay                  = command_line::get_arg(vm, arg_do_not_relay);
@@ -4786,12 +4787,20 @@ bool simple_wallet::try_connect_to_daemon(bool silent, uint32_t* version)
   uint32_t version_ = 0;
   if (!version)
     version = &version_;
-  if (!m_wallet->check_connection(version))
+  bool wallet_is_outdated, daemon_is_outdated = false;
+  if (!m_wallet->check_connection(version, NULL, 200000, &wallet_is_outdated, &daemon_is_outdated))
   {
     if (!silent)
     {
       if (m_wallet->is_offline())
         fail_msg_writer() << tr("wallet failed to connect to daemon, because it is set to offline mode");
+      else if (wallet_is_outdated)
+        fail_msg_writer() << tr("wallet failed to connect to daemon, because it is not up to date. ") <<
+          tr("Please make sure you are running the latest wallet.");
+      else if (daemon_is_outdated)
+        fail_msg_writer() << tr("wallet failed to connect to daemon: ") << m_wallet->get_daemon_address() << ". " <<
+          tr("Daemon is not up to date. "
+          "Please make sure the daemon is running the latest version or change the daemon address using the 'set_daemon' command.");
       else
         fail_msg_writer() << tr("wallet failed to connect to daemon: ") << m_wallet->get_daemon_address() << ". " <<
           tr("Daemon either is not started or wrong port was passed. "
@@ -4799,7 +4808,7 @@ bool simple_wallet::try_connect_to_daemon(bool silent, uint32_t* version)
     }
     return false;
   }
-  if (!m_allow_mismatched_daemon_version && ((*version >> 16) != CORE_RPC_VERSION_MAJOR))
+  if (!m_wallet->is_mismatched_daemon_version_allowed() && ((*version >> 16) != CORE_RPC_VERSION_MAJOR))
   {
     if (!silent)
       fail_msg_writer() << boost::format(tr("Daemon uses a different RPC major version (%u) than the wallet (%u): %s. Either update one of them, or use --allow-mismatched-daemon-version.")) % (*version>>16) % CORE_RPC_VERSION_MAJOR % m_wallet->get_daemon_address();
@@ -5057,7 +5066,7 @@ boost::optional<epee::wipeable_string> simple_wallet::new_wallet(const boost::pr
 }
 //----------------------------------------------------------------------------------------------------
 boost::optional<epee::wipeable_string> simple_wallet::new_wallet(const boost::program_options::variables_map& vm,
-    const epee::wipeable_string &multisig_keys, const std::string &old_language)
+    const epee::wipeable_string &multisig_keys, const epee::wipeable_string &seed_pass, const std::string &old_language)
 {
   std::pair<std::unique_ptr<tools::wallet2>, tools::password_container> rc;
   try { rc = tools::wallet2::make_new(vm, false, password_prompter); }
@@ -5091,7 +5100,16 @@ boost::optional<epee::wipeable_string> simple_wallet::new_wallet(const boost::pr
 
   try
   {
-    m_wallet->generate(m_wallet_file, std::move(rc.second).password(), multisig_keys, create_address_file);
+    if (seed_pass.empty())
+      m_wallet->generate(m_wallet_file, std::move(rc.second).password(), multisig_keys, create_address_file);
+    else
+    {
+      crypto::secret_key key;
+      crypto::cn_slow_hash(seed_pass.data(), seed_pass.size(), (crypto::hash&)key);
+      sc_reduce32((unsigned char*)key.data);
+      const epee::wipeable_string &msig_keys = m_wallet->decrypt<epee::wipeable_string>(std::string(multisig_keys.data(), multisig_keys.size()), key, true);
+      m_wallet->generate(m_wallet_file, std::move(rc.second).password(), msig_keys, create_address_file);
+    }
     bool ready;
     uint32_t threshold, total;
     if (!m_wallet->multisig(&ready, &threshold, &total) || !ready)
@@ -7912,8 +7930,10 @@ bool simple_wallet::accept_loaded_tx(const std::function<size_t()> get_num_txes,
 bool simple_wallet::accept_loaded_tx(const tools::wallet2::unsigned_tx_set &txs)
 {
   std::string extra_message;
-  if (!txs.transfers.second.empty())
-    extra_message = (boost::format("%u outputs to import. ") % (unsigned)txs.transfers.second.size()).str();
+  if (!std::get<2>(txs.new_transfers).empty())
+    extra_message = (boost::format("%u outputs to import. ") % (unsigned)std::get<2>(txs.new_transfers).size()).str();
+  else if (!std::get<2>(txs.transfers).empty())
+    extra_message = (boost::format("%u outputs to import. ") % (unsigned)std::get<2>(txs.transfers).size()).str();
   return accept_loaded_tx([&txs](){return txs.txes.size();}, [&txs](size_t n)->const tools::wallet2::tx_construction_data&{return txs.txes[n];}, extra_message);
 }
 //----------------------------------------------------------------------------------------------------
@@ -10627,7 +10647,6 @@ int main(int argc, char* argv[])
   command_line::add_arg(desc_params, arg_restore_multisig_wallet );
   command_line::add_arg(desc_params, arg_non_deterministic );
   command_line::add_arg(desc_params, arg_electrum_seed );
-  command_line::add_arg(desc_params, arg_allow_mismatched_daemon_version);
   command_line::add_arg(desc_params, arg_restore_height);
   command_line::add_arg(desc_params, arg_restore_date);
   command_line::add_arg(desc_params, arg_do_not_relay);

@@ -47,6 +47,7 @@
 using namespace epee;
 
 #include "cryptonote_config.h"
+#include "hardforks/hardforks.h"
 #include "cryptonote_core/tx_sanity_check.h"
 #include "wallet_rpc_helpers.h"
 #include "wallet2.h"
@@ -275,6 +276,7 @@ struct options {
   const command_line::arg_descriptor<bool> no_dns = {"no-dns", tools::wallet2::tr("Do not use DNS"), false};
   const command_line::arg_descriptor<bool> offline = {"offline", tools::wallet2::tr("Do not connect to a daemon, nor use DNS"), false};
   const command_line::arg_descriptor<std::string> extra_entropy = {"extra-entropy", tools::wallet2::tr("File containing extra entropy to initialize the PRNG (any data, aim for 256 bits of entropy to be useful, which typically means more than 256 bits of data)")};
+  const command_line::arg_descriptor<bool> allow_mismatched_daemon_version = {"allow-mismatched-daemon-version", tools::wallet2::tr("Allow communicating with a daemon that uses a different version"), false};
 };
 
 void do_prepare_file_names(const std::string& file_path, std::string& keys_file, std::string& wallet_file, std::string &mms_file)
@@ -483,6 +485,9 @@ std::unique_ptr<tools::wallet2> make_basic(const boost::program_options::variabl
         tools::error::wallet_internal_error, "Failed to load extra entropy from " + extra_entropy);
     add_extra_entropy_thread_safe(data.data(), data.size());
   }
+
+  if (command_line::has_arg(vm, opts.allow_mismatched_daemon_version))
+    wallet->allow_mismatched_daemon_version(true);
 
   try
   {
@@ -1218,7 +1223,9 @@ wallet2::wallet2(network_type nettype, uint64_t kdf_rounds, bool unattended, std
   m_export_format(ExportFormat::Binary),
   m_load_deprecated_formats(false),
   m_credits_target(0),
-  m_enable_multisig(false)
+  m_enable_multisig(false),
+  m_has_ever_refreshed_from_node(false),
+  m_allow_mismatched_daemon_version(false)
 {
   set_rpc_client_secret_key(rct::rct2sk(rct::skGen()));
 }
@@ -1278,6 +1285,7 @@ void wallet2::init_options(boost::program_options::options_description& desc_par
   command_line::add_arg(desc_params, opts.no_dns);
   command_line::add_arg(desc_params, opts.offline);
   command_line::add_arg(desc_params, opts.extra_entropy);
+  command_line::add_arg(desc_params, opts.allow_mismatched_daemon_version);
 }
 
 std::pair<std::unique_ptr<wallet2>, tools::password_container> wallet2::make_from_json(const boost::program_options::variables_map& vm, bool unattended, const std::string& json_file, const std::function<boost::optional<tools::password_container>(const char *, bool)> &password_prompter)
@@ -2914,6 +2922,26 @@ void wallet2::refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blo
   refresh(trusted_daemon, start_height, blocks_fetched, received_money);
 }
 //----------------------------------------------------------------------------------------------------
+void check_block_hard_fork_version(cryptonote::network_type nettype, uint8_t hf_version, uint64_t height, bool &wallet_is_outdated, bool &daemon_is_outdated)
+{
+  const size_t wallet_num_hard_forks = nettype == TESTNET ? num_testnet_hard_forks
+    : nettype == STAGENET ? num_stagenet_hard_forks : num_mainnet_hard_forks;
+  const hardfork_t *wallet_hard_forks = nettype == TESTNET ? testnet_hard_forks
+    : nettype == STAGENET ? stagenet_hard_forks : mainnet_hard_forks;
+
+  wallet_is_outdated = static_cast<size_t>(hf_version) > wallet_num_hard_forks;
+  if (wallet_is_outdated)
+    return;
+
+  // check block's height falls within wallet's expected range for block's given version
+  uint64_t start_height = hf_version == 1 ? 0 : wallet_hard_forks[hf_version - 1].height;
+  uint64_t end_height = static_cast<size_t>(hf_version) + 1 > wallet_num_hard_forks
+    ? std::numeric_limits<uint64_t>::max()
+    : wallet_hard_forks[hf_version].height;
+
+  daemon_is_outdated = height < start_height || height >= end_height;
+}
+//----------------------------------------------------------------------------------------------------
 void wallet2::pull_and_parse_next_blocks(uint64_t start_height, uint64_t &blocks_start_height, std::list<crypto::hash> &short_chain_history, const std::vector<cryptonote::block_complete_entry> &prev_blocks, const std::vector<parsed_block> &prev_parsed_blocks, std::vector<cryptonote::block_complete_entry> &blocks, std::vector<parsed_block> &parsed_blocks, bool &last, bool &error, std::exception_ptr &exception)
 {
   error = false;
@@ -2955,6 +2983,23 @@ void wallet2::pull_and_parse_next_blocks(uint64_t start_height, uint64_t &blocks
         error = true;
         break;
       }
+
+      if (!m_allow_mismatched_daemon_version)
+      {
+        // make sure block's hard fork version is expected at the block's height
+        uint8_t hf_version = parsed_blocks[i].block.major_version;
+        uint64_t height = blocks_start_height + i;
+        bool wallet_is_outdated = false;
+        bool daemon_is_outdated = false;
+        check_block_hard_fork_version(m_nettype, hf_version, height, wallet_is_outdated, daemon_is_outdated);
+        THROW_WALLET_EXCEPTION_IF(wallet_is_outdated || daemon_is_outdated, error::incorrect_fork_version,
+          "Unexpected hard fork version v" + std::to_string(hf_version) + " at height " + std::to_string(height) + ". " +
+          (wallet_is_outdated
+            ? "Make sure your wallet is up to date"
+            : "Make sure the node you are connected to is running the latest version")
+        );
+      }
+
       parsed_blocks[i].o_indices = std::move(o_indices[i]);
     }
 
@@ -3424,6 +3469,10 @@ void wallet2::refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blo
   uint64_t blocks_start_height;
   std::vector<cryptonote::block_complete_entry> blocks;
   std::vector<parsed_block> parsed_blocks;
+  // TODO judemooo-jude says this about the "refreshed" variable:
+  // "I had to reorder some code to fix... a timing info leak IIRC. In turn, this undid something I had fixed before, ... a subtle race condition with the txpool.
+  // It was pretty subtle IIRC, and so I needed time to think about how to refix it after the move, and I never got to it."
+  // https://github.com/jude-project/jude/pull/6097
   bool refreshed = false;
   std::shared_ptr<std::map<std::pair<uint64_t, uint64_t>, size_t>> output_tracker_cache;
   hw::device &hwdev = m_account.get_device();
@@ -3535,6 +3584,8 @@ void wallet2::refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blo
           throw std::runtime_error("proxy exception in refresh thread");
       }
 
+      m_has_ever_refreshed_from_node = true;
+
       if(!first && blocks_start_height == next_blocks_start_height)
       {
         m_node_rpc_proxy.set_height(m_blockchain.size());
@@ -3567,6 +3618,11 @@ void wallet2::refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blo
       throw;
     }
     catch (const error::reorg_depth_error&)
+    {
+      THROW_WALLET_EXCEPTION_IF(!waiter.wait(), error::wallet_internal_error, "Exception in thread pool");
+      throw;
+    }
+    catch (const error::incorrect_fork_version&)
     {
       THROW_WALLET_EXCEPTION_IF(!waiter.wait(), error::wallet_internal_error, "Exception in thread pool");
       throw;
@@ -4181,6 +4237,7 @@ bool wallet2::load_keys_buf(const std::string& keys_buf, const epee::wipeable_st
     m_auto_mine_for_rpc_payment_threshold = -1.0f;
     m_credits_target = 0;
     m_enable_multisig = false;
+    m_allow_mismatched_daemon_version = false;
   }
   else if(json.IsObject())
   {
@@ -4684,7 +4741,8 @@ void wallet2::init_type(hw::device::device_type device_type)
 }
 
 /*!
- * \brief  Generates a wallet or restores one.
+ * \brief  Generates a wallet or restores one. Assumes the multisig setup
+ *         has already completed for the provided multisig info.
  * \param  wallet_              Name of wallet file
  * \param  password             Password of wallet file
  * \param  multisig_data        The multisig restore info and keys
@@ -4743,11 +4801,6 @@ void wallet2::generate(const std::string& wallet_, const epee::wipeable_string& 
   crypto::public_key local_signer;
   THROW_WALLET_EXCEPTION_IF(!crypto::secret_key_to_public_key(spend_secret_key, local_signer), error::invalid_multisig_seed);
   THROW_WALLET_EXCEPTION_IF(std::find(multisig_signers.begin(), multisig_signers.end(), local_signer) == multisig_signers.end(), error::invalid_multisig_seed);
-  rct::key skey = rct::zero();
-  for (const auto &msk: multisig_keys)
-    sc_add(skey.bytes, skey.bytes, rct::sk2rct(msk).bytes);
-  THROW_WALLET_EXCEPTION_IF(!(rct::rct2sk(skey) == spend_secret_key), error::invalid_multisig_seed);
-  memwipe(&skey, sizeof(rct::key));
 
   m_account.make_multisig(view_secret_key, spend_secret_key, spend_public_key, multisig_keys);
 
@@ -4758,6 +4811,8 @@ void wallet2::generate(const std::string& wallet_, const epee::wipeable_string& 
   m_multisig = true;
   m_multisig_threshold = threshold;
   m_multisig_signers = multisig_signers;
+  // wallet is assumed already finalized
+  m_multisig_rounds_passed = multisig::multisig_setup_rounds_required(m_multisig_signers.size(), m_multisig_threshold);
   setup_keys(password);
 
   create_keys_file(wallet_, false, password, m_nettype != MAINNET || create_address_file);
@@ -5208,7 +5263,7 @@ bool wallet2::multisig(bool *ready, uint32_t *threshold, uint32_t *total) const
   if (ready)
   {
     *ready = !(get_account().get_keys().m_account_address.m_spend_public_key == rct::rct2pk(rct::identity())) &&
-      (m_multisig_rounds_passed == multisig::multisig_kex_rounds_required(m_multisig_signers.size(), m_multisig_threshold) + 1);
+      (m_multisig_rounds_passed == multisig::multisig_setup_rounds_required(m_multisig_signers.size(), m_multisig_threshold));
   }
   return true;
 }
@@ -5324,7 +5379,7 @@ bool wallet2::prepare_file_names(const std::string& file_path)
   return true;
 }
 //----------------------------------------------------------------------------------------------------
-bool wallet2::check_connection(uint32_t *version, bool *ssl, uint32_t timeout)
+bool wallet2::check_connection(uint32_t *version, bool *ssl, uint32_t timeout, bool *wallet_is_outdated, bool *daemon_is_outdated)
 {
   THROW_WALLET_EXCEPTION_IF(!m_is_initialized, error::wallet_not_initialized);
 
@@ -5361,20 +5416,99 @@ bool wallet2::check_connection(uint32_t *version, bool *ssl, uint32_t timeout)
     }
   }
 
-  if (!m_rpc_version)
-  {
-    cryptonote::COMMAND_RPC_GET_VERSION::request req_t = AUTO_VAL_INIT(req_t);
-    cryptonote::COMMAND_RPC_GET_VERSION::response resp_t = AUTO_VAL_INIT(resp_t);
-    bool r = invoke_http_json_rpc("/json_rpc", "get_version", req_t, resp_t);
-    if(!r || resp_t.status != CORE_RPC_STATUS_OK) {
-      if(version)
-        *version = 0;
-      return false;
-    }
-    m_rpc_version = resp_t.version;
-  }
+  if (!m_rpc_version && !check_version(version, wallet_is_outdated, daemon_is_outdated))
+    return false;
   if (version)
     *version = m_rpc_version;
+
+  return true;
+}
+//----------------------------------------------------------------------------------------------------
+bool wallet2::check_version(uint32_t *version, bool *wallet_is_outdated, bool *daemon_is_outdated)
+{
+  uint32_t rpc_version;
+  std::vector<std::pair<uint8_t, uint64_t>> daemon_hard_forks;
+  uint64_t height;
+  uint64_t target_height;
+  if (m_node_rpc_proxy.get_rpc_version(rpc_version, daemon_hard_forks, height, target_height))
+  {
+    if(version)
+      *version = 0;
+    return false;
+  }
+
+  // check wallet compatibility with daemon's hard fork version
+  if (!m_allow_mismatched_daemon_version)
+    if (!check_hard_fork_version(m_nettype, daemon_hard_forks, height, target_height, wallet_is_outdated, daemon_is_outdated))
+      return false;
+
+  m_rpc_version = rpc_version;
+  return true;
+}
+//----------------------------------------------------------------------------------------------------
+bool wallet2::check_hard_fork_version(cryptonote::network_type nettype, const std::vector<std::pair<uint8_t, uint64_t>> &daemon_hard_forks, const uint64_t height, const uint64_t target_height, bool *wallet_is_outdated, bool *daemon_is_outdated)
+{
+  const size_t wallet_num_hard_forks = nettype == TESTNET ? num_testnet_hard_forks
+    : nettype == STAGENET ? num_stagenet_hard_forks : num_mainnet_hard_forks;
+  const hardfork_t *wallet_hard_forks = nettype == TESTNET ? testnet_hard_forks
+    : nettype == STAGENET ? stagenet_hard_forks : mainnet_hard_forks;
+
+  // First check if wallet or daemon is outdated (whether either are unaware of
+  // a hard fork). Then check if fork has passed rendering versions incompatible
+  if (daemon_hard_forks.size() > 0)
+  {
+    bool daemon_outdated = daemon_hard_forks.size() < wallet_num_hard_forks;
+    bool wallet_outdated = daemon_hard_forks.size() > wallet_num_hard_forks;
+
+    if (daemon_is_outdated)
+      *daemon_is_outdated = daemon_outdated;
+    if (wallet_is_outdated)
+      *wallet_is_outdated = wallet_outdated;
+
+    if (daemon_outdated)
+    {
+      uint64_t daemon_missed_fork_height = wallet_hard_forks[daemon_hard_forks.size()].height;
+
+      // If the daemon missed the fork, then technically it is no longer part of
+      // the Jude network. Don't connect.
+      bool daemon_missed_fork = height >= daemon_missed_fork_height || target_height >= daemon_missed_fork_height;
+      if (daemon_missed_fork)
+        return false;
+    }
+    else if (wallet_outdated)
+    {
+      uint64_t wallet_missed_fork_height = daemon_hard_forks[wallet_num_hard_forks].second;
+
+      // If the wallet missed the fork, then technically it is no longer able
+      // to communicate with the Jude network. Don't connect.
+      bool wallet_missed_fork = height >= wallet_missed_fork_height || target_height >= wallet_missed_fork_height;
+      if (wallet_missed_fork)
+        return false;
+    }
+  }
+  else
+  {
+    // Non-updated daemons won't return daemon_hard_forks in response to
+    // get_version. Fall back to extra call to get_hard_fork_info by version.
+    uint64_t daemon_fork_height;
+    get_hard_fork_info(wallet_num_hard_forks-1/* wallet expects "double fork" pattern */, daemon_fork_height);
+    bool daemon_outdated = daemon_fork_height == std::numeric_limits<uint64_t>::max();
+
+    if (daemon_is_outdated)
+      *daemon_is_outdated = daemon_outdated;
+
+    if (daemon_outdated)
+    {
+      uint64_t daemon_missed_fork_height = wallet_hard_forks[wallet_num_hard_forks-2].height;
+      bool daemon_missed_fork = height >= daemon_missed_fork_height || target_height >= daemon_missed_fork_height;
+      if (daemon_missed_fork)
+        return false;
+    }
+
+    // Don't need to check if wallet is outdated here because the daemons updated
+    // for a future hard fork will serve daemon_hard_forks above. The check for
+    // an outdated wallet is done above using daemon_hard_forks.
+  }
 
   return true;
 }
@@ -6604,9 +6738,9 @@ bool wallet2::sign_tx(const std::string &unsigned_filename, const std::string &s
 //----------------------------------------------------------------------------------------------------
 bool wallet2::sign_tx(unsigned_tx_set &exported_txs, std::vector<wallet2::pending_tx> &txs, signed_tx_set &signed_txes)
 {
-  if (!exported_txs.new_transfers.second.empty())
+  if (!std::get<2>(exported_txs.new_transfers).empty())
     import_outputs(exported_txs.new_transfers);
-  else
+  else if (!std::get<2>(exported_txs.transfers).empty())
     import_outputs(exported_txs.transfers);
 
   // sign the transactions
@@ -10800,7 +10934,7 @@ void wallet2::cold_sign_tx(const std::vector<pending_tx>& ptx_vector, signed_tx_
   {
     txs.txes.push_back(get_construction_data_with_decrypted_short_payment_id(tx, m_account.get_device()));
   }
-  txs.transfers = std::make_pair(0, m_transfers);
+  txs.transfers = std::make_tuple(0, m_transfers.size(), m_transfers);
 
   auto dev_cold = dynamic_cast<::hw::device_cold*>(&hwdev);
   CHECK_AND_ASSERT_THROW_MES(dev_cold, "Device does not implement cold signing interface");
@@ -13103,18 +13237,29 @@ void wallet2::import_blockchain(const std::tuple<size_t, crypto::hash, std::vect
   m_last_block_reward = cryptonote::get_outs_money_amount(genesis.miner_tx);
 }
 //----------------------------------------------------------------------------------------------------
-std::pair<uint64_t, std::vector<tools::wallet2::exported_transfer_details>> wallet2::export_outputs(bool all) const
+std::tuple<uint64_t, uint64_t, std::vector<tools::wallet2::exported_transfer_details>> wallet2::export_outputs(bool all, uint32_t start, uint32_t count) const
 {
   PERF_TIMER(export_outputs);
   std::vector<tools::wallet2::exported_transfer_details> outs;
+
+  // invalid cases
+  THROW_WALLET_EXCEPTION_IF(count == 0, error::wallet_internal_error, "Nothing requested");
+  THROW_WALLET_EXCEPTION_IF(!all && start > 0, error::wallet_internal_error, "Incremental mode is incompatible with non-zero start");
+
+  // valid cases:
+  // all: all outputs, subject to start/count
+  // !all: incremental, subject to count
+  // for convenience, start/count are allowed to go past the valid range, then nothing is returned
 
   size_t offset = 0;
   if (!all)
     while (offset < m_transfers.size() && (m_transfers[offset].m_key_image_known && !m_transfers[offset].m_key_image_request))
       ++offset;
+  else
+    offset = start;
 
   outs.reserve(m_transfers.size() - offset);
-  for (size_t n = offset; n < m_transfers.size(); ++n)
+  for (size_t n = offset; n < m_transfers.size() && n - offset < count; ++n)
   {
     const transfer_details &td = m_transfers[n];
 
@@ -13132,20 +13277,22 @@ std::pair<uint64_t, std::vector<tools::wallet2::exported_transfer_details>> wall
     etd.m_flags.m_key_image_partial = td.m_key_image_partial;
     etd.m_amount = td.m_amount;
     etd.m_additional_tx_keys = get_additional_tx_pub_keys_from_extra(td.m_tx);
+    etd.m_subaddr_index_major = td.m_subaddr_index.major;
+    etd.m_subaddr_index_minor = td.m_subaddr_index.minor;
 
     outs.push_back(etd);
   }
 
-  return std::make_pair(offset, outs);
+  return std::make_tuple(offset, m_transfers.size(), outs);
 }
 //----------------------------------------------------------------------------------------------------
-std::string wallet2::export_outputs_to_str(bool all) const
+std::string wallet2::export_outputs_to_str(bool all, uint32_t start, uint32_t count) const
 {
   PERF_TIMER(export_outputs_to_str);
 
   std::stringstream oss;
   binary_archive<true> ar(oss);
-  auto outputs = export_outputs(all);
+  auto outputs = export_outputs(all, start, count);
   THROW_WALLET_EXCEPTION_IF(!::serialization::serialize(ar, outputs), error::wallet_internal_error, "Failed to serialize output data");
 
   std::string magic(OUTPUT_EXPORT_FILE_MAGIC, strlen(OUTPUT_EXPORT_FILE_MAGIC));
@@ -13158,21 +13305,35 @@ std::string wallet2::export_outputs_to_str(bool all) const
   return magic + ciphertext;
 }
 //----------------------------------------------------------------------------------------------------
-size_t wallet2::import_outputs(const std::pair<uint64_t, std::vector<tools::wallet2::transfer_details>> &outputs)
+size_t wallet2::import_outputs(const std::tuple<uint64_t, uint64_t, std::vector<tools::wallet2::transfer_details>> &outputs)
 {
   PERF_TIMER(import_outputs);
 
-  THROW_WALLET_EXCEPTION_IF(outputs.first > m_transfers.size(), error::wallet_internal_error,
+  THROW_WALLET_EXCEPTION_IF(m_has_ever_refreshed_from_node, error::wallet_internal_error,
+      "Hot wallets cannot import outputs");
+
+  // we can now import piecemeal
+  const size_t offset = std::get<0>(outputs);
+  const size_t num_outputs = std::get<1>(outputs);
+  const std::vector<tools::wallet2::transfer_details> &output_array = std::get<2>(outputs);
+
+  THROW_WALLET_EXCEPTION_IF(offset > m_transfers.size(), error::wallet_internal_error,
       "Imported outputs omit more outputs that we know of");
 
-  const size_t offset = outputs.first;
+  THROW_WALLET_EXCEPTION_IF(offset >= num_outputs, error::wallet_internal_error,
+      "Offset is larger than total outputs");
+  THROW_WALLET_EXCEPTION_IF(output_array.size() > num_outputs - offset, error::wallet_internal_error,
+      "Offset is larger than total outputs");
+
   const size_t original_size = m_transfers.size();
-  m_transfers.resize(offset + outputs.second.size());
-  for (size_t i = 0; i < offset; ++i)
-    m_transfers[i].m_key_image_request = false;
-  for (size_t i = 0; i < outputs.second.size(); ++i)
+  if (offset + output_array.size() > m_transfers.size())
+    m_transfers.resize(offset + output_array.size());
+  else if (num_outputs < m_transfers.size())
+    m_transfers.resize(num_outputs);
+
+  for (size_t i = 0; i < output_array.size(); ++i)
   {
-    transfer_details td = outputs.second[i];
+    transfer_details td = output_array[i];
 
     // skip those we've already imported, or which have different data
     if (i + offset < original_size)
@@ -13206,6 +13367,8 @@ process:
     THROW_WALLET_EXCEPTION_IF(td.m_internal_output_index >= td.m_tx.vout.size(),
         error::wallet_internal_error, "Internal index is out of range");
     crypto::public_key out_key = td.get_public_key();
+    if (should_expand(td.m_subaddr_index))
+      create_one_off_subaddress(td.m_subaddr_index);
     bool r = cryptonote::generate_key_image_helper(m_account.get_keys(), m_subaddresses, out_key, tx_pub_key, additional_tx_pub_keys, td.m_internal_output_index, in_ephemeral, td.m_key_image, m_account.get_device());
     THROW_WALLET_EXCEPTION_IF(!r, error::wallet_internal_error, "Failed to generate key image");
     if (should_expand(td.m_subaddr_index))
@@ -13224,24 +13387,38 @@ process:
   return m_transfers.size();
 }
 //----------------------------------------------------------------------------------------------------
-size_t wallet2::import_outputs(const std::pair<uint64_t, std::vector<tools::wallet2::exported_transfer_details>> &outputs)
+size_t wallet2::import_outputs(const std::tuple<uint64_t, uint64_t, std::vector<tools::wallet2::exported_transfer_details>> &outputs)
 {
   PERF_TIMER(import_outputs);
 
-  THROW_WALLET_EXCEPTION_IF(outputs.first > m_transfers.size(), error::wallet_internal_error,
+  THROW_WALLET_EXCEPTION_IF(m_has_ever_refreshed_from_node, error::wallet_internal_error,
+      "Hot wallets cannot import outputs");
+
+  // we can now import piecemeal
+  const size_t offset = std::get<0>(outputs);
+  const size_t num_outputs = std::get<1>(outputs);
+  const std::vector<tools::wallet2::exported_transfer_details> &output_array = std::get<2>(outputs);
+
+  THROW_WALLET_EXCEPTION_IF(offset > m_transfers.size(), error::wallet_internal_error,
       "Imported outputs omit more outputs that we know of. Try using export_outputs all.");
 
-  const size_t offset = outputs.first;
+  THROW_WALLET_EXCEPTION_IF(offset >= num_outputs, error::wallet_internal_error,
+      "Offset is larger than total outputs");
+  THROW_WALLET_EXCEPTION_IF(output_array.size() > num_outputs - offset, error::wallet_internal_error,
+      "Offset is larger than total outputs");
+
   const size_t original_size = m_transfers.size();
-  m_transfers.resize(offset + outputs.second.size());
-  for (size_t i = 0; i < offset; ++i)
-    m_transfers[i].m_key_image_request = false;
-  for (size_t i = 0; i < outputs.second.size(); ++i)
+  if (offset + output_array.size() > m_transfers.size())
+    m_transfers.resize(offset + output_array.size());
+  else if (num_outputs < m_transfers.size())
+    m_transfers.resize(num_outputs);
+
+  for (size_t i = 0; i < output_array.size(); ++i)
   {
-    exported_transfer_details etd = outputs.second[i];
+    exported_transfer_details etd = output_array[i];
     transfer_details &td = m_transfers[i + offset];
 
-    // setup td with "cheao" loaded data
+    // setup td with "cheap" loaded data
     td.m_block_height = 0;
     td.m_txid = crypto::null_hash;
     td.m_global_output_index = etd.m_global_output_index;
@@ -13254,6 +13431,8 @@ size_t wallet2::import_outputs(const std::pair<uint64_t, std::vector<tools::wall
     td.m_key_image_known = etd.m_flags.m_key_image_known;
     td.m_key_image_request = etd.m_flags.m_key_image_request;
     td.m_key_image_partial = false;
+    td.m_subaddr_index.major = etd.m_subaddr_index_major;
+    td.m_subaddr_index.minor = etd.m_subaddr_index_minor;
 
     // skip those we've already imported, or which have different data
     if (i + offset < original_size)
@@ -13294,6 +13473,8 @@ size_t wallet2::import_outputs(const std::pair<uint64_t, std::vector<tools::wall
     const crypto::public_key &tx_pub_key = etd.m_tx_pubkey;
     const std::vector<crypto::public_key> &additional_tx_pub_keys = etd.m_additional_tx_keys;
     const crypto::public_key& out_key = etd.m_pubkey;
+    if (should_expand(td.m_subaddr_index))
+      create_one_off_subaddress(td.m_subaddr_index);
     bool r = cryptonote::generate_key_image_helper(m_account.get_keys(), m_subaddresses, out_key, tx_pub_key, additional_tx_pub_keys, td.m_internal_output_index, in_ephemeral, td.m_key_image, m_account.get_device());
     THROW_WALLET_EXCEPTION_IF(!r, error::wallet_internal_error, "Failed to generate key image");
     if (should_expand(td.m_subaddr_index))
@@ -13350,7 +13531,7 @@ size_t wallet2::import_outputs_from_str(const std::string &outputs_st)
   {
     std::string body(data, headerlen);
 
-    std::pair<uint64_t, std::vector<tools::wallet2::exported_transfer_details>> new_outputs;
+    std::tuple<uint64_t, uint64_t, std::vector<tools::wallet2::exported_transfer_details>> new_outputs;
     try
     {
       binary_archive<false> ar{epee::strspan<std::uint8_t>(body)};
@@ -13360,9 +13541,9 @@ size_t wallet2::import_outputs_from_str(const std::string &outputs_st)
     }
     catch (...) {}
     if (!loaded)
-      new_outputs.second.clear();
+      std::get<2>(new_outputs).clear();
 
-    std::pair<uint64_t, std::vector<tools::wallet2::transfer_details>> outputs;
+    std::tuple<uint64_t, uint64_t, std::vector<tools::wallet2::transfer_details>> outputs;
     if (!loaded) try
     {
       binary_archive<false> ar{epee::strspan<std::uint8_t>(body)};
@@ -13387,11 +13568,12 @@ size_t wallet2::import_outputs_from_str(const std::string &outputs_st)
 
     if (!loaded)
     {
-      outputs.first = 0;
-      outputs.second = {};
+      std::get<0>(outputs) = 0;
+      std::get<1>(outputs) = 0;
+      std::get<2>(outputs) = {};
     }
 
-    imported_outputs = new_outputs.second.empty() ? import_outputs(outputs) : import_outputs(new_outputs);
+    imported_outputs = !std::get<2>(new_outputs).empty() ? import_outputs(new_outputs) : !std::get<2>(outputs).empty() ? import_outputs(outputs) : 0;
   }
   catch (const std::exception &e)
   {

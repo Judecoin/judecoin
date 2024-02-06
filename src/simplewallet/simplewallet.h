@@ -101,7 +101,7 @@ namespace cryptonote
     boost::optional<epee::wipeable_string> new_wallet(const boost::program_options::variables_map& vm, const cryptonote::account_public_address& address,
         const boost::optional<crypto::secret_key>& spendkey, const crypto::secret_key& viewkey);
     boost::optional<epee::wipeable_string> new_wallet(const boost::program_options::variables_map& vm,
-        const epee::wipeable_string &multisig_keys, const std::string &old_language);
+        const epee::wipeable_string &multisig_keys, const epee::wipeable_string &seed_pass, const std::string &old_language);
     boost::optional<epee::wipeable_string> new_wallet(const boost::program_options::variables_map& vm);
     boost::optional<epee::wipeable_string> open_wallet(const boost::program_options::variables_map& vm);
     bool close_wallet();
@@ -429,7 +429,6 @@ namespace cryptonote
     bool m_restore_deterministic_wallet;  // recover flag
     bool m_restore_multisig_wallet;  // recover flag
     bool m_non_deterministic;  // old 2-random generation
-    bool m_allow_mismatched_daemon_version;
     bool m_restoring;           // are we restoring, by whatever method?
     uint64_t m_restore_height;  // optional
     bool m_do_not_relay;
