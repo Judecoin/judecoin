@@ -212,14 +212,11 @@ TEST(test_epee_connection, test_lifetime)
   server.get_config_shared()->set_handler(new command_handler_t, &command_handler_t::destroy);
 
   io_context.post([&io_context, &work, &endpoint, &server]{
-    shared_state_ptr shared_state;
-    auto scope_exit_handler = epee::misc_utils::create_scope_leave_handler([&work, &shared_state]{
+    auto scope_exit_handler = epee::misc_utils::create_scope_leave_handler([&work]{
       work.reset();
-      if (shared_state)
-        shared_state->set_handler(nullptr, nullptr);
     });
 
-    shared_state = std::make_shared<shared_state_t>();
+    shared_state_ptr shared_state(std::make_shared<shared_state_t>());
     shared_state->set_handler(new command_handler_t, &command_handler_t::destroy);
 
     auto create_connection = [&io_context, &endpoint, &shared_state] {

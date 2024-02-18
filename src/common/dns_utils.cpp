@@ -102,6 +102,7 @@ get_builtin_ds(void)
 {
   static const char * const ds[] =
   {
+    ". IN DS 19036 8 2 49AAC11D7B6F6446702E54A1607371607A1A41855200FD2CE1CDDE32F24E8FB5\n",
     ". IN DS 20326 8 2 E06D44B80B8F1D39A95C0B0D7C65D08458E880409BBC683457104237C7F8EC8D\n",
     NULL
   };
@@ -520,7 +521,7 @@ bool load_txt_records_from_dns(std::vector<std::string> &good_records, const std
 
   // send all requests in parallel
   std::deque<bool> avail(dns_urls.size(), false), valid(dns_urls.size(), false);
-  tools::threadpool& tpool = tools::threadpool::getInstanceForIO();
+  tools::threadpool& tpool = tools::threadpool::getInstance();
   tools::threadpool::waiter waiter(tpool);
   for (size_t n = 0; n < dns_urls.size(); ++n)
   {

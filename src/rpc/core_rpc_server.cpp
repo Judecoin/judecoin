@@ -2290,12 +2290,6 @@ namespace cryptonote
         return m_bootstrap_daemon->handle_result(false, {});
       }
 
-      if (bootstrap_daemon_height < m_core.get_checkpoints().get_max_height())
-      {
-        MINFO("Bootstrap daemon height is lower than the latest checkpoint");
-        return m_bootstrap_daemon->handle_result(false, {});
-      }
-
       if (!m_p2p.get_payload_object().no_sync())
       {
         uint64_t top_height = m_core.get_current_blockchain_height();
@@ -2861,10 +2855,6 @@ namespace cryptonote
 
     res.version = CORE_RPC_VERSION;
     res.release = JUDE_VERSION_IS_RELEASE;
-    res.current_height = m_core.get_current_blockchain_height();
-    res.target_height = m_p2p.get_payload_object().is_synchronized() ? 0 : m_core.get_target_blockchain_height();
-    for (const auto &hf : m_core.get_blockchain_storage().get_hardforks())
-       res.hard_forks.push_back({hf.version, hf.height});
     res.status = CORE_RPC_STATUS_OK;
     return true;
   }

@@ -1,6 +1,6 @@
 ### Usage
 
-To build dependencies for the current arch+OS, from this working directory:
+To build dependencies for the current arch+OS:
 
 ```bash
 make
@@ -20,12 +20,10 @@ make HOST=x86_64-w64-mingw32 -j4
 
 A toolchain will be generated that's suitable for plugging into Jude's
 cmake. In the above example, a dir named x86_64-w64-mingw32 will be
-created. To use it for Jude, from the top of the Jude source tree:
+created. To use it for Jude:
 
 ```bash
-mkdir build
-cd build
-cmake -DCMAKE_TOOLCHAIN_FILE=$PWD/../contrib/depends/x86_64-w64-mingw32/share/toolchain.cmake ..
+cmake -DCMAKE_TOOLCHAIN=`pwd`/contrib/depends/x86_64-w64-mingw32
 ```
 
 Common `host-platform-triplets` for cross compilation are:

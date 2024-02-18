@@ -1883,18 +1883,16 @@ public:
   }
   virtual ~db_txn_guard()
   {
-    stop();
+    if (active)
+      stop();
   }
   void stop()
   {
-    if (active)
-    {
-      if (readonly)
-        db->block_rtxn_stop();
-      else
-        db->block_wtxn_stop();
-      active = false;
-    }
+    if (readonly)
+      db->block_rtxn_stop();
+    else
+      db->block_wtxn_stop();
+    active = false;
   }
   void abort()
   {

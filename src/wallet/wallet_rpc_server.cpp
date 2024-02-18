@@ -2792,7 +2792,7 @@ namespace tools
 
     try
     {
-      res.outputs_data_hex = epee::string_tools::buff_to_hex_nodelimer(m_wallet->export_outputs_to_str(req.all, req.start, req.count));
+      res.outputs_data_hex = epee::string_tools::buff_to_hex_nodelimer(m_wallet->export_outputs_to_str(req.all));
     }
     catch (const std::exception &e)
     {
@@ -3254,7 +3254,7 @@ namespace tools
     if (!m_wallet) return not_open(er);
     cryptonote::COMMAND_RPC_STOP_MINING::request daemon_req;
     cryptonote::COMMAND_RPC_STOP_MINING::response daemon_res;
-    bool r = m_wallet->invoke_http_json("/stop_mining", daemon_req, daemon_res, std::chrono::seconds(60)); // this waits till stopped, and if randomx has just started initializing its dataset, it might be a while
+    bool r = m_wallet->invoke_http_json("/stop_mining", daemon_req, daemon_res);
     if (!r || daemon_res.status != CORE_RPC_STATUS_OK)
     {
       er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
@@ -4146,13 +4146,6 @@ namespace tools
       er.message = "This wallet is not multisig";
       return false;
     }
-
-    if (ready)
-    {
-      er.code = WALLET_RPC_ERROR_CODE_ALREADY_MULTISIG;
-      er.message = "This wallet is multisig, and already finalized";
-      return false;
-    }
     CHECK_MULTISIG_ENABLED();
 
     if (req.multisig_info.size() + 1 < total)
@@ -4164,7 +4157,7 @@ namespace tools
 
     try
     {
-      res.multisig_info = m_wallet->exchange_multisig_keys(req.password, req.multisig_info);
+      res.multisig_info = m_wallet->exchange_multisig_keys(req.password, req.multisig_info, req.force_update_use_with_caution);
       m_wallet->multisig(&ready);
       if (ready)
       {
