@@ -159,6 +159,13 @@ namespace cryptonote
     bool deinit();
 
     /**
+     * @brief get a set of blockchain checkpoint hashes
+     *
+     * @return set of blockchain checkpoint hashes
+     */
+    const checkpoints& get_checkpoints() const { return m_checkpoints; }
+
+    /**
      * @brief assign a set of blockchain checkpoint hashes
      *
      * @param chk_pts the set of checkpoints to assign
@@ -891,6 +898,13 @@ namespace cryptonote
      * @return the height
      */
     uint64_t get_earliest_ideal_height_for_version(uint8_t version) const { return m_hardfork->get_earliest_ideal_height_for_version(version); }
+
+    /**
+     * @brief returns info for all known hard forks
+     *
+     * @return the hardforks
+     */
+    const std::vector<hardfork_t>& get_hardforks() const { return m_hardfork->get_hardforks(); }
 
     /**
      * @brief get information about hardfork voting for a version

@@ -437,6 +437,13 @@ namespace cryptonote
      void set_cryptonote_protocol(i_cryptonote_protocol* pprotocol);
 
      /**
+      * @copydoc Blockchain::get_checkpoints
+      *
+      * @note see Blockchain::get_checkpoints()
+      */
+     const checkpoints& get_checkpoints() const;
+
+     /**
       * @copydoc Blockchain::set_checkpoints
       *
       * @note see Blockchain::set_checkpoints()
@@ -1034,6 +1041,13 @@ namespace cryptonote
       * @return true
       */
      bool relay_txpool_transactions();
+
+     /**
+      * @brief sends notification of txpool events to subscribers
+      *
+      * @return true on success, false otherwise
+      */
+     bool notify_txpool_event(const epee::span<const cryptonote::blobdata> tx_blobs, epee::span<const crypto::hash> tx_hashes, epee::span<const cryptonote::transaction> txs, const std::vector<bool> &just_broadcasted) const;
 
      /**
       * @brief checks DNS versions

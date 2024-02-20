@@ -96,46 +96,8 @@ static std::vector<std::string> exchange_round(std::vector<tools::wallet2>& wall
   new_infos.reserve(infos.size());
 
   for (size_t i = 0; i < wallets.size(); ++i)
-    new_infos.push_back(wallets[i].exchange_multisig_keys("", infos));
-
-  return new_infos;
-}
-
-static std::vector<std::string> exchange_round_force_update(std::vector<tools::wallet2>& wallets,
-  const std::vector<std::string>& infos,
-  const std::size_t round_in_progress)
-{
-  EXPECT_TRUE(wallets.size() == infos.size());
-  std::vector<std::string> new_infos;
-  std::vector<std::string> temp_force_update_infos;
-  new_infos.reserve(infos.size());
-
-  // when force-updating, we only need at most 'num_signers - 1 - (round - 1)' messages from other signers
-  size_t num_other_messages_required{wallets.size() - 1 - (round_in_progress - 1)};
-  if (num_other_messages_required > wallets.size())
-    num_other_messages_required = 0;  //overflow case for post-kex verification round of 1-of-N
-
-  for (size_t i = 0; i < wallets.size(); ++i)
   {
-    temp_force_update_infos.clear();
-    temp_force_update_infos.reserve(num_other_messages_required + 1);
-    temp_force_update_infos.push_back(infos[i]);  //always include the local signer's message for this round
-
-    size_t infos_collected{0};
-    for (size_t wallet_index = 0; wallet_index < wallets.size(); ++wallet_index)
-    {
-      // skip the local signer's message
-      if (wallet_index == i)
-        continue;
-
-      temp_force_update_infos.push_back(infos[wallet_index]);
-      ++infos_collected;
-
-      if (infos_collected == num_other_messages_required)
-        break;
-    }
-
-    new_infos.push_back(wallets[i].exchange_multisig_keys("", temp_force_update_infos, true));
+      new_infos.push_back(wallets[i].exchange_multisig_keys("", infos));
   }
 
   return new_infos;
@@ -143,7 +105,7 @@ static std::vector<std::string> exchange_round_force_update(std::vector<tools::w
 
 static void check_results(const std::vector<std::string> &intermediate_infos,
   std::vector<tools::wallet2>& wallets,
-  const std::uint32_t M)
+  std::uint32_t M)
 {
   // check results
   std::unordered_set<crypto::secret_key> unique_privkeys;
@@ -205,12 +167,11 @@ static void check_results(const std::vector<std::string> &intermediate_infos,
   wallets[0].encrypt_keys("");
 }
 
-static void make_wallets(const unsigned int M, const unsigned int N, const bool force_update)
+static void make_wallets(std::vector<tools::wallet2>& wallets, unsigned int M)
 {
-  std::vector<tools::wallet2> wallets(N);
   ASSERT_TRUE(wallets.size() > 1 && wallets.size() <= KEYS_COUNT);
   ASSERT_TRUE(M <= wallets.size());
-  std::uint32_t total_rounds_required = multisig::multisig_kex_rounds_required(wallets.size(), M) + 1;
+  std::uint32_t total_rounds_required = multisig::multisig_setup_rounds_required(wallets.size(), M);
   std::uint32_t rounds_complete{0};
 
   // initialize wallets, get first round multisig kex msgs
@@ -246,12 +207,9 @@ static void make_wallets(const unsigned int M, const unsigned int N, const bool 
   wallets[0].multisig(&ready);
   while (!ready)
   {
-    if (force_update)
-      intermediate_infos = exchange_round_force_update(wallets, intermediate_infos, rounds_complete + 1);
-    else
-      intermediate_infos = exchange_round(wallets, intermediate_infos);
-
+    intermediate_infos = exchange_round(wallets, intermediate_infos);
     wallets[0].multisig(&ready);
+
     ++rounds_complete;
   }
 
@@ -262,38 +220,38 @@ static void make_wallets(const unsigned int M, const unsigned int N, const bool 
 
 TEST(multisig, make_1_2)
 {
-  make_wallets(1, 2, false);
-  make_wallets(1, 2, true);
+  std::vector<tools::wallet2> wallets(2);
+  make_wallets(wallets, 1);
 }
 
 TEST(multisig, make_1_3)
 {
-  make_wallets(1, 3, false);
-  make_wallets(1, 3, true);
+  std::vector<tools::wallet2> wallets(3);
+  make_wallets(wallets, 1);
 }
 
 TEST(multisig, make_2_2)
 {
-  make_wallets(2, 2, false);
-  make_wallets(2, 2, true);
+  std::vector<tools::wallet2> wallets(2);
+  make_wallets(wallets, 2);
 }
 
 TEST(multisig, make_3_3)
 {
-  make_wallets(3, 3, false);
-  make_wallets(3, 3, true);
+  std::vector<tools::wallet2> wallets(3);
+  make_wallets(wallets, 3);
 }
 
 TEST(multisig, make_2_3)
 {
-  make_wallets(2, 3, false);
-  make_wallets(2, 3, true);
+  std::vector<tools::wallet2> wallets(3);
+  make_wallets(wallets, 2);
 }
 
 TEST(multisig, make_2_4)
 {
-  make_wallets(2, 4, false);
-  make_wallets(2, 4, true);
+  std::vector<tools::wallet2> wallets(4);
+  make_wallets(wallets, 2);
 }
 
 TEST(multisig, multisig_kex_msg)
@@ -314,7 +272,9 @@ TEST(multisig, multisig_kex_msg)
     signing_skey = rct::rct2sk(rct::skGen());
   }
 
-  const crypto::secret_key ancillary_skey{rct::rct2sk(rct::skGen())};
+  crypto::secret_key ancillary_skey = rct::rct2sk(rct::skGen());
+  while (ancillary_skey == crypto::null_skey)
+    ancillary_skey = rct::rct2sk(rct::skGen());
 
   // misc. edge cases
   EXPECT_NO_THROW((multisig_kex_msg{}));
@@ -352,8 +312,8 @@ TEST(multisig, multisig_kex_msg)
   // test that keys can be recovered if stored in a message and the message's reverse
 
   // round 1
-  const multisig_kex_msg msg_rnd1{1, signing_skey, std::vector<crypto::public_key>{pubkey1}, ancillary_skey};
-  const multisig_kex_msg msg_rnd1_reverse{msg_rnd1.get_msg()};
+  multisig_kex_msg msg_rnd1{1, signing_skey, std::vector<crypto::public_key>{pubkey1}, ancillary_skey};
+  multisig_kex_msg msg_rnd1_reverse{msg_rnd1.get_msg()};
   EXPECT_EQ(msg_rnd1.get_round(), 1);
   EXPECT_EQ(msg_rnd1.get_round(), msg_rnd1_reverse.get_round());
   EXPECT_EQ(msg_rnd1.get_signing_pubkey(), signing_pubkey);
@@ -364,8 +324,8 @@ TEST(multisig, multisig_kex_msg)
   EXPECT_EQ(msg_rnd1.get_msg_privkey(), msg_rnd1_reverse.get_msg_privkey());
 
   // round 2
-  const multisig_kex_msg msg_rnd2{2, signing_skey, std::vector<crypto::public_key>{pubkey1, pubkey2}, ancillary_skey};
-  const multisig_kex_msg msg_rnd2_reverse{msg_rnd2.get_msg()};
+  multisig_kex_msg msg_rnd2{2, signing_skey, std::vector<crypto::public_key>{pubkey1, pubkey2}, ancillary_skey};
+  multisig_kex_msg msg_rnd2_reverse{msg_rnd2.get_msg()};
   EXPECT_EQ(msg_rnd2.get_round(), 2);
   EXPECT_EQ(msg_rnd2.get_round(), msg_rnd2_reverse.get_round());
   EXPECT_EQ(msg_rnd2.get_signing_pubkey(), signing_pubkey);

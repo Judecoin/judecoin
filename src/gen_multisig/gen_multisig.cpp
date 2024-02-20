@@ -50,6 +50,7 @@
 using namespace std;
 using namespace epee;
 using namespace cryptonote;
+using boost::lexical_cast;
 namespace po = boost::program_options;
 
 #undef JUDE_DEFAULT_LOG_CATEGORY
@@ -83,9 +84,6 @@ static bool generate_multisig(uint32_t threshold, uint32_t total, const std::str
 
   try
   {
-    if (total == 0)
-      throw std::runtime_error("Signer group of size 0 is not allowed.");
-
     // create M wallets first
     std::vector<boost::shared_ptr<tools::wallet2>> wallets(total);
     for (size_t n = 0; n < total; ++n)
@@ -120,17 +118,13 @@ static bool generate_multisig(uint32_t threshold, uint32_t total, const std::str
       ss << "  " << name << std::endl;
     }
 
-    // exchange keys until the wallets are done
-    bool ready{false};
-    wallets[0]->multisig(&ready);
-    while (!ready)
+    //exchange keys unless exchange_multisig_keys returns no extra info
+    while (!kex_msgs_intermediate[0].empty())
     {
       for (size_t n = 0; n < total; ++n)
       {
           kex_msgs_intermediate[n] = wallets[n]->exchange_multisig_keys(pwd_container->password(), kex_msgs_intermediate);
       }
-
-      wallets[0]->multisig(&ready);
     }
 
     std::string address = wallets[0]->get_account().get_public_address_str(wallets[0]->nettype());
