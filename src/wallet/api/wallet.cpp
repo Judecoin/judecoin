@@ -63,8 +63,8 @@ namespace {
     static const int    MAX_REFRESH_INTERVAL_MILLIS = 1000 * 60 * 1;
     // Default refresh interval when connected to remote node
     static const int    DEFAULT_REMOTE_NODE_REFRESH_INTERVAL_MILLIS = 1000 * 10;
-    // Connection timeout 20 sec
-    static const int    DEFAULT_CONNECTION_TIMEOUT_MILLIS = 1000 * 20;
+    // Connection timeout 30 sec
+    static const int    DEFAULT_CONNECTION_TIMEOUT_MILLIS = 1000 * 30;
 
     std::string get_default_ringdb_path(cryptonote::network_type nettype)
     {
@@ -1396,12 +1396,12 @@ string WalletImpl::makeMultisig(const vector<string>& info, const uint32_t thres
     return string();
 }
 
-std::string WalletImpl::exchangeMultisigKeys(const std::vector<std::string> &info) {
+std::string WalletImpl::exchangeMultisigKeys(const std::vector<std::string> &info, const bool force_update_use_with_caution /*= false*/) {
     try {
         clearStatus();
         checkMultisigWalletNotReady(m_wallet);
 
-        return m_wallet->exchange_multisig_keys(epee::wipeable_string(m_password), info);
+        return m_wallet->exchange_multisig_keys(epee::wipeable_string(m_password), info, force_update_use_with_caution);
     } catch (const exception& e) {
         LOG_ERROR("Error on exchanging multisig keys: " << e.what());
         setStatusError(string(tr("Failed to exchange multisig keys: ")) + e.what());
@@ -2173,7 +2173,7 @@ bool WalletImpl::connectToDaemon()
 Wallet::ConnectionStatus WalletImpl::connected() const
 {
     uint32_t version = 0;
-    bool wallet_is_outdated = false, daemon_is_outdated = false;
+    bool wallet_is_outdated, daemon_is_outdated = false;
     m_is_connected = m_wallet->check_connection(&version, NULL, DEFAULT_CONNECTION_TIMEOUT_MILLIS, &wallet_is_outdated, &daemon_is_outdated);
     if (!m_is_connected)
     {
