@@ -449,14 +449,11 @@ endif()
 # Check if we're on OpenBSD. See the README.md for build instructions.
 if(CMAKE_SYSTEM_NAME MATCHES "kOpenBSD.*|OpenBSD.*")
   set(OPENBSD TRUE)
+elseif(CMAKE_SYSTEM_NAME MATCHES "kNetBSD.*|NetBSD.*")
+  set(NETBSD TRUE)
+elseif(CMAKE_SYSTEM_NAME MATCHES ".*BSDI.*")
+  set(BSDI TRUE)
 endif()
-
-# TODO: check bsdi, NetBSD, to see if they need the same FreeBSD changes
-#
-# elseif(CMAKE_SYSTEM_NAME MATCHES "kNetBSD.*|NetBSD.*")
-#   set(NETBSD TRUE)
-# elseif(CMAKE_SYSTEM_NAME MATCHES ".*BSDI.*")
-#   set(BSDI TRUE)
 
 include_directories(external/rapidjson/include external/easylogging++ src contrib/epee/include external external/supercop/include)
 
@@ -531,7 +528,7 @@ add_definitions("-DBLOCKCHAIN_DB=${BLOCKCHAIN_DB}")
 # Can't install hook in static build on OSX, because OSX linker does not support --wrap
 # On ARM, having libunwind package (with .so's only) installed breaks static link.
 # When possible, avoid stack tracing using libunwind in favor of using easylogging++.
-if (APPLE)
+if (APPLE OR NETBSD)
   set(DEFAULT_STACK_TRACE OFF)
   set(LIBUNWIND_LIBRARIES "")
 elseif (DEPENDS AND NOT LINUX)
@@ -1139,7 +1136,9 @@ if (HIDAPI_FOUND OR LibUSB_COMPILE_TEST_PASSED)
   endif()
 endif()
 
-option(USE_READLINE "Build with GNU readline support." ON)
+if(NOT OPENBSD)
+  option(USE_READLINE "Build with GNU readline support." ON)
+endif()
 if(USE_READLINE AND NOT DEPENDS)
   find_package(Readline)
   if(READLINE_FOUND AND GNU_READLINE_FOUND)
@@ -1178,6 +1177,9 @@ find_library(NORM_LIBRARY norm)
 find_library(GSSAPI_LIBRARY gssapi_krb5)
 find_library(PROTOLIB_LIBRARY protolib)
 find_library(SODIUM_LIBRARY sodium)
+find_library(BSD_LIBRARY bsd)
+find_library(MD_LIBRARY md)
+find_library(PROTOKIT_LIBRARY protokit)
 
 if(NOT ZMQ_INCLUDE_PATH)
   message(FATAL_ERROR "Could not find required header zmq.h")
@@ -1199,6 +1201,15 @@ if(PROTOLIB_LIBRARY)
 endif()
 if(SODIUM_LIBRARY)
   set(ZMQ_LIB "${ZMQ_LIB};${SODIUM_LIBRARY}")
+endif()
+if(BSD_LIBRARY)
+  set(ZMQ_LIB "${ZMQ_LIB};${BSD_LIBRARY}")
+endif()
+if(MD_LIBRARY)
+  set(ZMQ_LIB "${ZMQ_LIB};${MD_LIBRARY}")
+endif()
+if(PROTOKIT_LIBRARY)
+  set(ZMQ_LIB "${ZMQ_LIB};${PROTOKIT_LIBRARY}")
 endif()
 
 include(external/supercop/functions.cmake) # place after setting flags and before src directory inclusion
