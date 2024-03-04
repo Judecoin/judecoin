@@ -1346,6 +1346,7 @@ bool wallet2::set_daemon(std::string daemon_address, boost::optional<epee::net_u
     }
     m_rpc_payment_state.expected_spent = 0;
     m_rpc_payment_state.discrepancy = 0;
+    m_rpc_version = 0;
     m_node_rpc_proxy.invalidate();
   }
 
@@ -2724,7 +2725,7 @@ void wallet2::process_parsed_blocks(uint64_t start_height, const std::vector<cry
   THROW_WALLET_EXCEPTION_IF(blocks.size() != parsed_blocks.size(), error::wallet_internal_error, "size mismatch");
   THROW_WALLET_EXCEPTION_IF(!m_blockchain.is_in_bounds(current_index), error::out_of_hashchain_bounds_error);
 
-  tools::threadpool& tpool = tools::threadpool::getInstance();
+  tools::threadpool& tpool = tools::threadpool::getInstanceForCompute();
   tools::threadpool::waiter waiter(tpool);
 
   size_t num_txes = 0;
@@ -2967,7 +2968,7 @@ void wallet2::pull_and_parse_next_blocks(uint64_t start_height, uint64_t &blocks
     pull_blocks(start_height, blocks_start_height, short_chain_history, blocks, o_indices, current_height);
     THROW_WALLET_EXCEPTION_IF(blocks.size() != o_indices.size(), error::wallet_internal_error, "Mismatched sizes of blocks and o_indices");
 
-    tools::threadpool& tpool = tools::threadpool::getInstance();
+    tools::threadpool& tpool = tools::threadpool::getInstanceForCompute();
     tools::threadpool::waiter waiter(tpool);
     parsed_blocks.resize(blocks.size());
     for (size_t i = 0; i < blocks.size(); ++i)
@@ -3417,7 +3418,7 @@ std::shared_ptr<std::map<std::pair<uint64_t, uint64_t>, size_t>> wallet2::create
   return cache;
 }
 //----------------------------------------------------------------------------------------------------
-void wallet2::refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blocks_fetched, bool& received_money, bool check_pool)
+void wallet2::refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blocks_fetched, bool& received_money, bool check_pool, uint64_t max_blocks)
 {
   if (m_offline)
   {
@@ -3464,7 +3465,7 @@ void wallet2::refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blo
   size_t try_count = 0;
   crypto::hash last_tx_hash_id = m_transfers.size() ? m_transfers.back().m_txid : null_hash;
   std::list<crypto::hash> short_chain_history;
-  tools::threadpool& tpool = tools::threadpool::getInstance();
+  tools::threadpool& tpool = tools::threadpool::getInstanceForCompute();
   tools::threadpool::waiter waiter(tpool);
   uint64_t blocks_start_height;
   std::vector<cryptonote::block_complete_entry> blocks;
@@ -3513,7 +3514,7 @@ void wallet2::refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blo
   update_pool_state(process_pool_txs, true);
 
   bool first = true, last = false;
-  while(m_run.load(std::memory_order_relaxed))
+  while(m_run.load(std::memory_order_relaxed) && blocks_fetched < max_blocks)
   {
     uint64_t next_blocks_start_height;
     std::vector<cryptonote::block_complete_entry> next_blocks;
@@ -13329,9 +13330,7 @@ size_t wallet2::import_outputs(const std::tuple<uint64_t, uint64_t, std::vector<
   THROW_WALLET_EXCEPTION_IF(offset > m_transfers.size(), error::wallet_internal_error,
       "Imported outputs omit more outputs that we know of");
 
-  THROW_WALLET_EXCEPTION_IF(offset >= num_outputs, error::wallet_internal_error,
-      "Offset is larger than total outputs");
-  THROW_WALLET_EXCEPTION_IF(output_array.size() > num_outputs - offset, error::wallet_internal_error,
+  THROW_WALLET_EXCEPTION_IF(offset + output_array.size() > num_outputs, error::wallet_internal_error,
       "Offset is larger than total outputs");
 
   const size_t original_size = m_transfers.size();
@@ -13411,9 +13410,7 @@ size_t wallet2::import_outputs(const std::tuple<uint64_t, uint64_t, std::vector<
   THROW_WALLET_EXCEPTION_IF(offset > m_transfers.size(), error::wallet_internal_error,
       "Imported outputs omit more outputs that we know of. Try using export_outputs all.");
 
-  THROW_WALLET_EXCEPTION_IF(offset >= num_outputs, error::wallet_internal_error,
-      "Offset is larger than total outputs");
-  THROW_WALLET_EXCEPTION_IF(output_array.size() > num_outputs - offset, error::wallet_internal_error,
+  THROW_WALLET_EXCEPTION_IF(offset + output_array.size() > num_outputs, error::wallet_internal_error,
       "Offset is larger than total outputs");
 
   const size_t original_size = m_transfers.size();

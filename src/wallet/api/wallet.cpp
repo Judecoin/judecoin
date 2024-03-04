@@ -63,8 +63,8 @@ namespace {
     static const int    MAX_REFRESH_INTERVAL_MILLIS = 1000 * 60 * 1;
     // Default refresh interval when connected to remote node
     static const int    DEFAULT_REMOTE_NODE_REFRESH_INTERVAL_MILLIS = 1000 * 10;
-    // Connection timeout 30 sec
-    static const int    DEFAULT_CONNECTION_TIMEOUT_MILLIS = 1000 * 30;
+    // Connection timeout 20 sec
+    static const int    DEFAULT_CONNECTION_TIMEOUT_MILLIS = 1000 * 20;
 
     std::string get_default_ringdb_path(cryptonote::network_type nettype)
     {
@@ -535,7 +535,7 @@ bool WalletImpl::createWatchOnly(const std::string &path, const std::string &pas
         view_wallet->generate(path, password, address, viewkey);
 
         // Export/Import outputs
-        auto outputs = m_wallet->export_outputs();
+        auto outputs = m_wallet->export_outputs(true/*all*/);
         view_wallet->import_outputs(outputs);
 
         // Copy scanned blockchain
@@ -553,7 +553,7 @@ bool WalletImpl::createWatchOnly(const std::string &path, const std::string &pas
 
         // Export/Import key images
         // We already know the spent status from the outputs we exported, thus no need to check them again
-        auto key_images = m_wallet->export_key_images();
+        auto key_images = m_wallet->export_key_images(true/*all*/);
         uint64_t spent = 0;
         uint64_t unspent = 0;
         view_wallet->import_key_images(key_images.second, key_images.first, spent, unspent, false);
@@ -2173,7 +2173,7 @@ bool WalletImpl::connectToDaemon()
 Wallet::ConnectionStatus WalletImpl::connected() const
 {
     uint32_t version = 0;
-    bool wallet_is_outdated, daemon_is_outdated = false;
+    bool wallet_is_outdated = false, daemon_is_outdated = false;
     m_is_connected = m_wallet->check_connection(&version, NULL, DEFAULT_CONNECTION_TIMEOUT_MILLIS, &wallet_is_outdated, &daemon_is_outdated);
     if (!m_is_connected)
     {
