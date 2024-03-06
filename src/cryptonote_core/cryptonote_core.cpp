@@ -1013,7 +1013,7 @@ namespace cryptonote
 
     CRITICAL_REGION_LOCAL(m_incoming_tx_lock);
 
-    tools::threadpool& tpool = tools::threadpool::getInstance();
+    tools::threadpool& tpool = tools::threadpool::getInstanceForCompute();
     tools::threadpool::waiter waiter(tpool);
     epee::span<tx_blob_entry>::const_iterator it = tx_blobs.begin();
     for (size_t i = 0; i < tx_blobs.size(); i++, ++it) {
@@ -1655,10 +1655,6 @@ namespace cryptonote
 
     if (((size_t)-1) <= 0xffffffff && block_blob.size() >= 0x3fffffff)
       MWARNING("This block's size is " << block_blob.size() << ", closing on the 32 bit limit");
-
-    // load json & DNS checkpoints every 10min/hour respectively,
-    // and verify them with respect to what blocks we already have
-    CHECK_AND_ASSERT_MES(update_checkpoints(), false, "One or more checkpoints loaded from json or dns conflicted with existing checkpoints.");
 
     block lb;
     if (!b)
