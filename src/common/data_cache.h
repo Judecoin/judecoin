@@ -1,5 +1,4 @@
-// Copyright (c) 2017-2024, The Jude Project
-
+// Copyright (c) 2014-2024, The Jude Project
 // 
 // All rights reserved.
 // 
@@ -26,47 +25,41 @@
 // INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// Adapted from Python code by Sarang Noether
+// 
+// Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
-#pragma once
+#pragma once 
 
-#ifndef MULTIEXP_H
-#define MULTIEXP_H
+#include <unordered_set>
+#include <mutex>
 
-#include <vector>
-#include "crypto/crypto.h"
-#include "rctTypes.h"
-#include "misc_log_ex.h"
-
-namespace rct
+namespace tools
 {
-
-struct MultiexpData {
-  rct::key scalar;
-  ge_p3 point;
-
-  MultiexpData() {}
-  MultiexpData(const rct::key &s, const ge_p3 &p): scalar(s), point(p) {}
-  MultiexpData(const rct::key &s, const rct::key &p): scalar(s)
+  template<typename T, size_t MAX_SIZE>
+  class data_cache
   {
-    CHECK_AND_ASSERT_THROW_MES(ge_frombytes_vartime(&point, p.bytes) == 0, "ge_frombytes_vartime failed");
-  }
-};
+  public:
+    void add(const T& value)
+    {
+      std::lock_guard<std::mutex> lock(m);
+      if (data.insert(value).second)
+      {
+        T& old_value = buf[counter++ % MAX_SIZE];
+        data.erase(old_value);
+        old_value = value;
+      }
+    }
 
-struct straus_cached_data;
-struct pippenger_cached_data;
+    bool has(const T& value) const
+    {
+      std::lock_guard<std::mutex> lock(m);
+      return (data.find(value) != data.end());
+    }
 
-rct::key bos_coster_heap_conv(std::vector<MultiexpData> data);
-rct::key bos_coster_heap_conv_robust(std::vector<MultiexpData> data);
-std::shared_ptr<straus_cached_data> straus_init_cache(const std::vector<MultiexpData> &data, size_t N =0);
-size_t straus_get_cache_size(const std::shared_ptr<straus_cached_data> &cache);
-rct::key straus(const std::vector<MultiexpData> &data, const std::shared_ptr<straus_cached_data> &cache = NULL, size_t STEP = 0);
-std::shared_ptr<pippenger_cached_data> pippenger_init_cache(const std::vector<MultiexpData> &data, size_t start_offset = 0, size_t N =0);
-size_t pippenger_get_cache_size(const std::shared_ptr<pippenger_cached_data> &cache);
-size_t get_pippenger_c(size_t N);
-rct::key pippenger(const std::vector<MultiexpData> &data, const std::shared_ptr<pippenger_cached_data> &cache = NULL, size_t cache_size = 0, size_t c = 0);
-
+  private:
+    mutable std::mutex m;
+    std::unordered_set<T> data;
+    T buf[MAX_SIZE] = {};
+    size_t counter = 0;
+  };
 }
-
-#endif
