@@ -39,7 +39,9 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/archive/binary_iarchive.hpp>
 #include <boost/asio/ip/address.hpp>
+#include <boost/filesystem/operations.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/preprocessor/stringize.hpp>
 #include <openssl/evp.h>
@@ -64,7 +66,6 @@ using namespace epee;
 #include "multisig/multisig_account.h"
 #include "multisig/multisig_kex_msg.h"
 #include "multisig/multisig_tx_builder_ringct.h"
-#include "common/boost_serialization_helper.h"
 #include "common/command_line.h"
 #include "common/threadpool.h"
 #include "int-util.h"
@@ -13330,7 +13331,9 @@ size_t wallet2::import_outputs(const std::tuple<uint64_t, uint64_t, std::vector<
   THROW_WALLET_EXCEPTION_IF(offset > m_transfers.size(), error::wallet_internal_error,
       "Imported outputs omit more outputs that we know of");
 
-  THROW_WALLET_EXCEPTION_IF(offset + output_array.size() > num_outputs, error::wallet_internal_error,
+  THROW_WALLET_EXCEPTION_IF(offset >= num_outputs, error::wallet_internal_error,
+      "Offset is larger than total outputs");
+  THROW_WALLET_EXCEPTION_IF(output_array.size() > num_outputs - offset, error::wallet_internal_error,
       "Offset is larger than total outputs");
 
   const size_t original_size = m_transfers.size();
@@ -13410,7 +13413,9 @@ size_t wallet2::import_outputs(const std::tuple<uint64_t, uint64_t, std::vector<
   THROW_WALLET_EXCEPTION_IF(offset > m_transfers.size(), error::wallet_internal_error,
       "Imported outputs omit more outputs that we know of. Try using export_outputs all.");
 
-  THROW_WALLET_EXCEPTION_IF(offset + output_array.size() > num_outputs, error::wallet_internal_error,
+  THROW_WALLET_EXCEPTION_IF(offset >= num_outputs, error::wallet_internal_error,
+      "Offset is larger than total outputs");
+  THROW_WALLET_EXCEPTION_IF(output_array.size() > num_outputs - offset, error::wallet_internal_error,
       "Offset is larger than total outputs");
 
   const size_t original_size = m_transfers.size();
