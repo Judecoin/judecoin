@@ -1009,17 +1009,7 @@ namespace cryptonote
       CHECK_AND_ASSERT_MES(tx_hash == std::get<0>(tx), false, "mismatched tx hash");
       e.tx_hash = *txhi++;
       e.prunable_hash = epee::string_tools::pod_to_hex(std::get<2>(tx));
-
-      // coinbase txes do not have signatures to prune, so they appear to be pruned if looking just at prunable data being empty
-      bool pruned = std::get<3>(tx).empty();
-      if (pruned)
-      {
-        cryptonote::transaction t;
-        if (cryptonote::parse_and_validate_tx_base_from_blob(std::get<1>(tx), t) && is_coinbase(t))
-          pruned = false;
-      }
-
-      if (req.split || req.prune || pruned)
+      if (req.split || req.prune || std::get<3>(tx).empty())
       {
         // use splitted form with pruned and prunable (filled only when prune=false and the daemon has it), leaving as_hex as empty
         e.pruned_as_hex = string_tools::buff_to_hex_nodelimer(std::get<1>(tx));
@@ -2906,9 +2896,9 @@ namespace cryptonote
     CHECK_PAYMENT(req, res, COST_PER_FEE_ESTIMATE);
 
     const uint8_t version = m_core.get_blockchain_storage().get_current_hard_fork_version();
-    if (version >= HF_VERSION_2021_SCALING)
+    if (version >= HF_VERSION_2024_SCALING)
     {
-      m_core.get_blockchain_storage().get_dynamic_base_fee_estimate_2021_scaling(req.grace_blocks, res.fees);
+      m_core.get_blockchain_storage().get_dynamic_base_fee_estimate_2024_scaling(req.grace_blocks, res.fees);
       res.fee = res.fees[0];
     }
     else

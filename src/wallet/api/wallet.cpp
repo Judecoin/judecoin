@@ -535,7 +535,7 @@ bool WalletImpl::createWatchOnly(const std::string &path, const std::string &pas
         view_wallet->generate(path, password, address, viewkey);
 
         // Export/Import outputs
-        auto outputs = m_wallet->export_outputs();
+        auto outputs = m_wallet->export_outputs(true/*all*/);
         view_wallet->import_outputs(outputs);
 
         // Copy scanned blockchain
@@ -553,7 +553,7 @@ bool WalletImpl::createWatchOnly(const std::string &path, const std::string &pas
 
         // Export/Import key images
         // We already know the spent status from the outputs we exported, thus no need to check them again
-        auto key_images = m_wallet->export_key_images();
+        auto key_images = m_wallet->export_key_images(true/*all*/);
         uint64_t spent = 0;
         uint64_t unspent = 0;
         view_wallet->import_key_images(key_images.second, key_images.first, spent, unspent, false);
@@ -1782,7 +1782,7 @@ uint64_t WalletImpl::estimateTransactionFee(const std::vector<std::pair<std::str
         m_wallet->use_fork_rules(HF_VERSION_CLSAG, 0),
         m_wallet->use_fork_rules(HF_VERSION_BULLETPROOF_PLUS, 0),
         m_wallet->use_fork_rules(HF_VERSION_VIEW_TAGS, 0),
-        m_wallet->get_base_fee(),
+        m_wallet->get_base_fee(priority),
         m_wallet->get_fee_quantization_mask());
 }
 
