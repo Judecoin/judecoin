@@ -155,7 +155,8 @@ bool wallet2::search_for_rpc_payment(uint64_t credits_target, uint32_t n_threads
         const uint8_t major_version = hashing_blob[0];
         if (major_version >= RX_BLOCK_VERSION)
         {
-          crypto::rx_slow_hash(seed_hash.data, hashing_blob.data(), hashing_blob.size(), hash[i].data);
+          const int miners = 1;
+          crypto::rx_slow_hash(height, seed_height, seed_hash.data, hashing_blob.data(), hashing_blob.size(), hash[i].data, miners, 0);
         }
         else
         {

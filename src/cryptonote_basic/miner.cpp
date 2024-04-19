@@ -82,7 +82,6 @@
 using namespace epee;
 
 #include "miner.h"
-#include "crypto/hash.h"
 
 
 extern "C" void slow_hash_allocate_state();
@@ -437,6 +436,7 @@ namespace cryptonote
   {
     m_stop = true;
   }
+  extern "C" void rx_stop_mining(void);
   //-----------------------------------------------------------------------------------------------------
   bool miner::stop()
   {
@@ -469,6 +469,7 @@ namespace cryptonote
     MINFO("Mining has been stopped, " << m_threads.size() << " finished" );
     m_threads.clear();
     m_threads_autodetect.clear();
+    rx_stop_mining();
     return true;
   }
   //-----------------------------------------------------------------------------------------------------
@@ -523,8 +524,6 @@ namespace cryptonote
   bool miner::worker_thread()
   {
     const uint32_t th_local_index = m_thread_index++; // atomically increment, getting value before increment
-    crypto::rx_set_miner_thread(th_local_index, tools::get_max_concurrency());
-
     MLOG_SET_THREAD_NAME(std::string("[miner ") + std::to_string(th_local_index) + "]");
     MGINFO("Miner thread was started ["<< th_local_index << "]");
     uint32_t nonce = m_starter_nonce + th_local_index;
