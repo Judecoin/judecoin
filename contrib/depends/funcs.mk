@@ -148,7 +148,6 @@ $(1)_autoconf=./configure --host=$($($(1)_type)_host) --prefix=$($($(1)_type)_pr
 ifneq ($(1),libusb)
 $(1)_autoconf += --disable-dependency-tracking
 endif
-
 ifneq ($($(1)_nm),)
 $(1)_autoconf += NM="$$($(1)_nm)"
 endif

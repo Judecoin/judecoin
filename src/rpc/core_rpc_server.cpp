@@ -1009,7 +1009,7 @@ namespace cryptonote
       CHECK_AND_ASSERT_MES(tx_hash == std::get<0>(tx), false, "mismatched tx hash");
       e.tx_hash = *txhi++;
       e.prunable_hash = epee::string_tools::pod_to_hex(std::get<2>(tx));
-      
+
       // coinbase txes do not have signatures to prune, so they appear to be pruned if looking just at prunable data being empty
       bool pruned = std::get<3>(tx).empty();
       if (pruned)
