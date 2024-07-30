@@ -159,7 +159,6 @@ int main(int argc, char const * argv[])
       command_line::add_arg(core_settings, daemon_args::arg_zmq_rpc_bind_port);
       command_line::add_arg(core_settings, daemon_args::arg_zmq_pub);
       command_line::add_arg(core_settings, daemon_args::arg_zmq_rpc_disabled);
-      command_line::add_arg(core_settings, daemonizer::arg_non_interactive);
 
       daemonizer::init_options(hidden_options, visible_options);
       daemonize::t_executor::init_options(core_settings);
@@ -219,6 +218,19 @@ int main(int argc, char const * argv[])
       try
       {
         po::store(po::parse_config_file<char>(config_path.string<std::string>().c_str(), core_settings), vm);
+      }
+      catch (const po::unknown_option &e)
+      {
+        std::string unrecognized_option = e.get_option_name();
+        if (all_options.find_nothrow(unrecognized_option, false))
+        {
+          std::cerr << "Option '" << unrecognized_option << "' is not allowed in the config file, please use it as a command line flag." << std::endl;
+        }
+        else
+        {
+          std::cerr << "Unrecognized option '" << unrecognized_option << "' in config file." << std::endl;
+        }
+        return 1;
       }
       catch (const std::exception &e)
       {

@@ -91,8 +91,10 @@ namespace tools
     //         is_key_image_spent_error
     //         get_histogram_error
     //         get_output_distribution
-    //         payment_required
+    //         deprecated_rpc_access
     //       wallet_files_doesnt_correspond
+    //       scan_tx_error *
+    //         wont_reprocess_recent_txs_via_untrusted_daemon
     //
     // * - class with protected ctor
 
@@ -865,10 +867,11 @@ namespace tools
       }
     };
     //----------------------------------------------------------------------------------------------------
-    struct payment_required: public wallet_rpc_error
+    struct deprecated_rpc_access: public wallet_rpc_error
     {
-      explicit payment_required(std::string&& loc, const std::string& request)
-        : wallet_rpc_error(std::move(loc), "payment required", request)
+      // The daemon we connected to has enabled the old pay-to-access RPC feature
+      explicit deprecated_rpc_access(std::string&& loc, const std::string& request)
+        : wallet_rpc_error(std::move(loc), "daemon requires deprecated RPC payment", request)
       {
       }
     };
@@ -911,6 +914,23 @@ namespace tools
     {
       explicit bitmessage_api_error(std::string&& loc, const std::string& error_string)
         : mms_error(std::move(loc), "PyBitmessage returned " + error_string)
+      {
+      }
+    };
+    //----------------------------------------------------------------------------------------------------
+    struct scan_tx_error : public wallet_logic_error
+    {
+    protected:
+      explicit scan_tx_error(std::string&& loc, const std::string& message)
+        : wallet_logic_error(std::move(loc), message)
+      {
+      }
+    };
+    //----------------------------------------------------------------------------------------------------
+    struct wont_reprocess_recent_txs_via_untrusted_daemon : public scan_tx_error
+    {
+      explicit wont_reprocess_recent_txs_via_untrusted_daemon(std::string&& loc)
+        : scan_tx_error(std::move(loc), "The wallet has already seen 1 or more recent transactions than the scanned tx")
       {
       }
     };

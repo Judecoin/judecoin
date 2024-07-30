@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024, The JUDE Project
+// Copyright (c) 2017-2024, The Jude Project
 
 // 
 // All rights reserved.

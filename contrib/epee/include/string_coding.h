@@ -35,7 +35,7 @@ namespace epee
 namespace string_encoding
 {
 	inline 
-	const std::string& base64_chars()
+	std::string& base64_chars()
 	{
 
 		static std::string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"

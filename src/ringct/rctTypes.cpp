@@ -1,4 +1,4 @@
-// Copyright (c) 2016, Jude Research Labs
+// Copyright (c) 2016-2024, Jude Research Labs
 //
 // Author: Shen Noether <shen.noether@gmx.com>
 // 

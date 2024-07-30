@@ -576,11 +576,7 @@ namespace cryptonote
         else if(options[0] == "fastest")
         {
           db_flags = DBF_FASTEST;
-#ifdef _WIN32
           sync_threshold = 1000; // default to fastest:async:1000
-#else
-          sync_threshold = 100000; // default to fastest:async:100000
-#endif
           sync_mode = db_sync_mode_is_default ? db_defaultsync : db_async;
         }
         else
@@ -1567,8 +1563,7 @@ namespace cryptonote
       return false;
     }
     m_blockchain_storage.add_new_block(b, bvc);
-    const bool force_sync = m_nettype != FAKECHAIN;
-    cleanup_handle_incoming_blocks(force_sync);
+    cleanup_handle_incoming_blocks(true);
     //anyway - update miner template
     update_miner_block_template();
     m_miner.resume();

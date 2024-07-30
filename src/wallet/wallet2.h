@@ -70,15 +70,12 @@
 #include "common/password.h"
 #include "node_rpc_proxy.h"
 #include "message_store.h"
-#include "wallet_light_rpc.h"
-#include "wallet_rpc_helpers.h"
 
 #undef JUDE_DEFAULT_LOG_CATEGORY
 #define JUDE_DEFAULT_LOG_CATEGORY "wallet.wallet2"
 
 #define THROW_ON_RPC_RESPONSE_ERROR(r, error, res, method, ...) \
   do { \
-    handle_payment_changes(res, std::integral_constant<bool, HasCredits<decltype(res)>::Has>()); \
     throw_on_rpc_response_error(r, error, res.status, method); \
     THROW_WALLET_EXCEPTION_IF(res.status != CORE_RPC_STATUS_OK, ## __VA_ARGS__); \
   } while(0)
@@ -145,11 +142,6 @@ private:
     virtual void on_money_spent(uint64_t height, const crypto::hash &txid, const cryptonote::transaction& in_tx, uint64_t amount, const cryptonote::transaction& spend_tx, const cryptonote::subaddress_index& subaddr_index) {}
     virtual void on_skip_transaction(uint64_t height, const crypto::hash &txid, const cryptonote::transaction& tx) {}
     virtual boost::optional<epee::wipeable_string> on_get_password(const char *reason) { return boost::none; }
-    // Light wallet callbacks
-    virtual void on_lw_new_block(uint64_t height) {}
-    virtual void on_lw_money_received(uint64_t height, const crypto::hash &txid, uint64_t amount) {}
-    virtual void on_lw_unconfirmed_money_received(uint64_t height, const crypto::hash &txid, uint64_t amount) {}
-    virtual void on_lw_money_spent(uint64_t height, const crypto::hash &txid, uint64_t amount) {}
     // Device callbacks
     virtual void on_device_button_request(uint64_t code) {}
     virtual void on_device_button_pressed() {}
@@ -818,6 +810,30 @@ private:
       bool empty() const { return tx_extra_fields.empty() && primary.empty() && additional.empty(); }
     };
 
+    struct detached_blockchain_data
+    {
+      hashchain detached_blockchain;
+      size_t original_chain_size;
+      std::unordered_set<crypto::hash> detached_tx_hashes;
+      std::unordered_map<crypto::hash, std::vector<cryptonote::tx_destination_entry>> detached_confirmed_txs_dests;
+    };
+
+    struct process_tx_entry_t
+    {
+      cryptonote::COMMAND_RPC_GET_TRANSACTIONS::entry tx_entry;
+      cryptonote::transaction tx;
+      crypto::hash tx_hash;
+    };
+
+    struct tx_entry_data
+    {
+      std::vector<process_tx_entry_t> tx_entries;
+      uint64_t lowest_height;
+      uint64_t highest_height;
+
+      tx_entry_data(): lowest_height((uint64_t)-1), highest_height(0) {}
+    };
+
     /*!
      * \brief  Generates a wallet or restores one. Assumes the multisig setup
       *        has already completed for the provided multisig info.
@@ -984,14 +1000,6 @@ private:
     bool get_seed(epee::wipeable_string& electrum_words, const epee::wipeable_string &passphrase = epee::wipeable_string()) const;
 
     /*!
-    * \brief Checks if light wallet. A light wallet sends view key to a server where the blockchain is scanned.
-    */
-    bool light_wallet() const { return m_light_wallet; }
-    void set_light_wallet(bool light_wallet) { m_light_wallet = light_wallet; }
-    uint64_t get_light_wallet_scanned_block_height() const { return m_light_wallet_scanned_block_height; }
-    uint64_t get_light_wallet_blockchain_height() const { return m_light_wallet_blockchain_height; }
-
-    /*!
      * \brief Gets the seed language
      */
     const std::string &get_seed_language() const;
@@ -1106,7 +1114,7 @@ private:
     void get_unconfirmed_payments_out(std::list<std::pair<crypto::hash,wallet2::unconfirmed_transfer_details>>& unconfirmed_payments, const boost::optional<uint32_t>& subaddr_account = boost::none, const std::set<uint32_t>& subaddr_indices = {}) const;
     void get_unconfirmed_payments(std::list<std::pair<crypto::hash,wallet2::pool_payment_details>>& unconfirmed_payments, const boost::optional<uint32_t>& subaddr_account = boost::none, const std::set<uint32_t>& subaddr_indices = {}) const;
 
-    uint64_t get_blockchain_current_height() const { return m_light_wallet_blockchain_height ? m_light_wallet_blockchain_height : m_blockchain.size(); }
+    uint64_t get_blockchain_current_height() const { return m_blockchain.size(); }
     void rescan_spent();
     void rescan_blockchain(bool hard, bool refresh = true, bool keep_key_images = false);
     bool is_transfer_unlocked(const transfer_details& td);
@@ -1234,7 +1242,8 @@ private:
       a & m_cold_key_images.parent();
       if(ver < 29)
         return;
-      a & m_rpc_client_secret_key;
+      crypto::secret_key dummy_rpc_client_secret_key; // Compatibility for old RPC payment system
+      a & dummy_rpc_client_secret_key;
       if(ver < 30)
       {
         m_has_ever_refreshed_from_node = false;
@@ -1270,7 +1279,8 @@ private:
       FIELD(m_tx_device)
       FIELD(m_device_last_key_image_sync)
       FIELD(m_cold_key_images)
-      FIELD(m_rpc_client_secret_key)
+      crypto::secret_key dummy_rpc_client_secret_key; // Compatibility for old RPC payment system
+      FIELD_N("m_rpc_client_secret_key", dummy_rpc_client_secret_key)
       if (version < 1)
       {
         m_has_ever_refreshed_from_node = false;
@@ -1354,14 +1364,6 @@ private:
     inline void set_export_format(const ExportFormat& export_format) { m_export_format = export_format; }
     bool load_deprecated_formats() const { return m_load_deprecated_formats; }
     void load_deprecated_formats(bool load) { m_load_deprecated_formats = load; }
-    bool persistent_rpc_client_id() const { return m_persistent_rpc_client_id; }
-    void persistent_rpc_client_id(bool persistent) { m_persistent_rpc_client_id = persistent; }
-    void auto_mine_for_rpc_payment_threshold(float threshold) { m_auto_mine_for_rpc_payment_threshold = threshold; }
-    float auto_mine_for_rpc_payment_threshold() const { return m_auto_mine_for_rpc_payment_threshold; }
-    crypto::secret_key get_rpc_client_secret_key() const { return m_rpc_client_secret_key; }
-    void set_rpc_client_secret_key(const crypto::secret_key &key) { m_rpc_client_secret_key = key; m_node_rpc_proxy.set_client_secret_key(key); }
-    uint64_t credits_target() const { return m_credits_target; }
-    void credits_target(uint64_t threshold) { m_credits_target = threshold; }
     bool is_multisig_enabled() const { return m_enable_multisig; }
     void enable_multisig(bool enable) { m_enable_multisig = enable; }
     bool is_mismatched_daemon_version_allowed() const { return m_allow_mismatched_daemon_version; }
@@ -1382,7 +1384,7 @@ private:
     std::string get_spend_proof(const crypto::hash &txid, const std::string &message);
     bool check_spend_proof(const crypto::hash &txid, const std::string &message, const std::string &sig_str);
 
-    void scan_tx(const std::vector<crypto::hash> &txids);
+    void scan_tx(const std::unordered_set<crypto::hash> &txids);
 
     /*!
      * \brief  Generates a proof that proves the reserve of unspent funds
@@ -1545,38 +1547,6 @@ private:
 
     std::pair<size_t, uint64_t> estimate_tx_size_and_weight(bool use_rct, int n_inputs, int ring_size, int n_outputs, size_t extra_size);
 
-    bool get_rpc_payment_info(bool mining, bool &payment_required, uint64_t &credits, uint64_t &diff, uint64_t &credits_per_hash_found, cryptonote::blobdata &hashing_blob, uint64_t &height, uint64_t &seed_height, crypto::hash &seed_hash, crypto::hash &next_seed_hash, uint32_t &cookie);
-    bool daemon_requires_payment();
-    bool make_rpc_payment(uint32_t nonce, uint32_t cookie, uint64_t &credits, uint64_t &balance);
-    bool search_for_rpc_payment(uint64_t credits_target, uint32_t n_threads, const std::function<bool(uint64_t, uint64_t)> &startfunc, const std::function<bool(unsigned)> &contfunc, const std::function<bool(uint64_t)> &foundfunc = NULL, const std::function<void(const std::string&)> &errorfunc = NULL);
-    template<typename T> void handle_payment_changes(const T &res, std::true_type) {
-      if (res.status == CORE_RPC_STATUS_OK || res.status == CORE_RPC_STATUS_PAYMENT_REQUIRED)
-        m_rpc_payment_state.credits = res.credits;
-      if (res.top_hash != m_rpc_payment_state.top_hash)
-      {
-        m_rpc_payment_state.top_hash = res.top_hash;
-        m_rpc_payment_state.stale = true;
-      }
-    }
-    template<typename T> void handle_payment_changes(const T &res, std::false_type) {}
-
-    // Light wallet specific functions
-    // fetch unspent outs from lw node and store in m_transfers
-    void light_wallet_get_unspent_outs();
-    // fetch txs and store in m_payments
-    void light_wallet_get_address_txs();
-    // get_address_info
-    bool light_wallet_get_address_info(tools::COMMAND_RPC_GET_ADDRESS_INFO::response &response);
-    // Login. new_address is true if address hasn't been used on lw node before.
-    bool light_wallet_login(bool &new_address);
-    // Send an import request to lw node. returns info about import fee, address and payment_id
-    bool light_wallet_import_wallet_request(tools::COMMAND_RPC_IMPORT_WALLET_REQUEST::response &response);
-    // get random outputs from light wallet server
-    void light_wallet_get_outs(std::vector<std::vector<get_outs_entry>> &outs, const std::vector<size_t> &selected_transfers, size_t fake_outputs_count);
-    // Parse rct string
-    bool light_wallet_parse_rct_str(const std::string& rct_string, const crypto::public_key& tx_pub_key, uint64_t internal_output_index, rct::key& decrypted_mask, rct::key& rct_commit, bool decrypt) const;
-    // check if key image is ours
-    bool light_wallet_key_image_is_ours(const crypto::key_image& key_image, const crypto::public_key& tx_public_key, uint64_t out_index);
 
     /*
      * "attributes" are a mechanism to store an arbitrary number of string values
@@ -1674,9 +1644,6 @@ private:
     void set_offline(bool offline = true);
     bool is_offline() const { return m_offline; }
 
-    uint64_t credits() const { return m_rpc_payment_state.credits; }
-    void credit_report(uint64_t &expected_spent, uint64_t &discrepancy) const { expected_spent = m_rpc_payment_state.expected_spent; discrepancy = m_rpc_payment_state.discrepancy; }
-
     static std::string get_default_daemon_address() { CRITICAL_REGION_LOCAL(default_daemon_address_lock); return default_daemon_address; }
 
   private:
@@ -1701,10 +1668,11 @@ private:
      */
     bool load_keys_buf(const std::string& keys_buf, const epee::wipeable_string& password);
     bool load_keys_buf(const std::string& keys_buf, const epee::wipeable_string& password, boost::optional<crypto::chacha_key>& keys_to_encrypt);
-    void process_new_transaction(const crypto::hash &txid, const cryptonote::transaction& tx, const std::vector<uint64_t> &o_indices, uint64_t height, uint8_t block_version, uint64_t ts, bool miner_tx, bool pool, bool double_spend_seen, const tx_cache_data &tx_cache_data, std::map<std::pair<uint64_t, uint64_t>, size_t> *output_tracker_cache = NULL);
+    void process_new_transaction(const crypto::hash &txid, const cryptonote::transaction& tx, const std::vector<uint64_t> &o_indices, uint64_t height, uint8_t block_version, uint64_t ts, bool miner_tx, bool pool, bool double_spend_seen, const tx_cache_data &tx_cache_data, std::map<std::pair<uint64_t, uint64_t>, size_t> *output_tracker_cache = NULL, bool ignore_callbacks = false);
     bool should_skip_block(const cryptonote::block &b, uint64_t height) const;
     void process_new_blockchain_entry(const cryptonote::block& b, const cryptonote::block_complete_entry& bche, const parsed_block &parsed_block, const crypto::hash& bl_id, uint64_t height, const std::vector<tx_cache_data> &tx_cache_data, size_t tx_cache_data_offset, std::map<std::pair<uint64_t, uint64_t>, size_t> *output_tracker_cache = NULL);
-    void detach_blockchain(uint64_t height, std::map<std::pair<uint64_t, uint64_t>, size_t> *output_tracker_cache = NULL);
+    detached_blockchain_data detach_blockchain(uint64_t height, std::map<std::pair<uint64_t, uint64_t>, size_t> *output_tracker_cache = NULL);
+    void handle_reorg(uint64_t height, std::map<std::pair<uint64_t, uint64_t>, size_t> *output_tracker_cache = NULL);
     void get_short_chain_history(std::list<crypto::hash>& ids, uint64_t granularity = 1) const;
     bool clear();
     void clear_soft(bool keep_key_images=false);
@@ -1760,6 +1728,9 @@ private:
     crypto::chacha_key get_ringdb_key();
     void setup_keys(const epee::wipeable_string &password);
     size_t get_transfer_details(const crypto::key_image &ki) const;
+    tx_entry_data get_tx_entries(const std::unordered_set<crypto::hash> &txids);
+    void sort_scan_tx_entries(std::vector<process_tx_entry_t> &unsorted_tx_entries);
+    void process_scan_txs(const tx_entry_data &txs_to_scan, const tx_entry_data &txs_to_reprocess, const std::unordered_set<crypto::hash> &tx_hashes_to_reprocess, detached_blockchain_data &dbd);
 
     void register_devices();
     hw::device& lookup_device(const std::string & device_descriptor);
@@ -1784,9 +1755,6 @@ private:
 
     std::string get_rpc_status(const std::string &s) const;
     void throw_on_rpc_response_error(bool r, const epee::json_rpc::error &error, const std::string &status, const char *method) const;
-
-    std::string get_client_signature() const;
-    void check_rpc_cost(const char *call, uint64_t post_call_credits, uint64_t pre_credits, double expected_cost);
 
     bool should_expand(const cryptonote::subaddress_index &index) const;
     bool spends_one_of_ours(const cryptonote::transaction &tx) const;
@@ -1853,6 +1821,9 @@ private:
     // m_refresh_from_block_height was defaulted to zero.*/
     bool m_explicit_refresh_from_block_height;
     uint64_t m_pool_info_query_time;
+    uint64_t m_skip_to_height;
+    // m_skip_to_height is useful when we don't want to modify the wallet's restore height.
+    // m_refresh_from_block_height is also a wallet's restore height which should remain constant unless explicitly modified by the user.
     bool m_confirm_non_default_ring_size;
     AskPasswordType m_ask_password;
     uint64_t m_max_reorg_depth;
@@ -1873,7 +1844,6 @@ private:
     bool m_show_wallet_name_when_locked;
     uint32_t m_inactivity_lock_timeout;
     BackgroundMiningSetupType m_setup_background_mining;
-    bool m_persistent_rpc_client_id;
     float m_auto_mine_for_rpc_payment_threshold;
     bool m_is_initialized;
     NodeRPCProxy m_node_rpc_proxy;
@@ -1885,28 +1855,11 @@ private:
     bool m_use_dns;
     bool m_offline;
     uint32_t m_rpc_version;
-    crypto::secret_key m_rpc_client_secret_key;
-    rpc_payment_state_t m_rpc_payment_state;
-    uint64_t m_credits_target;
     bool m_enable_multisig;
     bool m_allow_mismatched_daemon_version;
 
     // Aux transaction data from device
     serializable_unordered_map<crypto::hash, std::string> m_tx_device;
-
-    // Light wallet
-    bool m_light_wallet; /* sends view key to daemon for scanning */
-    uint64_t m_light_wallet_scanned_block_height;
-    uint64_t m_light_wallet_blockchain_height;
-    uint64_t m_light_wallet_per_kb_fee = FEE_PER_KB;
-    bool m_light_wallet_connected;
-    uint64_t m_light_wallet_balance;
-    uint64_t m_light_wallet_unlocked_balance;
-    // Light wallet info needed to populate m_payment requires 2 separate api calls (get_address_txs and get_unspent_outs)
-    // We save the info from the first call in m_light_wallet_address_txs for easier lookup.
-    std::unordered_map<crypto::hash, address_tx> m_light_wallet_address_txs;
-    // store calculated key image for faster lookup
-    serializable_unordered_map<crypto::public_key, serializable_map<uint64_t, crypto::key_image> > m_key_image_cache;
 
     std::string m_ring_database;
     bool m_ring_history_saved;
