@@ -583,11 +583,7 @@ namespace net_utils
             break;
         }
       }
-      else if (ec.value())
         terminate();
-      else {
-        cancel_timer();
-        on_interrupted();
       }
     };
     m_strand.post(
