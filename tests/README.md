@@ -43,6 +43,10 @@ ctest
 
 To run the same tests on a release build, replace `debug` with `release`.
 
+# Daemon tests
+
+[TODO]
+
 # Functional tests
 
 [TODO]
@@ -50,7 +54,7 @@ Functional tests are located under the `tests/functional_tests` directory.
 
 Building all the tests requires installing the following dependencies:
 ```bash
-pip install requests psutil monotonic zmq deepdiff
+pip install requests psutil monotonic zmq
 ```
 
 First, run a regtest daemon in the offline mode and with a fixed difficulty:

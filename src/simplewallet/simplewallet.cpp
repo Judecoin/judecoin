@@ -3011,6 +3011,7 @@ bool simple_wallet::scan_tx(const std::vector<std::string> &args)
     }
     txids.insert(txid);
   }
+  std::vector<crypto::hash> txids_v(txids.begin(), txids.end());
 
   if (!m_wallet->is_trusted_daemon()) {
     message_writer(console_color_red, true) << tr("WARNING: this operation may reveal the txids to the remote node and affect your privacy");
@@ -3023,9 +3024,7 @@ bool simple_wallet::scan_tx(const std::vector<std::string> &args)
   LOCK_IDLE_SCOPE();
   m_in_manual_refresh.store(true);
   try {
-    m_wallet->scan_tx(txids);
-  } catch (const tools::error::wont_reprocess_recent_txs_via_untrusted_daemon &e) {
-    fail_msg_writer() << e.what() << ". Either connect to a trusted daemon by passing --trusted-daemon when starting the wallet, or use rescan_bc to rescan the chain.";
+    m_wallet->scan_tx(txids_v);
   } catch (const std::exception &e) {
     fail_msg_writer() << e.what();
   }
@@ -6582,7 +6581,25 @@ bool simple_wallet::transfer_main(int transfer_type, const std::vector<std::stri
           float days = locked_blocks / 720.0f;
           prompt << boost::format(tr(".\nThis transaction (including %s change) will unlock on block %llu, in approximately %s days (assuming 2 minutes per block)")) % cryptonote::print_money(change) % ((unsigned long long)unlock_block) % days;
         }
-
+        if (!process_ring_members(ptx_vector, prompt, m_wallet->print_ring_members()))
+          return false;
+        bool default_ring_size = true;
+        for (const auto &ptx: ptx_vector)
+        {
+          for (const auto &vin: ptx.tx.vin)
+          {
+            if (vin.type() == typeid(txin_to_key))
+            {
+              const txin_to_key& in_to_key = boost::get<txin_to_key>(vin);
+              if (in_to_key.key_offsets.size() != min_ring_size)
+                default_ring_size = false;
+            }
+          }
+        }
+        if (m_wallet->confirm_non_default_ring_size() && !default_ring_size)
+        {
+          prompt << tr("WARNING: this is a non default ring size, which may harm your privacy. Default is recommended.");
+        }
         prompt << ENDL << tr("Is this okay?");
         
         std::string accepted = input_line(prompt.str(), true);

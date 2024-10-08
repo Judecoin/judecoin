@@ -281,11 +281,6 @@ namespace cryptonote
         cnx.ip = cnx.host;
         cnx.port = std::to_string(cntxt.m_remote_address.as<epee::net_utils::ipv4_network_address>().port());
       }
-      else if (cntxt.m_remote_address.get_type_id() == epee::net_utils::ipv6_network_address::get_type_id())
-      {
-        cnx.ip = cnx.host;
-        cnx.port = std::to_string(cntxt.m_remote_address.as<epee::net_utils::ipv6_network_address>().port());
-      }
       cnx.rpc_port = cntxt.m_rpc_port;
       cnx.rpc_credits_per_hash = cntxt.m_rpc_credits_per_hash;
 
@@ -984,18 +979,8 @@ namespace cryptonote
   int t_cryptonote_protocol_handler<t_core>::handle_notify_new_transactions(int command, NOTIFY_NEW_TRANSACTIONS::request& arg, cryptonote_connection_context& context)
   {
     MLOG_P2P_MESSAGE("Received NOTIFY_NEW_TRANSACTIONS (" << arg.txs.size() << " txes)");
-    std::unordered_set<blobdata> seen;
     for (const auto &blob: arg.txs)
-    {
       MLOGIF_P2P_MESSAGE(cryptonote::transaction tx; crypto::hash hash; bool ret = cryptonote::parse_and_validate_tx_from_blob(blob, tx, hash);, ret, "Including transaction " << hash);
-      if (seen.find(blob) != seen.end())
-      {
-        LOG_PRINT_CCONTEXT_L1("Duplicate transaction in notification, dropping connection");
-        drop_connection(context, false, false);
-        return 1;
-      }
-      seen.insert(blob);
-    }
 
     if(context.m_state != cryptonote_connection_context::state_normal)
       return 1;
@@ -1166,6 +1151,13 @@ namespace cryptonote
     ++m_sync_spans_downloaded;
     m_sync_download_objects_size += size;
     MDEBUG(context << " downloaded " << size << " bytes worth of blocks");
+
+    /*using namespace boost::chrono;
+      auto point = steady_clock::now();
+      auto time_from_epoh = point.time_since_epoch();
+      auto sec = duration_cast< seconds >( time_from_epoh ).count();*/
+
+    //epee::net_utils::network_throttle_manager::get_global_throttle_inreq().logger_handle_net("log/dr-jude/net/req-all.data", sec, get_avg_block_size());
 
     if(arg.blocks.empty())
     {
