@@ -3173,7 +3173,7 @@ namespace tools
           return false;
       }
 
-      std::vector<crypto::hash> txids;
+      std::unordered_set<crypto::hash> txids;
       std::list<std::string>::const_iterator i = req.txids.begin();
       while (i != req.txids.end())
       {
@@ -3186,11 +3186,15 @@ namespace tools
           }
 
           crypto::hash txid = *reinterpret_cast<const crypto::hash*>(txid_blob.data());
-          txids.push_back(txid);
+          txids.insert(txid);
       }
 
       try {
           m_wallet->scan_tx(txids);
+      }  catch (const tools::error::wont_reprocess_recent_txs_via_untrusted_daemon &e) {
+          er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
+          er.message = e.what() + std::string(". Either connect to a trusted daemon or rescan the chain.");
+          return false;
       } catch (const std::exception &e) {
           handle_rpc_exception(std::current_exception(), er, WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR);
           return false;
@@ -3807,7 +3811,7 @@ namespace tools
     std::string old_language;
 
     // check the given seed
-    if (!req.enable_multisig_experimental) {
+    {
       if (!crypto::ElectrumWords::words_to_bytes(req.seed, recovery_key, old_language))
       {
         er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
@@ -3830,13 +3834,6 @@ namespace tools
 
     // process seed_offset if given
     {
-      if (req.enable_multisig_experimental && !req.seed_offset.empty())
-      {
-        er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-        er.message = "Multisig seeds are not compatible with seed offsets";
-        return false;
-      }
-
       if (!req.seed_offset.empty())
       {
         recovery_key = cryptonote::decrypt_key(recovery_key, req.seed_offset);
@@ -3900,27 +3897,7 @@ namespace tools
     crypto::secret_key recovery_val;
     try
     {
-      if (req.enable_multisig_experimental)
-      {
-        // Parse multisig seed into raw multisig data
-        epee::wipeable_string multisig_data;
-        multisig_data.resize(req.seed.size() / 2);
-        if (!epee::from_hex::to_buffer(epee::to_mut_byte_span(multisig_data), req.seed))
-        {
-          er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-          er.message = "Multisig seed not represented as hexadecimal string";
-          return false;
-        }
-
-        // Generate multisig wallet
-        wal->generate(wallet_file, std::move(rc.second).password(), multisig_data, false);
-        wal->enable_multisig(true);
-      }
-      else
-      {
-        // Generate normal wallet
-        recovery_val = wal->generate(wallet_file, std::move(rc.second).password(), recovery_key, true, false, false);
-      }
+      recovery_val = wal->generate(wallet_file, std::move(rc.second).password(), recovery_key, true, false, false);
       MINFO("Wallet has been restored.\n");
     }
     catch (const std::exception &e)
@@ -3931,7 +3908,7 @@ namespace tools
 
     // // Convert the secret key back to seed
     epee::wipeable_string electrum_words;
-    if (!req.enable_multisig_experimental && !crypto::ElectrumWords::bytes_to_words(recovery_val, electrum_words, mnemonic_language))
+    if (!crypto::ElectrumWords::bytes_to_words(recovery_val, electrum_words, mnemonic_language))
     {
       er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
       er.message = "Failed to encode seed";
@@ -4721,6 +4698,7 @@ int main(int argc, char** argv) {
   command_line::add_arg(desc_params, arg_wallet_dir);
   command_line::add_arg(desc_params, arg_prompt_for_password);
   command_line::add_arg(desc_params, arg_no_initial_sync);
+  command_line::add_arg(hidden_options, daemonizer::arg_non_interactive);
 
   daemonizer::init_options(hidden_options, desc_params);
   desc_params.add(hidden_options);

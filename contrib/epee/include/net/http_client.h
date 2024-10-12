@@ -202,8 +202,10 @@ namespace net_utils
 				// This magic var determines the maximum length for when copying the body message in
 				// memory is faster/more preferable than the round-trip time for one packet
 				constexpr size_t BODY_NO_COPY_CUTOFF = 128 * 1024; // ~262 KB or ~175 packets
+
 				// Maximum expected total headers bytes
 				constexpr size_t HEADER_RESERVE_SIZE = 2048;
+
 				const bool do_copy_body = body.size() <= BODY_NO_COPY_CUTOFF;
 				const size_t req_buff_cap = HEADER_RESERVE_SIZE + (do_copy_body ? body.size() : 0);
 
@@ -254,7 +256,7 @@ namespace net_utils
 
 					if (m_auth.handle_401(m_response_info) == http_client_auth::kParseFailure)
 					{
-					LOG_ERROR("Bad server response for authentication");
+						LOG_ERROR("Bad server response for authentication");
 						return false;
 					}
 				}

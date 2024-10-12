@@ -43,10 +43,6 @@ ctest
 
 To run the same tests on a release build, replace `debug` with `release`.
 
-# Daemon tests
-
-[TODO]
-
 # Functional tests
 
 [TODO]
@@ -54,7 +50,7 @@ Functional tests are located under the `tests/functional_tests` directory.
 
 Building all the tests requires installing the following dependencies:
 ```bash
-pip install requests psutil monotonic zmq
+pip install requests psutil monotonic zmq deepdiff
 ```
 
 First, run a regtest daemon in the offline mode and with a fixed difficulty:
@@ -108,6 +104,12 @@ ctest
 
 To run the same tests on a release build, replace `debug` with `release`.
 
+To run specific hash test, you can use `ctest` `-R` parameter. For exmaple to run only `blake2b` hash tests:
+
+```
+ctest -R hash-blake2b
+```
+
 # Libwallet API tests
 
 [TODO]
@@ -155,3 +157,4 @@ When writing new tests, please implement all functions in `.cpp` or `.c` files, 
 ## Writing fuzz tests
 
 [TODO]
+hash
