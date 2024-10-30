@@ -221,9 +221,8 @@ namespace cryptonote
 
   //-----------------------------------------------------------------------------------------------
   core::core(i_cryptonote_protocol* pprotocol):
-              m_bap(),
-              m_mempool(m_bap.tx_pool),
-              m_blockchain_storage(m_bap.blockchain),
+              m_mempool(m_blockchain_storage),
+              m_blockchain_storage(m_mempool),
               m_miner(this, [this](const cryptonote::block &b, uint64_t height, const crypto::hash *seed_hash, unsigned int threads, crypto::hash &hash) {
                 return cryptonote::get_block_longhash(&m_blockchain_storage, b, hash, height, seed_hash, threads);
               }),
@@ -1559,8 +1558,7 @@ namespace cryptonote
       return false;
     }
     m_blockchain_storage.add_new_block(b, bvc);
-    const bool force_sync = m_nettype != FAKECHAIN;
-    cleanup_handle_incoming_blocks(force_sync);
+    cleanup_handle_incoming_blocks(true);
     //anyway - update miner template
     update_miner_block_template();
     m_miner.resume();

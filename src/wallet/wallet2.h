@@ -1044,7 +1044,7 @@ private:
     bool multisig(bool *ready = NULL, uint32_t *threshold = NULL, uint32_t *total = NULL) const;
     bool has_multisig_partial_key_images() const;
     bool has_unknown_key_images() const;
-    bool get_multisig_seed(epee::wipeable_string& seed, const epee::wipeable_string &passphrase = std::string()) const;
+    bool get_multisig_seed(epee::wipeable_string& seed, const epee::wipeable_string &passphrase = std::string(), bool raw = true) const;
     bool key_on_device() const { return get_device_type() != hw::device::device_type::SOFTWARE; }
     hw::device::device_type get_device_type() const { return m_key_device_type; }
     bool reconnect_device();
@@ -1342,6 +1342,8 @@ private:
     void segregation_height(uint64_t height) { m_segregation_height = height; }
     bool ignore_fractional_outputs() const { return m_ignore_fractional_outputs; }
     void ignore_fractional_outputs(bool value) { m_ignore_fractional_outputs = value; }
+    bool confirm_non_default_ring_size() const { return m_confirm_non_default_ring_size; }
+    void confirm_non_default_ring_size(bool always) { m_confirm_non_default_ring_size = always; }
     uint64_t ignore_outputs_above() const { return m_ignore_outputs_above; }
     void ignore_outputs_above(uint64_t value) { m_ignore_outputs_above = value; }
     uint64_t ignore_outputs_below() const { return m_ignore_outputs_below; }
@@ -1614,7 +1616,6 @@ private:
     void thaw(const crypto::key_image &ki);
     bool frozen(const crypto::key_image &ki) const;
     bool frozen(const transfer_details &td) const;
-    bool frozen(const multisig_tx_set& txs) const; // does partially signed txset contain frozen enotes?
 
     bool save_to_file(const std::string& path_to_file, const std::string& binary, bool is_printable = false) const;
     static bool load_from_file(const std::string& path_to_file, std::string& target_str, size_t max_size = 1000000000);

@@ -143,8 +143,9 @@ namespace
 
 }
 
-static std::unique_ptr<cryptonote::BlockchainAndPool> init_blockchain(const std::vector<test_event_entry> & events, cryptonote::network_type nettype)
+static std::unique_ptr<cryptonote::Blockchain> init_blockchain(const std::vector<test_event_entry> & events, cryptonote::network_type nettype)
 {
+  std::unique_ptr<cryptonote::Blockchain> bc;
   v_hardforks_t hardforks;
   cryptonote::test_options test_options_tmp{nullptr, 0};
   const cryptonote::test_options * test_options = &test_options_tmp;
@@ -158,8 +159,10 @@ static std::unique_ptr<cryptonote::BlockchainAndPool> init_blockchain(const std:
   test_options_tmp.hard_forks = hardforks.data();
   test_options = &test_options_tmp;
 
-  std::unique_ptr<cryptonote::BlockchainAndPool> bap(new BlockchainAndPool());
+  cryptonote::tx_memory_pool txpool(*bc);
+  bc.reset(new cryptonote::Blockchain(txpool));
 
+  cryptonote::Blockchain *blockchain = bc.get();
   auto bdb = new TestDB();
 
   BOOST_FOREACH(const test_event_entry &ev, events)
@@ -174,9 +177,9 @@ static std::unique_ptr<cryptonote::BlockchainAndPool> init_blockchain(const std:
     bdb->add_block(*blk, 1, 1, 1, 0, 0, blk_hash);
   }
 
-  bool r = bap->blockchain.init(bdb, nettype, true, test_options, 2, nullptr);
+  bool r = blockchain->init(bdb, nettype, true, test_options, 2, nullptr);
   CHECK_AND_ASSERT_THROW_MES(r, "could not init blockchain from events");
-  return bap;
+  return bc;
 }
 
 void test_generator::get_block_chain(std::vector<block_info>& blockchain, const crypto::hash& head, size_t n) const
@@ -390,7 +393,7 @@ bool test_generator::construct_block_manually_tx(cryptonote::block& blk, const c
 void test_generator::fill_nonce(cryptonote::block& blk, const difficulty_type& diffic, uint64_t height)
 {
   const cryptonote::Blockchain *blockchain = nullptr;
-  std::unique_ptr<cryptonote::BlockchainAndPool> bap;
+  std::unique_ptr<cryptonote::Blockchain> bc;
 
   if (blk.major_version >= RX_BLOCK_VERSION && diffic > 1)
   {
@@ -400,8 +403,8 @@ void test_generator::fill_nonce(cryptonote::block& blk, const difficulty_type& d
     }
     else
     {
-      bap = init_blockchain(*m_events, m_nettype);
-      blockchain = &bap->blockchain;
+      bc = init_blockchain(*m_events, m_nettype);
+      blockchain = bc.get();
     }
   }
 

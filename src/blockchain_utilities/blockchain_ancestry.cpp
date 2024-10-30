@@ -37,7 +37,10 @@
 #include "common/command_line.h"
 #include "common/varint.h"
 #include "cryptonote_basic/cryptonote_boost_serialization.h"
+#include "cryptonote_core/tx_pool.h"
 #include "cryptonote_core/cryptonote_core.h"
+#include "cryptonote_core/blockchain.h"
+#include "blockchain_db/blockchain_db.h"
 #include "version.h"
 
 #undef JUDE_DEFAULT_LOG_CATEGORY
@@ -446,7 +449,9 @@ int main(int argc, char* argv[])
   // because unlike blockchain_storage constructor, which takes a pointer to
   // tx_memory_pool, Blockchain's constructor takes tx_memory_pool object.
   LOG_PRINT_L0("Initializing source blockchain (BlockchainDB)");
-  std::unique_ptr<BlockchainAndPool> core_storage = std::make_unique<BlockchainAndPool>();
+  std::unique_ptr<Blockchain> core_storage;
+  tx_memory_pool m_mempool(*core_storage);
+  core_storage.reset(new Blockchain(m_mempool));
   BlockchainDB *db = new_db();
   if (db == NULL)
   {
@@ -467,7 +472,7 @@ int main(int argc, char* argv[])
     LOG_PRINT_L0("Error opening database: " << e.what());
     return 1;
   }
-  r = core_storage->blockchain.init(db, net_type);
+  r = core_storage->init(db, net_type);
 
   CHECK_AND_ASSERT_MES(r, 1, "Failed to initialize source blockchain storage");
   LOG_PRINT_L0("Source blockchain storage initialized OK");
@@ -711,7 +716,7 @@ int main(int argc, char* argv[])
   }
 
 done:
-  core_storage->blockchain.deinit();
+  core_storage->deinit();
 
   if (opt_show_cache_stats)
   MINFO("cache: txes " << std::to_string(cached_txes*100./total_txes)

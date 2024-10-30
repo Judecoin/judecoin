@@ -986,21 +986,6 @@ bool get_pruned_tx(const cryptonote::COMMAND_RPC_GET_TRANSACTIONS::entry &entry,
   return false;
 }
 
-// Given M (threshold) and N (total), calculate the number of private multisig keys each
-// signer should have. This value is equal to (N - 1) choose (N - M)
-// Prereq: M >= 1 && N >= M && N <= 16
-uint64_t num_priv_multisig_keys_post_setup(uint64_t threshold, uint64_t total)
-{
-  THROW_WALLET_EXCEPTION_IF(threshold < 1 || total < threshold || threshold > 16,
-    tools::error::wallet_internal_error, "Invalid arguments to num_priv_multisig_keys_post_setup");
-
-  uint64_t n_multisig_keys = 1;
-  for (uint64_t i = 2; i <= total - 1; ++i) n_multisig_keys *= i; // multiply by (N - 1)!
-  for (uint64_t i = 2; i <= total - threshold; ++i) n_multisig_keys /= i; // divide by (N - M)!
-  for (uint64_t i = 2; i <= threshold - 1; ++i) n_multisig_keys /= i; // divide by ((N - 1) - (N - M))!
-  return n_multisig_keys;
-}
-
   //-----------------------------------------------------------------
 } //namespace
 
@@ -1184,6 +1169,7 @@ wallet2::wallet2(network_type nettype, uint64_t kdf_rounds, bool unattended, std
   m_refresh_from_block_height(0),
   m_explicit_refresh_from_block_height(true),
   m_skip_to_height(0),
+  m_confirm_non_default_ring_size(true),
   m_ask_password(AskPasswordToDecrypt),
   m_max_reorg_depth(ORPHANED_BLOCKS_MAX_COUNT),
   m_min_output_count(0),
@@ -1409,7 +1395,7 @@ bool wallet2::get_seed(epee::wipeable_string& electrum_words, const epee::wipeab
   return true;
 }
 //----------------------------------------------------------------------------------------------------
-bool wallet2::get_multisig_seed(epee::wipeable_string& seed, const epee::wipeable_string &passphrase) const
+bool wallet2::get_multisig_seed(epee::wipeable_string& seed, const epee::wipeable_string &passphrase, bool raw) const
 {
   bool ready;
   uint32_t threshold, total;
@@ -1423,14 +1409,15 @@ bool wallet2::get_multisig_seed(epee::wipeable_string& seed, const epee::wipeabl
     std::cout << "This multisig wallet is not yet finalized" << std::endl;
     return false;
   }
-
-  const uint64_t num_expected_ms_keys = num_priv_multisig_keys_post_setup(threshold, total);
+  if (!raw && seed_language.empty())
+  {
+    std::cout << "seed_language not set" << std::endl;
+    return false;
+  }
 
   crypto::secret_key skey;
   crypto::public_key pkey;
   const account_keys &keys = get_account().get_keys();
-  THROW_WALLET_EXCEPTION_IF(num_expected_ms_keys != keys.m_multisig_keys.size(),
-    error::wallet_internal_error, "Unexpected number of private multisig keys")
   epee::wipeable_string data;
   data.append((const char*)&threshold, sizeof(uint32_t));
   data.append((const char*)&total, sizeof(uint32_t));
@@ -1455,7 +1442,18 @@ bool wallet2::get_multisig_seed(epee::wipeable_string& seed, const epee::wipeabl
     data = encrypt(data, key, true);
   }
 
-  seed = epee::to_hex::wipeable_string({(const unsigned char*)data.data(), data.size()});
+  if (raw)
+  {
+    seed = epee::to_hex::wipeable_string({(const unsigned char*)data.data(), data.size()});
+  }
+  else
+  {
+    if (!crypto::ElectrumWords::bytes_to_words(data.data(), data.size(), seed, seed_language))
+    {
+      std::cout << "Failed to encode seed";
+      return false;
+    }
+  }
 
   return true;
 }
@@ -1974,36 +1972,6 @@ bool wallet2::frozen(size_t idx) const
   return td.m_frozen;
 }
 //----------------------------------------------------------------------------------------------------
-bool wallet2::frozen(const multisig_tx_set& txs) const
-{
-  // Each call to frozen(const key_image&) is O(N), so if we didn't use batching like we did here,
-  // this op would be O(M * N) instead of O(M + N). N = # wallet transfers, M = # key images in set.
-  // Step 1. Collect all key images from all pending txs into set
-  std::unordered_set<crypto::key_image> kis_to_sign;
-  for (const auto& ptx : txs.m_ptx)
-  {
-    const tools::wallet2::tx_construction_data& cd = ptx.construction_data;
-    CHECK_AND_ASSERT_THROW_MES(cd.sources.size() == ptx.tx.vin.size(), "mismatched multisg tx set source sizes");
-    for (size_t src_idx = 0; src_idx < cd.sources.size(); ++src_idx)
-    {
-      // Extract keys images from tx vin and construction data
-      const crypto::key_image multisig_ki = rct::rct2ki(cd.sources[src_idx].multisig_kLRki.ki);
-      CHECK_AND_ASSERT_THROW_MES(ptx.tx.vin[src_idx].type() == typeid(cryptonote::txin_to_key), "multisig tx cannot be miner");
-      const crypto::key_image& vin_ki = boost::get<cryptonote::txin_to_key>(ptx.tx.vin[src_idx]).k_image;
-
-       // Add key images to set (there will be some overlap)
-      kis_to_sign.insert(multisig_ki);
-      kis_to_sign.insert(vin_ki);
-    }
-  }
-  // Step 2. Scan all transfers for frozen key images
-  for (const auto& td : m_transfers)
-    if (td.m_frozen && kis_to_sign.count(td.m_key_image))
-      return true;
-
-  return false;
-}
-//----------------------------------------------------------------------------------------------------
 void wallet2::freeze(const crypto::key_image &ki)
 {
   freeze(get_transfer_details(ki));
@@ -2024,13 +1992,8 @@ size_t wallet2::get_transfer_details(const crypto::key_image &ki) const
   for (size_t idx = 0; idx < m_transfers.size(); ++idx)
   {
     const transfer_details &td = m_transfers[idx];
-    if (td.m_key_image == ki)
-    {
-      if (td.m_key_image_known)
-        return idx;
-      else if (td.m_key_image_partial)
-        CHECK_AND_ASSERT_THROW_MES(false, "Transfer detail lookups are not allowed for multisig partial key images");
-    }
+    if (td.m_key_image_known && td.m_key_image == ki)
+      return idx;
   }
   CHECK_AND_ASSERT_THROW_MES(false, "Key image not found");
 }
@@ -3294,7 +3257,7 @@ void check_block_hard_fork_version(cryptonote::network_type nettype, uint8_t hf_
     if (wallet_hard_forks[fork_index].version == hf_version)
       break;
   THROW_WALLET_EXCEPTION_IF(fork_index == wallet_num_hard_forks, error::wallet_internal_error, "Fork not found in table");
-  uint64_t start_height = hf_version == 1 ? 0 : wallet_hard_forks[fork_index].height;
+  uint64_t start_height = wallet_hard_forks[fork_index].height;
   uint64_t end_height = fork_index == wallet_num_hard_forks - 1
     ? std::numeric_limits<uint64_t>::max()
     : wallet_hard_forks[fork_index + 1].height;
@@ -4427,7 +4390,7 @@ boost::optional<wallet2::keys_file_data> wallet2::get_keys_file_data(const epee:
   value2.SetUint64(m_skip_to_height);
   json.AddMember("skip_to_height", value2, json.GetAllocator());
 
-  value2.SetInt(1); // exists for deserialization backwards compatibility
+  value2.SetInt(m_confirm_non_default_ring_size ? 1 :0);
   json.AddMember("confirm_non_default_ring_size", value2, json.GetAllocator());
 
   value2.SetInt(m_ask_password);
@@ -4660,6 +4623,7 @@ bool wallet2::load_keys_buf(const std::string& keys_buf, const epee::wipeable_st
     m_refresh_type = RefreshType::RefreshDefault;
     m_refresh_from_block_height = 0;
     m_skip_to_height = 0;
+    m_confirm_non_default_ring_size = true;
     m_ask_password = AskPasswordToDecrypt;
     cryptonote::set_default_decimal_point(CRYPTONOTE_DISPLAY_DECIMAL_POINT);
     m_max_reorg_depth = ORPHANED_BLOCKS_MAX_COUNT;
@@ -4811,6 +4775,8 @@ bool wallet2::load_keys_buf(const std::string& keys_buf, const epee::wipeable_st
     m_refresh_from_block_height = field_refresh_height;
     GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, skip_to_height, uint64_t, Uint64, false, 0);
     m_skip_to_height = field_skip_to_height;
+    GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, confirm_non_default_ring_size, int, Int, false, true);
+    m_confirm_non_default_ring_size = field_confirm_non_default_ring_size;
     GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, ask_password, AskPasswordType, Int, false, AskPasswordToDecrypt);
     m_ask_password = field_ask_password;
     GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, default_decimal_point, int, Int, false, CRYPTONOTE_DISPLAY_DECIMAL_POINT);
@@ -5215,11 +5181,9 @@ void wallet2::generate(const std::string& wallet_, const epee::wipeable_string& 
   offset += sizeof(uint32_t);
   uint32_t total = *(uint32_t*)(multisig_data.data() + offset);
   offset += sizeof(uint32_t);
-
-  THROW_WALLET_EXCEPTION_IF(threshold < 1, error::invalid_multisig_seed);
-  THROW_WALLET_EXCEPTION_IF(total < threshold, error::invalid_multisig_seed);
-  THROW_WALLET_EXCEPTION_IF(threshold > 16, error::invalid_multisig_seed); // doing N choose (N - M + 1) might overflow
-  const uint64_t n_multisig_keys = num_priv_multisig_keys_post_setup(threshold, total);
+  THROW_WALLET_EXCEPTION_IF(threshold < 2, error::invalid_multisig_seed);
+  THROW_WALLET_EXCEPTION_IF(total != threshold && total != threshold + 1, error::invalid_multisig_seed);
+  const size_t n_multisig_keys =  total == threshold ? 1 : threshold;
   THROW_WALLET_EXCEPTION_IF(multisig_data.size() != 8 + 32 * (4 + n_multisig_keys + total), error::invalid_multisig_seed);
 
   std::vector<crypto::secret_key> multisig_keys;
@@ -6396,8 +6360,6 @@ std::map<uint32_t, uint64_t> wallet2::balance_per_subaddress(uint32_t index_majo
   std::map<uint32_t, uint64_t> amount_per_subaddr;
   for (const auto& td: m_transfers)
   {
-    if (td.amount() > m_ignore_outputs_above || td.amount() < m_ignore_outputs_below)
-      continue;
     if (td.m_subaddr_index.major == index_major && !is_spent(td, strict) && !td.m_frozen)
     {
       auto found = amount_per_subaddr.find(td.m_subaddr_index.minor);
@@ -6453,8 +6415,6 @@ std::map<uint32_t, std::pair<uint64_t, std::pair<uint64_t, uint64_t>>> wallet2::
   const uint64_t now = time(NULL);
   for(const transfer_details& td: m_transfers)
   {
-    if (td.amount() > m_ignore_outputs_above || td.amount() < m_ignore_outputs_below)
-      continue;
     if(td.m_subaddr_index.major == index_major && !is_spent(td, strict) && !td.m_frozen)
     {
       uint64_t amount = 0, blocks_to_unlock = 0, time_to_unlock = 0;
@@ -7686,8 +7646,6 @@ bool wallet2::sign_multisig_tx(multisig_tx_set &exported_txs, std::vector<crypto
       error::wallet_internal_error, "Transaction was signed by too many signers");
   THROW_WALLET_EXCEPTION_IF(exported_txs.m_signers.size() == m_multisig_threshold,
       error::wallet_internal_error, "Transaction is already fully signed");
-  THROW_WALLET_EXCEPTION_IF(frozen(exported_txs),
-    error::wallet_internal_error, "Will not sign multisig tx containing frozen outputs")
 
   txids.clear();
 
@@ -10222,7 +10180,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryp
       else
       {
         LOG_PRINT_L2("We made a tx, adjusting fee and saving it, we need " << print_money(needed_fee) << " and we have " << print_money(test_ptx.fee));
-        do {
+        while (needed_fee > test_ptx.fee) {
           if (use_rct)
             transfer_selected_rct(tx.dsts, tx.selected_transfers, fake_outs_count, outs, valid_public_keys_cache, unlock_time, needed_fee, extra,
               test_tx, test_ptx, rct_config, use_view_tags);
@@ -10233,7 +10191,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryp
           needed_fee = calculate_fee(use_per_byte_fee, test_ptx.tx, txBlob.size(), base_fee, fee_quantization_mask);
           LOG_PRINT_L2("Made an attempt at a  final " << get_weight_string(test_ptx.tx, txBlob.size()) << " tx, with " << print_money(test_ptx.fee) <<
             " fee  and " << print_money(test_ptx.change_dts.amount) << " change");
-        } while (needed_fee > test_ptx.fee);
+        }
 
         LOG_PRINT_L2("Made a final " << get_weight_string(test_ptx.tx, txBlob.size()) << " tx, with " << print_money(test_ptx.fee) <<
           " fee  and " << print_money(test_ptx.change_dts.amount) << " change");
@@ -10629,7 +10587,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_from(const crypton
       THROW_WALLET_EXCEPTION_IF(needed_fee > available_for_fee, error::wallet_internal_error, "Transaction cannot pay for itself");
 
       do {
-        LOG_PRINT_L2("We made a tx, adjusting fee and saving it, we need " << print_money(needed_fee) << " and we have " << print_money(test_ptx.fee));
+        LOG_PRINT_L2("We made a tx, adjusting fee and saving it");
         // distribute total transferred amount between outputs
         uint64_t amount_transferred = available_for_fee - needed_fee;
         uint64_t dt_amount = amount_transferred / outputs;
