@@ -98,6 +98,7 @@ set(unit_tests_sources
   output_selection.cpp
   vercmp.cpp
   ringdb.cpp
+  wallet_storage.cpp
   wipeable_string.cpp
   is_hdd.cpp
   aligned.cpp
@@ -122,7 +123,6 @@ target_link_libraries(unit_tests
     rpc
     net
     serialization
-    seraphis_crypto
     wallet
     p2p
     version
@@ -142,6 +142,8 @@ if (NOT MSVC)
     PROPERTY
       COMPILE_FLAGS " -Wno-undef -Wno-sign-compare")
 endif ()
+
+SET_PROPERTY(SOURCE main.cpp PROPERTY COMPILE_FLAGS -DDEFAULT_DATA_DIR="\\"${CMAKE_SOURCE_DIR}/tests/data\\"")
 
 SET_PROPERTY(SOURCE memwipe.cpp PROPERTY COMPILE_FLAGS -Ofast)
 

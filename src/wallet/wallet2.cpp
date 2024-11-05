@@ -986,6 +986,39 @@ bool get_pruned_tx(const cryptonote::COMMAND_RPC_GET_TRANSACTIONS::entry &entry,
   return false;
 }
 
+// Given M (threshold) and N (total), calculate the number of private multisig keys each
+// signer should have. This value is equal to (N - 1) choose (N - M)
+// Prereq: M >= 1 && N >= M && N <= 16
+uint64_t num_priv_multisig_keys_post_setup(uint64_t threshold, uint64_t total)
+{
+  THROW_WALLET_EXCEPTION_IF(threshold < 1 || total < threshold || threshold > 16,
+    tools::error::wallet_internal_error, "Invalid arguments to num_priv_multisig_keys_post_setup");
+
+  uint64_t n_multisig_keys = 1;
+  for (uint64_t i = 2; i <= total - 1; ++i) n_multisig_keys *= i; // multiply by (N - 1)!
+  for (uint64_t i = 2; i <= total - threshold; ++i) n_multisig_keys /= i; // divide by (N - M)!
+  for (uint64_t i = 2; i <= threshold - 1; ++i) n_multisig_keys /= i; // divide by ((N - 1) - (N - M))!
+  return n_multisig_keys;
+}
+
+/**
+ * @brief Derives the chacha key to encrypt wallet cache files given the chacha key to encrypt the wallet keys files
+ *
+ * @param keys_data_key the chacha key that encrypts wallet keys files
+ * @return crypto::chacha_key the chacha key that encrypts the wallet cache files
+ */
+crypto::chacha_key derive_cache_key(const crypto::chacha_key& keys_data_key)
+{
+  static_assert(HASH_SIZE == sizeof(crypto::chacha_key), "Mismatched sizes of hash and chacha key");
+
+  crypto::chacha_key cache_key;
+  epee::mlocked<tools::scrubbed_arr<char, HASH_SIZE+1>> cache_key_data;
+  memcpy(cache_key_data.data(), &keys_data_key, HASH_SIZE);
+  cache_key_data[HASH_SIZE] = config::HASH_KEY_WALLET_CACHE;
+  cn_fast_hash(cache_key_data.data(), HASH_SIZE+1, (crypto::hash&) cache_key);
+
+  return cache_key;
+}
   //-----------------------------------------------------------------
 } //namespace
 
@@ -1169,7 +1202,6 @@ wallet2::wallet2(network_type nettype, uint64_t kdf_rounds, bool unattended, std
   m_refresh_from_block_height(0),
   m_explicit_refresh_from_block_height(true),
   m_skip_to_height(0),
-  m_confirm_non_default_ring_size(true),
   m_ask_password(AskPasswordToDecrypt),
   m_max_reorg_depth(ORPHANED_BLOCKS_MAX_COUNT),
   m_min_output_count(0),
@@ -1395,7 +1427,7 @@ bool wallet2::get_seed(epee::wipeable_string& electrum_words, const epee::wipeab
   return true;
 }
 //----------------------------------------------------------------------------------------------------
-bool wallet2::get_multisig_seed(epee::wipeable_string& seed, const epee::wipeable_string &passphrase, bool raw) const
+bool wallet2::get_multisig_seed(epee::wipeable_string& seed, const epee::wipeable_string &passphrase) const
 {
   bool ready;
   uint32_t threshold, total;
@@ -1409,15 +1441,14 @@ bool wallet2::get_multisig_seed(epee::wipeable_string& seed, const epee::wipeabl
     std::cout << "This multisig wallet is not yet finalized" << std::endl;
     return false;
   }
-  if (!raw && seed_language.empty())
-  {
-    std::cout << "seed_language not set" << std::endl;
-    return false;
-  }
+
+  const uint64_t num_expected_ms_keys = num_priv_multisig_keys_post_setup(threshold, total);
 
   crypto::secret_key skey;
   crypto::public_key pkey;
   const account_keys &keys = get_account().get_keys();
+  THROW_WALLET_EXCEPTION_IF(num_expected_ms_keys != keys.m_multisig_keys.size(),
+    error::wallet_internal_error, "Unexpected number of private multisig keys")
   epee::wipeable_string data;
   data.append((const char*)&threshold, sizeof(uint32_t));
   data.append((const char*)&total, sizeof(uint32_t));
@@ -1442,18 +1473,7 @@ bool wallet2::get_multisig_seed(epee::wipeable_string& seed, const epee::wipeabl
     data = encrypt(data, key, true);
   }
 
-  if (raw)
-  {
-    seed = epee::to_hex::wipeable_string({(const unsigned char*)data.data(), data.size()});
-  }
-  else
-  {
-    if (!crypto::ElectrumWords::bytes_to_words(data.data(), data.size(), seed, seed_language))
-    {
-      std::cout << "Failed to encode seed";
-      return false;
-    }
-  }
+  seed = epee::to_hex::wipeable_string({(const unsigned char*)data.data(), data.size()});
 
   return true;
 }
@@ -1716,21 +1736,26 @@ void wallet2::sort_scan_tx_entries(std::vector<process_tx_entry_t> &unsorted_tx_
     else // l.tx_entry.block_height == r.tx_entry.block_height
     {
       // coinbase tx is the first tx in a block
+      if (cryptonote::is_coinbase(r.tx))
+        return false;
       if (cryptonote::is_coinbase(l.tx))
         return true;
-      if (cryptonote::is_coinbase(r.tx))
+
+      // in case std::sort is comparing elem to itself
+      if (l.tx_hash == r.tx_hash)
         return false;
 
       // see which tx hash comes first in the block
       THROW_WALLET_EXCEPTION_IF(parsed_blocks.find(l.tx_entry.block_height) == parsed_blocks.end(),
-          error::wallet_internal_error, "Expected block not returned by daemon");
+          error::wallet_internal_error, std::string("Expected block not returned by daemon, ") +
+          "left tx: " + string_tools::pod_to_hex(l.tx_hash) + ", right tx: " + string_tools::pod_to_hex(r.tx_hash));
       const auto &blk = parsed_blocks[l.tx_entry.block_height];
       for (const auto &tx_hash : blk.tx_hashes)
       {
-        if (tx_hash == l.tx_hash)
-          return true;
         if (tx_hash == r.tx_hash)
           return false;
+        if (tx_hash == l.tx_hash)
+          return true;
       }
       THROW_WALLET_EXCEPTION(error::wallet_internal_error, "Tx hashes not found in block");
       return false;
@@ -1972,6 +1997,36 @@ bool wallet2::frozen(size_t idx) const
   return td.m_frozen;
 }
 //----------------------------------------------------------------------------------------------------
+bool wallet2::frozen(const multisig_tx_set& txs) const
+{
+  // Each call to frozen(const key_image&) is O(N), so if we didn't use batching like we did here,
+  // this op would be O(M * N) instead of O(M + N). N = # wallet transfers, M = # key images in set.
+  // Step 1. Collect all key images from all pending txs into set
+  std::unordered_set<crypto::key_image> kis_to_sign;
+  for (const auto& ptx : txs.m_ptx)
+  {
+    const tools::wallet2::tx_construction_data& cd = ptx.construction_data;
+    CHECK_AND_ASSERT_THROW_MES(cd.sources.size() == ptx.tx.vin.size(), "mismatched multisg tx set source sizes");
+    for (size_t src_idx = 0; src_idx < cd.sources.size(); ++src_idx)
+    {
+      // Extract keys images from tx vin and construction data
+      const crypto::key_image multisig_ki = rct::rct2ki(cd.sources[src_idx].multisig_kLRki.ki);
+      CHECK_AND_ASSERT_THROW_MES(ptx.tx.vin[src_idx].type() == typeid(cryptonote::txin_to_key), "multisig tx cannot be miner");
+      const crypto::key_image& vin_ki = boost::get<cryptonote::txin_to_key>(ptx.tx.vin[src_idx]).k_image;
+
+      // Add key images to set (there will be some overlap)
+      kis_to_sign.insert(multisig_ki);
+      kis_to_sign.insert(vin_ki);
+    }
+  }
+  // Step 2. Scan all transfers for frozen key images
+  for (const auto& td : m_transfers)
+    if (td.m_frozen && kis_to_sign.count(td.m_key_image))
+      return true;
+
+  return false;
+}
+//----------------------------------------------------------------------------------------------------
 void wallet2::freeze(const crypto::key_image &ki)
 {
   freeze(get_transfer_details(ki));
@@ -1992,8 +2047,13 @@ size_t wallet2::get_transfer_details(const crypto::key_image &ki) const
   for (size_t idx = 0; idx < m_transfers.size(); ++idx)
   {
     const transfer_details &td = m_transfers[idx];
-    if (td.m_key_image_known && td.m_key_image == ki)
-      return idx;
+    if (td.m_key_image == ki)
+    {
+      if (td.m_key_image_known)
+        return idx;
+      else if (td.m_key_image_partial)
+        CHECK_AND_ASSERT_THROW_MES(false, "Transfer detail lookups are not allowed for multisig partial key images");
+    }
   }
   CHECK_AND_ASSERT_THROW_MES(false, "Key image not found");
 }
@@ -4306,6 +4366,10 @@ boost::optional<wallet2::keys_file_data> wallet2::get_keys_file_data(const epee:
   crypto::chacha_key key;
   crypto::generate_chacha_key(password.data(), password.size(), key, m_kdf_rounds);
 
+  // We use m_cache_key as a deterministic test to see if given key corresponds to original password
+  const crypto::chacha_key cache_key = derive_cache_key(key);
+  THROW_WALLET_EXCEPTION_IF(cache_key != m_cache_key, error::invalid_password);
+
   if (m_ask_password == AskPasswordToDecrypt && !m_unattended && !m_watch_only)
   {
     account.encrypt_viewkey(key);
@@ -4390,7 +4454,7 @@ boost::optional<wallet2::keys_file_data> wallet2::get_keys_file_data(const epee:
   value2.SetUint64(m_skip_to_height);
   json.AddMember("skip_to_height", value2, json.GetAllocator());
 
-  value2.SetInt(m_confirm_non_default_ring_size ? 1 :0);
+  value2.SetInt(1); // exists for deserialization backwards compatibility
   json.AddMember("confirm_non_default_ring_size", value2, json.GetAllocator());
 
   value2.SetInt(m_ask_password);
@@ -4533,11 +4597,8 @@ void wallet2::setup_keys(const epee::wipeable_string &password)
     m_account.decrypt_viewkey(key);
   }
 
-  static_assert(HASH_SIZE == sizeof(crypto::chacha_key), "Mismatched sizes of hash and chacha key");
-  epee::mlocked<tools::scrubbed_arr<char, HASH_SIZE+1>> cache_key_data;
-  memcpy(cache_key_data.data(), &key, HASH_SIZE);
-  cache_key_data[HASH_SIZE] = config::HASH_KEY_WALLET_CACHE;
-  cn_fast_hash(cache_key_data.data(), HASH_SIZE+1, (crypto::hash&)m_cache_key);
+  m_cache_key = derive_cache_key(key);
+
   get_ringdb_key();
 }
 //----------------------------------------------------------------------------------------------------
@@ -4546,9 +4607,8 @@ void wallet2::change_password(const std::string &filename, const epee::wipeable_
   if (m_ask_password == AskPasswordToDecrypt && !m_unattended && !m_watch_only)
     decrypt_keys(original_password);
   setup_keys(new_password);
-  rewrite(filename, new_password);
   if (!filename.empty())
-    store();
+    store_to(filename, new_password, true); // force rewrite keys file to possible new location
 }
 //----------------------------------------------------------------------------------------------------
 /*!
@@ -4623,7 +4683,6 @@ bool wallet2::load_keys_buf(const std::string& keys_buf, const epee::wipeable_st
     m_refresh_type = RefreshType::RefreshDefault;
     m_refresh_from_block_height = 0;
     m_skip_to_height = 0;
-    m_confirm_non_default_ring_size = true;
     m_ask_password = AskPasswordToDecrypt;
     cryptonote::set_default_decimal_point(CRYPTONOTE_DISPLAY_DECIMAL_POINT);
     m_max_reorg_depth = ORPHANED_BLOCKS_MAX_COUNT;
@@ -4775,8 +4834,6 @@ bool wallet2::load_keys_buf(const std::string& keys_buf, const epee::wipeable_st
     m_refresh_from_block_height = field_refresh_height;
     GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, skip_to_height, uint64_t, Uint64, false, 0);
     m_skip_to_height = field_skip_to_height;
-    GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, confirm_non_default_ring_size, int, Int, false, true);
-    m_confirm_non_default_ring_size = field_confirm_non_default_ring_size;
     GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, ask_password, AskPasswordType, Int, false, AskPasswordToDecrypt);
     m_ask_password = field_ask_password;
     GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, default_decimal_point, int, Int, false, CRYPTONOTE_DISPLAY_DECIMAL_POINT);
@@ -5044,6 +5101,10 @@ void wallet2::encrypt_keys(const crypto::chacha_key &key)
 
 void wallet2::decrypt_keys(const crypto::chacha_key &key)
 {
+  // We use m_cache_key as a deterministic test to see if given key corresponds to original password
+  const crypto::chacha_key cache_key = derive_cache_key(key);
+  THROW_WALLET_EXCEPTION_IF(cache_key != m_cache_key, error::invalid_password);
+
   m_account.encrypt_viewkey(key);
   m_account.decrypt_keys(key);
 }
@@ -5181,9 +5242,11 @@ void wallet2::generate(const std::string& wallet_, const epee::wipeable_string& 
   offset += sizeof(uint32_t);
   uint32_t total = *(uint32_t*)(multisig_data.data() + offset);
   offset += sizeof(uint32_t);
-  THROW_WALLET_EXCEPTION_IF(threshold < 2, error::invalid_multisig_seed);
-  THROW_WALLET_EXCEPTION_IF(total != threshold && total != threshold + 1, error::invalid_multisig_seed);
-  const size_t n_multisig_keys =  total == threshold ? 1 : threshold;
+
+  THROW_WALLET_EXCEPTION_IF(threshold < 1, error::invalid_multisig_seed);
+  THROW_WALLET_EXCEPTION_IF(total < threshold, error::invalid_multisig_seed);
+  THROW_WALLET_EXCEPTION_IF(threshold > 16, error::invalid_multisig_seed); // doing N choose (N - M + 1) might overflow
+  const uint64_t n_multisig_keys = num_priv_multisig_keys_post_setup(threshold, total);
   THROW_WALLET_EXCEPTION_IF(multisig_data.size() != 8 + 32 * (4 + n_multisig_keys + total), error::invalid_multisig_seed);
 
   std::vector<crypto::secret_key> multisig_keys;
@@ -6189,22 +6252,32 @@ void wallet2::store()
     store_to("", epee::wipeable_string());
 }
 //----------------------------------------------------------------------------------------------------
-void wallet2::store_to(const std::string &path, const epee::wipeable_string &password)
+void wallet2::store_to(const std::string &path, const epee::wipeable_string &password, bool force_rewrite_keys)
 {
   trim_hashchain();
 
+  const bool had_old_wallet_files = !m_wallet_file.empty();
+  THROW_WALLET_EXCEPTION_IF(!had_old_wallet_files && path.empty(), error::wallet_internal_error,
+    "Cannot resave wallet to current file since wallet was not loaded from file to begin with");
+
   // if file is the same, we do:
-  // 1. save wallet to the *.new file
-  // 2. remove old wallet file
-  // 3. rename *.new to wallet_name
+  // 1. overwrite the keys file iff force_rewrite_keys is specified
+  // 2. save cache to the *.new file
+  // 3. rename *.new to wallet_name, replacing old cache file
+  // else we do:
+  // 1. prepare new file names with "path" variable
+  // 2. store new keys files
+  // 3. remove old keys file
+  // 4. store new cache file
+  // 5. remove old cache file
 
   // handle if we want just store wallet state to current files (ex store() replacement);
-  bool same_file = true;
-  if (!path.empty())
+  bool same_file = had_old_wallet_files && path.empty();
+  if (had_old_wallet_files && !path.empty())
   {
-    std::string canonical_path = boost::filesystem::canonical(m_wallet_file).string();
-    size_t pos = canonical_path.find(path);
-    same_file = pos != std::string::npos;
+    const std::string canonical_old_path = boost::filesystem::canonical(m_wallet_file).string();
+    const std::string canonical_new_path = boost::filesystem::weakly_canonical(path).string();
+    same_file = canonical_old_path == canonical_new_path;
   }
 
 
@@ -6225,7 +6298,7 @@ void wallet2::store_to(const std::string &path, const epee::wipeable_string &pas
   }
 
   // get wallet cache data
-  boost::optional<wallet2::cache_file_data> cache_file_data = get_cache_file_data(password);
+  boost::optional<wallet2::cache_file_data> cache_file_data = get_cache_file_data();
   THROW_WALLET_EXCEPTION_IF(cache_file_data == boost::none, error::wallet_internal_error, "failed to generate wallet cache data");
 
   const std::string new_file = same_file ? m_wallet_file + ".new" : path;
@@ -6234,12 +6307,20 @@ void wallet2::store_to(const std::string &path, const epee::wipeable_string &pas
   const std::string old_address_file = m_wallet_file + ".address.txt";
   const std::string old_mms_file = m_mms_file;
 
-  // save keys to the new file
-  // if we here, main wallet file is saved and we only need to save keys and address files
-  if (!same_file) {
+  if (!same_file)
+  {
     prepare_file_names(path);
+  }
+
+  if (!same_file || force_rewrite_keys)
+  {
     bool r = store_keys(m_keys_file, password, false);
     THROW_WALLET_EXCEPTION_IF(!r, error::file_save_error, m_keys_file);
+  }
+
+  if (!same_file && had_old_wallet_files)
+  {
+    bool r = false;
     if (boost::filesystem::exists(old_address_file))
     {
       // save address to the new file
@@ -6251,11 +6332,6 @@ void wallet2::store_to(const std::string &path, const epee::wipeable_string &pas
       if (!r) {
         LOG_ERROR("error removing file: " << old_address_file);
       }
-    }
-    // remove old wallet file
-    r = boost::filesystem::remove(old_file);
-    if (!r) {
-      LOG_ERROR("error removing file: " << old_file);
     }
     // remove old keys file
     r = boost::filesystem::remove(old_keys_file);
@@ -6270,8 +6346,9 @@ void wallet2::store_to(const std::string &path, const epee::wipeable_string &pas
         LOG_ERROR("error removing file: " << old_mms_file);
       }
     }
-  } else {
-    // save to new file
+  }
+
+  // Save cache to new file. If storing to the same file, the temp path has the ".new" extension
 #ifdef WIN32
     // On Windows avoid using std::ofstream which does not work with UTF-8 filenames
     // The price to pay is temporary higher memory consumption for string stream + binary archive
@@ -6291,9 +6368,19 @@ void wallet2::store_to(const std::string &path, const epee::wipeable_string &pas
     THROW_WALLET_EXCEPTION_IF(!success || !ostr.good(), error::file_save_error, new_file);
 #endif
 
+  if (same_file)
+  {
     // here we have "*.new" file, we need to rename it to be without ".new"
     std::error_code e = tools::replace_file(new_file, m_wallet_file);
     THROW_WALLET_EXCEPTION_IF(e, error::file_save_error, m_wallet_file, e);
+  }
+  else if (!same_file && had_old_wallet_files)
+  {
+    // remove old wallet file
+    bool r = boost::filesystem::remove(old_file);
+    if (!r) {
+      LOG_ERROR("error removing file: " << old_file);
+    }
   }
   
   if (m_message_store.get_active())
@@ -6304,7 +6391,7 @@ void wallet2::store_to(const std::string &path, const epee::wipeable_string &pas
   }
 }
 //----------------------------------------------------------------------------------------------------
-boost::optional<wallet2::cache_file_data> wallet2::get_cache_file_data(const epee::wipeable_string &passwords)
+boost::optional<wallet2::cache_file_data> wallet2::get_cache_file_data()
 {
   trim_hashchain();
   try
@@ -6360,6 +6447,8 @@ std::map<uint32_t, uint64_t> wallet2::balance_per_subaddress(uint32_t index_majo
   std::map<uint32_t, uint64_t> amount_per_subaddr;
   for (const auto& td: m_transfers)
   {
+    if (td.amount() > m_ignore_outputs_above || td.amount() < m_ignore_outputs_below)
+      continue;
     if (td.m_subaddr_index.major == index_major && !is_spent(td, strict) && !td.m_frozen)
     {
       auto found = amount_per_subaddr.find(td.m_subaddr_index.minor);
@@ -6415,6 +6504,8 @@ std::map<uint32_t, std::pair<uint64_t, std::pair<uint64_t, uint64_t>>> wallet2::
   const uint64_t now = time(NULL);
   for(const transfer_details& td: m_transfers)
   {
+    if (td.amount() > m_ignore_outputs_above || td.amount() < m_ignore_outputs_below)
+      continue;
     if(td.m_subaddr_index.major == index_major && !is_spent(td, strict) && !td.m_frozen)
     {
       uint64_t amount = 0, blocks_to_unlock = 0, time_to_unlock = 0;
@@ -7646,6 +7737,8 @@ bool wallet2::sign_multisig_tx(multisig_tx_set &exported_txs, std::vector<crypto
       error::wallet_internal_error, "Transaction was signed by too many signers");
   THROW_WALLET_EXCEPTION_IF(exported_txs.m_signers.size() == m_multisig_threshold,
       error::wallet_internal_error, "Transaction is already fully signed");
+  THROW_WALLET_EXCEPTION_IF(frozen(exported_txs),
+    error::wallet_internal_error, "Will not sign multisig tx containing frozen outputs")
 
   txids.clear();
 
@@ -10180,7 +10273,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryp
       else
       {
         LOG_PRINT_L2("We made a tx, adjusting fee and saving it, we need " << print_money(needed_fee) << " and we have " << print_money(test_ptx.fee));
-        while (needed_fee > test_ptx.fee) {
+        do {
           if (use_rct)
             transfer_selected_rct(tx.dsts, tx.selected_transfers, fake_outs_count, outs, valid_public_keys_cache, unlock_time, needed_fee, extra,
               test_tx, test_ptx, rct_config, use_view_tags);
@@ -10191,7 +10284,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryp
           needed_fee = calculate_fee(use_per_byte_fee, test_ptx.tx, txBlob.size(), base_fee, fee_quantization_mask);
           LOG_PRINT_L2("Made an attempt at a  final " << get_weight_string(test_ptx.tx, txBlob.size()) << " tx, with " << print_money(test_ptx.fee) <<
             " fee  and " << print_money(test_ptx.change_dts.amount) << " change");
-        }
+        } while (needed_fee > test_ptx.fee);
 
         LOG_PRINT_L2("Made a final " << get_weight_string(test_ptx.tx, txBlob.size()) << " tx, with " << print_money(test_ptx.fee) <<
           " fee  and " << print_money(test_ptx.change_dts.amount) << " change");
@@ -10587,7 +10680,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_from(const crypton
       THROW_WALLET_EXCEPTION_IF(needed_fee > available_for_fee, error::wallet_internal_error, "Transaction cannot pay for itself");
 
       do {
-        LOG_PRINT_L2("We made a tx, adjusting fee and saving it");
+        LOG_PRINT_L2("We made a tx, adjusting fee and saving it, we need " << print_money(needed_fee) << " and we have " << print_money(test_ptx.fee));
         // distribute total transferred amount between outputs
         uint64_t amount_transferred = available_for_fee - needed_fee;
         uint64_t dt_amount = amount_transferred / outputs;

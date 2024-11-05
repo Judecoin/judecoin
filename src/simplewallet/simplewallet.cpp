@@ -3186,6 +3186,8 @@ simple_wallet::simple_wallet()
                                   "  decrypt: same as action, but keeps the spend key encrypted in memory when not needed\n "
                                   "unit <jude|millinero|micronero|nanonero|piconero>\n "
                                   "  Set the default jude (sub-)unit.\n "
+                                  "max-reorg-depth <unsigned int>\n "
+                                  "  Set the maximum amount of blocks to accept in a reorg.\n "
                                   "min-outputs-count [n]\n "
                                   "  Try to keep at least that many outputs of value at least min-outputs-value.\n "
                                   "min-outputs-value [n]\n "
@@ -3224,6 +3226,8 @@ simple_wallet::simple_wallet()
                                   "  Device name for hardware wallet.\n "
                                   "export-format <\"binary\"|\"ascii\">\n "
                                   "  Save all exported files as binary (cannot be copied and pasted) or ascii (can be).\n "
+                                  "load-deprecated-formats <1|0>\n "
+                                  "  Whether to enable importing data in deprecated formats.\n "
                                   "show-wallet-name-when-locked <1|0>\n "
                                   "  Set this if you would like to display the wallet name when locked.\n "
                                   "enable-multisig-experimental <1|0>\n "
@@ -6584,23 +6588,7 @@ bool simple_wallet::transfer_main(int transfer_type, const std::vector<std::stri
         }
         if (!process_ring_members(ptx_vector, prompt, m_wallet->print_ring_members()))
           return false;
-        bool default_ring_size = true;
-        for (const auto &ptx: ptx_vector)
-        {
-          for (const auto &vin: ptx.tx.vin)
-          {
-            if (vin.type() == typeid(txin_to_key))
-            {
-              const txin_to_key& in_to_key = boost::get<txin_to_key>(vin);
-              if (in_to_key.key_offsets.size() != min_ring_size)
-                default_ring_size = false;
-            }
-          }
-        }
-        if (m_wallet->confirm_non_default_ring_size() && !default_ring_size)
-        {
-          prompt << tr("WARNING: this is a non default ring size, which may harm your privacy. Default is recommended.");
-        }
+
         prompt << ENDL << tr("Is this okay?");
         
         std::string accepted = input_line(prompt.str(), true);

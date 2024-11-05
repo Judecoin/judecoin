@@ -933,22 +933,32 @@ private:
     /*!
      * \brief store_to  Stores wallet to another file(s), deleting old ones
      * \param path      Path to the wallet file (keys and address filenames will be generated based on this filename)
-     * \param password  Password to protect new wallet (TODO: probably better save the password in the wallet object?)
+     * \param password  Password that currently locks the wallet
+     * \param force_rewrite_keys if true, always rewrite keys file
+     *
+     * Leave both "path" and "password" blank to restore the cache file to the current position in the disk
+     * (which is the same as calling `store()`). If you want to store the wallet with a new password,
+     * use the method `change_password()`.
+     *
+     * Normally the keys file is not overwritten when storing, except when force_rewrite_keys is true
+     * or when `path` is a new wallet file.
+     *
+     * \throw error::invalid_password If storing keys file and old password is incorrect
      */
-    void store_to(const std::string &path, const epee::wipeable_string &password);
+    void store_to(const std::string &path, const epee::wipeable_string &password, bool force_rewrite_keys = false);
     /*!
      * \brief get_keys_file_data  Get wallet keys data which can be stored to a wallet file.
-     * \param password            Password of the encrypted wallet buffer (TODO: probably better save the password in the wallet object?)
+     * \param password            Password that currently locks the wallet
      * \param watch_only          true to include only view key, false to include both spend and view keys
      * \return                    Encrypted wallet keys data which can be stored to a wallet file
+     * \throw                     error::invalid_password if password does not match current wallet
      */
     boost::optional<wallet2::keys_file_data> get_keys_file_data(const epee::wipeable_string& password, bool watch_only);
     /*!
      * \brief get_cache_file_data   Get wallet cache data which can be stored to a wallet file.
-     * \param password              Password to protect the wallet cache data (TODO: probably better save the password in the wallet object?)
-     * \return                      Encrypted wallet cache data which can be stored to a wallet file
+     * \return                      Encrypted wallet cache data which can be stored to a wallet file (using current password)
      */
-    boost::optional<wallet2::cache_file_data> get_cache_file_data(const epee::wipeable_string& password);
+    boost::optional<wallet2::cache_file_data> get_cache_file_data();
 
     std::string path() const;
 
@@ -1044,7 +1054,7 @@ private:
     bool multisig(bool *ready = NULL, uint32_t *threshold = NULL, uint32_t *total = NULL) const;
     bool has_multisig_partial_key_images() const;
     bool has_unknown_key_images() const;
-    bool get_multisig_seed(epee::wipeable_string& seed, const epee::wipeable_string &passphrase = std::string(), bool raw = true) const;
+    bool get_multisig_seed(epee::wipeable_string& seed, const epee::wipeable_string &passphrase = std::string()) const;
     bool key_on_device() const { return get_device_type() != hw::device::device_type::SOFTWARE; }
     hw::device::device_type get_device_type() const { return m_key_device_type; }
     bool reconnect_device();
@@ -1342,8 +1352,6 @@ private:
     void segregation_height(uint64_t height) { m_segregation_height = height; }
     bool ignore_fractional_outputs() const { return m_ignore_fractional_outputs; }
     void ignore_fractional_outputs(bool value) { m_ignore_fractional_outputs = value; }
-    bool confirm_non_default_ring_size() const { return m_confirm_non_default_ring_size; }
-    void confirm_non_default_ring_size(bool always) { m_confirm_non_default_ring_size = always; }
     uint64_t ignore_outputs_above() const { return m_ignore_outputs_above; }
     void ignore_outputs_above(uint64_t value) { m_ignore_outputs_above = value; }
     uint64_t ignore_outputs_below() const { return m_ignore_outputs_below; }
@@ -1616,6 +1624,7 @@ private:
     void thaw(const crypto::key_image &ki);
     bool frozen(const crypto::key_image &ki) const;
     bool frozen(const transfer_details &td) const;
+    bool frozen(const multisig_tx_set& txs) const; // does partially signed txset contain frozen enotes?
 
     bool save_to_file(const std::string& path_to_file, const std::string& binary, bool is_printable = false) const;
     static bool load_from_file(const std::string& path_to_file, std::string& target_str, size_t max_size = 1000000000);
