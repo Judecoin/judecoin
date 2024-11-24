@@ -4252,6 +4252,9 @@ wallet2::detached_blockchain_data wallet2::detach_blockchain(uint64_t height, st
       ++it;
   }
 
+  if (m_callback)
+    m_callback->on_reorg(height, blocks_detached, transfers_detached);
+
   LOG_PRINT_L0("Detached blockchain on height " << height << ", transfers detached " << transfers_detached << ", blocks detached " << blocks_detached);
   return dbd;
 }
@@ -4263,9 +4266,7 @@ void wallet2::handle_reorg(uint64_t height, std::map<std::pair<uint64_t, uint64_
   //               C
   THROW_WALLET_EXCEPTION_IF(height < m_blockchain.offset() && m_blockchain.size() > m_blockchain.offset(),
       error::wallet_internal_error, "Daemon claims reorg below last checkpoint");
-  detached_blockchain_data dbd = detach_blockchain(height, output_tracker_cache);
-  if (m_callback)
-    m_callback->on_reorg(height, dbd.detached_blockchain.size(), dbd.detached_tx_hashes.size());
+  detach_blockchain(height, output_tracker_cache);
 }
 //----------------------------------------------------------------------------------------------------
 bool wallet2::deinit()
@@ -4401,7 +4402,7 @@ boost::optional<wallet2::keys_file_data> wallet2::get_keys_file_data(const epee:
   value2.SetInt(m_key_device_type);
   json.AddMember("key_on_device", value2, json.GetAllocator());
 
-  value2.SetInt((watch_only || m_watch_only) ? 1 :0); // WTF ? JSON has different true and false types, and not boolean ??
+  value2.SetInt(watch_only ? 1 :0); // WTF ? JSON has different true and false types, and not boolean ??
   json.AddMember("watch_only", value2, json.GetAllocator());
 
   value2.SetInt(m_multisig ? 1 :0);
@@ -6313,7 +6314,7 @@ void wallet2::store_to(const std::string &path, const epee::wipeable_string &pas
 
   if (!same_file || force_rewrite_keys)
   {
-    bool r = store_keys(m_keys_file, password, m_watch_only);
+    bool r = store_keys(m_keys_file, password, false);
     THROW_WALLET_EXCEPTION_IF(!r, error::file_save_error, m_keys_file);
   }
 
