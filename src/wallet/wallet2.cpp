@@ -4402,7 +4402,7 @@ boost::optional<wallet2::keys_file_data> wallet2::get_keys_file_data(const epee:
   value2.SetInt(m_key_device_type);
   json.AddMember("key_on_device", value2, json.GetAllocator());
 
-  value2.SetInt(watch_only ? 1 :0); // WTF ? JSON has different true and false types, and not boolean ??
+  value2.SetInt((watch_only || m_watch_only) ? 1 :0); // WTF ? JSON has different true and false types, and not boolean ??
   json.AddMember("watch_only", value2, json.GetAllocator());
 
   value2.SetInt(m_multisig ? 1 :0);
@@ -5698,7 +5698,7 @@ std::string wallet2::exchange_multisig_keys(const epee::wipeable_string &passwor
 
     if (!m_wallet_file.empty())
     {
-      bool r = store_keys(m_keys_file, password, false);
+      bool r = store_keys(m_keys_file, password, m_watch_only);
       THROW_WALLET_EXCEPTION_IF(!r, error::file_save_error, m_keys_file);
 
       if (boost::filesystem::exists(m_wallet_file + ".address.txt"))
