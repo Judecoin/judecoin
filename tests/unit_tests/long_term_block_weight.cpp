@@ -404,6 +404,7 @@ TEST(long_term_block_weight, long_growth_spike_and_drop)
 TEST(long_term_block_weight, cache_matches_true_value)
 {
   PREFIX(16);
+
   // Add big blocks to increase the block weight limit 
   for (uint64_t h = 0; h <= 2000; ++h)
   {
@@ -413,7 +414,8 @@ TEST(long_term_block_weight, cache_matches_true_value)
     bc->update_next_cumulative_weight_limit();
   }
 
-    ASSERT_GT(bc->get_current_cumulative_block_weight_limit() * 10/17 , 300000);
+  ASSERT_GT(bc->get_current_cumulative_block_weight_limit() * 10/17 , 300000);
+
   // Add small blocks to the top of the chain
   for (uint64_t h = 2000; h <= 5001; ++h)
   {
@@ -429,6 +431,7 @@ TEST(long_term_block_weight, cache_matches_true_value)
   bc->m_long_term_block_weights_cache_rolling_median.clear();
   bc->get_long_term_block_weight_median(bc->get_db().height() - TEST_LONG_TERM_BLOCK_WEIGHT_WINDOW, TEST_LONG_TERM_BLOCK_WEIGHT_WINDOW);
   bc->update_next_cumulative_weight_limit();
+
   // make sure the weight limit is the same
   ASSERT_EQ(weight_limit, bc->get_current_cumulative_block_weight_limit());
 }

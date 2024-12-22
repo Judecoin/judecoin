@@ -37,7 +37,6 @@
 
 #include "blockchain.h"
 #include "tx_pool.h"
-#include "warnings.h"
 
 namespace cryptonote
 {
@@ -53,10 +52,7 @@ struct BlockchainAndPool
 {
     Blockchain blockchain;
     tx_memory_pool tx_pool;
-
-PUSH_WARNINGS
-DISABLE_GCC_WARNING(uninitialized)
+  
     BlockchainAndPool(): blockchain(tx_pool), tx_pool(blockchain) {}
-POP_WARNINGS
 };
 }
