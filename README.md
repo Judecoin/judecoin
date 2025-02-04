@@ -1,6 +1,6 @@
  JUDECOIN
 
-Copyright (c) 2014-2024 The judecoin Project.   
+Copyright (c) 2014-2025 The judecoin Project.   
 Portions Copyright (c) The Cryptonote developers.
 
  Table of Contents

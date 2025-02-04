@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024, The Jude Project
+// Copyright (c) 2017-2025, The Jude Project
 // 
 // All rights reserved.
 // 
@@ -223,7 +223,7 @@ boost::optional<std::string> NodeRPCProxy::get_earliest_height(uint8_t version, 
   return boost::optional<std::string>();
 }
 
-boost::optional<std::string> NodeRPCProxy::get_dynamic_base_fee_estimate_2024_scaling(uint64_t grace_blocks, std::vector<uint64_t> &fees)
+boost::optional<std::string> NodeRPCProxy::get_dynamic_base_fee_estimate_2025_scaling(uint64_t grace_blocks, std::vector<uint64_t> &fees)
 {
   uint64_t height;
 
@@ -259,7 +259,7 @@ boost::optional<std::string> NodeRPCProxy::get_dynamic_base_fee_estimate_2024_sc
 boost::optional<std::string> NodeRPCProxy::get_dynamic_base_fee_estimate(uint64_t grace_blocks, uint64_t &fee)
 {
   std::vector<uint64_t> fees;
-  auto res = get_dynamic_base_fee_estimate_2024_scaling(grace_blocks, fees);
+  auto res = get_dynamic_base_fee_estimate_2025_scaling(grace_blocks, fees);
   if (res)
     return res;
   fee = fees[0];

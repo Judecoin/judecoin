@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2024, The Jude Project
+// Copyright (c) 2014-2025, The Jude Project
 // 
 // All rights reserved.
 // 
@@ -7992,8 +7992,8 @@ uint64_t wallet2::get_base_fee()
 //----------------------------------------------------------------------------------------------------
 uint64_t wallet2::get_base_fee(uint32_t priority)
 {
-  const bool use_2024_scaling = use_fork_rules(HF_VERSION_2024_SCALING, -30 * 1);
-  if (use_2024_scaling)
+  const bool use_2025_scaling = use_fork_rules(HF_VERSION_2025_SCALING, -30 * 1);
+  if (use_2025_scaling)
   {
     // clamp and map to 0..3 indices, mapping 0 (default, but should not end up here) to 0, and 1..4 to 0..3
     if (priority == 0)
@@ -8003,7 +8003,7 @@ uint64_t wallet2::get_base_fee(uint32_t priority)
     --priority;
 
     std::vector<uint64_t> fees;
-    boost::optional<std::string> result = m_node_rpc_proxy.get_dynamic_base_fee_estimate_2024_scaling(FEE_ESTIMATE_GRACE_BLOCKS, fees);
+    boost::optional<std::string> result = m_node_rpc_proxy.get_dynamic_base_fee_estimate_2025_scaling(FEE_ESTIMATE_GRACE_BLOCKS, fees);
     if (result)
     {
       MERROR("Failed to determine base fee, using default");

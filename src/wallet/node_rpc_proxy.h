@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2024, The Jude Project
+// Copyright (c) 2017-2025, The Jude Project
 // 
 // All rights reserved.
 // 
@@ -54,7 +54,7 @@ public:
   boost::optional<std::string> get_adjusted_time(uint64_t &adjusted_time);
   boost::optional<std::string> get_earliest_height(uint8_t version, uint64_t &earliest_height);
   boost::optional<std::string> get_dynamic_base_fee_estimate(uint64_t grace_blocks, uint64_t &fee);
-  boost::optional<std::string> get_dynamic_base_fee_estimate_2024_scaling(uint64_t grace_blocks, std::vector<uint64_t> &fees);
+  boost::optional<std::string> get_dynamic_base_fee_estimate_2025_scaling(uint64_t grace_blocks, std::vector<uint64_t> &fees);
   boost::optional<std::string> get_fee_quantization_mask(uint64_t &fee_quantization_mask);
   boost::optional<std::string> get_transactions(const std::vector<crypto::hash> &txids, const std::function<void(const cryptonote::COMMAND_RPC_GET_TRANSACTIONS::request&, const cryptonote::COMMAND_RPC_GET_TRANSACTIONS::response&, bool)> &f);
   boost::optional<std::string> get_block_header_by_height(uint64_t height, cryptonote::block_header_response &block_header);

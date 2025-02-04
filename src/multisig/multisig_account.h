@@ -1,4 +1,4 @@
-// Copyright (c) 2024-2024, The Jude Project
+// Copyright (c) 2025-2025, The Jude Project
 // 
 // All rights reserved.
 // 
@@ -71,7 +71,7 @@ namespace multisig
   * 
   * - Further reading
   *   - MRL-0009: https://www.getjude.org/resources/research-lab/pubs/MRL-0009.pdf
-  *   - MuSig2: https://eprint.iacr.org/2024/1261
+  *   - MuSig2: https://eprint.iacr.org/2025/1261
   *   - ZtM2: https://web.getjude.org/library/Zero-to-Jude-2-0-0.pdf Ch. 9, especially Section 9.6.3
   *   - FROST: https://eprint.iacr.org/2018/417
   */

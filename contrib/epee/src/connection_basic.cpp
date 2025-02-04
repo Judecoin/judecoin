@@ -2,7 +2,7 @@
 /// @author rfree (current maintainer in jude.cc project)
 /// @brief base for connection, contains e.g. the ratelimit hooks
 
-// Copyright (c) 2014-2024, The Jude Project
+// Copyright (c) 2014-2025, The Jude Project
 // 
 // All rights reserved.
 // 

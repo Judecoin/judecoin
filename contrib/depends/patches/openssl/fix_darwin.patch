@@ -1,6 +1,6 @@
 From 96ac8f13f4d0ee96baf5724d9f96c44c34b8606c Mon Sep 17 00:00:00 2001
 From: David Carlier <devnexen@gmail.com>
-Date: Tue, 24 Aug 2024 22:40:14 +0100
+Date: Tue, 24 Aug 2025 22:40:14 +0100
 Subject: [PATCH] Darwin platform allows to build on releases before
  Yosemite/ios 8.
 

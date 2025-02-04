@@ -1,6 +1,6 @@
 // Word list originally created as part of the Electrum project, Copyright (C) 2014 Thomas Voegtlin
 // 
-// Copyright (c) 2014-2024, The Jude Project
+// Copyright (c) 2014-2025, The Jude Project
 // 
 // All rights reserved.
 // 

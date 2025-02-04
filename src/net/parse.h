@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2024, The Jude Project
+// Copyright (c) 2018-2025, The Jude Project
 
 //
 // All rights reserved.
@@ -42,7 +42,7 @@ namespace net
      * \brief Takes a valid address string (IP, Tor, I2P, or DNS name) and splits it into host and port
      *
      * The host of an IPv6 addresses in the format "[x:x:..:x]:port" will have the braces stripped.
-     * For example, when the address is "[ffff::2024]", host will be set to "ffff::2024".
+     * For example, when the address is "[ffff::2025]", host will be set to "ffff::2025".
      *
      * \param address The address string one wants to split
      * \param[out] host The host part of the address string. Is always set.

@@ -1,5 +1,5 @@
---- config/ltmain.sh.0	2024-11-10 17:25:26.000000000 +0100
-+++ config/ltmain.sh	2024-09-11 19:39:36.000000000 +0200
+--- config/ltmain.sh.0	2025-11-10 17:25:26.000000000 +0100
++++ config/ltmain.sh	2025-09-11 19:39:36.000000000 +0200
 @@ -10768,6 +10768,8 @@
  	fi
  	func_to_tool_file "$oldlib" func_convert_file_msys_to_w32

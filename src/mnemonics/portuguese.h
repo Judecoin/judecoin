@@ -21,7 +21,7 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-// Code surrounding the word list is Copyright (c) 2014-2024, The Jude Project
+// Code surrounding the word list is Copyright (c) 2014-2025, The Jude Project
 //
 // All rights reserved.
 //

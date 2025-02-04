@@ -1,5 +1,5 @@
 #assumes you have gnu sed, osx sed might need slight syntax changeo
-#c.f. https://unix.stackexchange.com/questions/112024/how-can-i-replace-a-string-in-a-files
+#c.f. https://unix.stackexchange.com/questions/112025/how-can-i-replace-a-string-in-a-files
 
 #written by shen-noether jude research labs
 
@@ -8,14 +8,14 @@ import glob #for copy files
 import textwrap #for comments etc
 
 print("make sure you have cat and grep installed")
-print("also assumes gnu sed syntax, c.f. :https://unix.stackexchange.com/questions/112024/how-can-i-replace-a-string-in-a-files")
+print("also assumes gnu sed syntax, c.f. :https://unix.stackexchange.com/questions/112025/how-can-i-replace-a-string-in-a-files")
 print("I believe osx may have slightly different version of sed")
 print("maybe someone smart can replace the sed with perl..")
 
 a = ""
 
 license = textwrap.dedent("""\
-    // Copyright (c) 2014-2024, The Jude Project
+    // Copyright (c) 2014-2025, The Jude Project
     // 
     // All rights reserved.
     // 

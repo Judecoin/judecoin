@@ -1,4 +1,4 @@
-// Copyright (c) 2024, The Jude Project
+// Copyright (c) 2025, The Jude Project
 //
 // All rights reserved.
 //
@@ -241,7 +241,7 @@ TEST(variant, operatorbool)
 {
     variant<int8_t, uint8_t, int16_t, uint16_t, std::string> v;
     EXPECT_FALSE(v);
-    v = (int16_t) 2024;
+    v = (int16_t) 2025;
     EXPECT_TRUE(v);
     v = (int16_t) 0;
     EXPECT_TRUE(v);
@@ -253,7 +253,7 @@ TEST(variant, is_empty)
 {
     variant<int8_t, uint8_t, int16_t, uint16_t, std::string> v;
     EXPECT_TRUE(v.is_empty());
-    v = (int16_t) 2024;
+    v = (int16_t) 2025;
     EXPECT_FALSE(v.is_empty());
     v = (int16_t) 0;
     EXPECT_FALSE(v.is_empty());
@@ -270,10 +270,10 @@ TEST(variant, is_type)
 {
     variant<int8_t, uint8_t, int16_t, uint16_t, std::string> v;
     EXPECT_TRUE(v.is_type<boost::blank>());
-    v = (int16_t) 2024;
+    v = (int16_t) 2025;
     EXPECT_TRUE(v.is_type<int16_t>());
 
-    test_is_type_full((uint32_t) 2024, (char) '\n', std::string("HOWDY"));
+    test_is_type_full((uint32_t) 2025, (char) '\n', std::string("HOWDY"));
 }
 //-------------------------------------------------------------------------------------------------------------------
 TEST(variant, try_unwrap)

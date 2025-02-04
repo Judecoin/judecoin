@@ -1,4 +1,4 @@
-// Copyright (c) 2024, The Jude Project
+// Copyright (c) 2025, The Jude Project
 //
 // All rights reserved.
 //
@@ -224,7 +224,7 @@ static const rct::ctkeyM tx1_input_pubkeys =
     make_ctkey("527563a03b498e47732b815f5f0c5875a70e0fb71a37c88123f0f8686349fae4", "04417c03b397cd11e403275ec89cb0ab5b8476bb88470e9ae7208ea63dacf073"),
     make_ctkey("bffca8b5c7fe4235ba7136d6b5325f63df343dc147940b677f50217f8953bca6", "5cd8c5e54e07275422c9c5a9f4a7268d26c494ffba419e878b7e873a02ae2e76"),
     make_ctkey("1f73385ea74308aa78b5abf585faac14a5e78a6e23f0f68c9c14681108b28ef0", "5c02b3156daaa8ec476d3244439d90efa266f3e51cb9c8eb384d8b9a8efaa024"),
-    make_ctkey("a2421eae8bb256644b34feeab48c6086c2c9feb40d2643436dc45e303eee8ab2", "787823abffa988b56d4a7b4a834630f71520240fd82fad035955e616ec095788"),
+    make_ctkey("a2421eae8bb256644b34feeab48c6086c2c9feb40d2643436dc45e303eee8ab2", "787823abffa988b56d4a7b4a834630f71520250fd82fad035955e616ec095788"),
     make_ctkey("17d8d8dc1e1c25b7295f2eab44c4ccc08a629b8e8d781bbb6f9a51a9561bcd4c", "db1ea24be6947e03176a297160dba16d65f37751bb0ef2ba71a4590d12b61dfc"),
     make_ctkey("2c39348a9ab04dbabe3b5249819b7845ed8aaebd0d8eddd98bda0bf40753a398", "4e6cd25fbd10e2e040be84e3bf8043c612daeef625e66a5e5bcff88c9c46e82c"),
     make_ctkey("c4c97157f23b45c7084526aaa9958fe858bebe446a7efa22c491c439b74271b1", "e251db2c86193a11a5bffefffe48c20e3d92a8dc98cb3a2f41704e565bcd860a"),
@@ -313,7 +313,7 @@ TEST(verRctNonSemanticsSimple, serializable_sig_changes)
     SERIALIZABLE_SIG_CHANGES_SUBTEST(outPk[1].dest[14]--)
     SERIALIZABLE_SIG_CHANGES_SUBTEST(outPk[0].mask[14]--)
     SERIALIZABLE_SIG_CHANGES_SUBTEST(outPk[1].mask[14]--)
-    SERIALIZABLE_SIG_CHANGES_SUBTEST(txnFee *= 2024)
+    SERIALIZABLE_SIG_CHANGES_SUBTEST(txnFee *= 2025)
 
     // rctSigPrunable changes
     SERIALIZABLE_SIG_CHANGES_SUBTEST(p.rangeSigs.push_back({}))
