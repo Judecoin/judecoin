@@ -281,20 +281,20 @@ bool message_transporter::post_request(const std::string &request, std::string &
     }
     else if ((string_value.find("API Error 0024") == 0) && (request.find("joinChan") != std::string::npos))
     {
-      // "API Error 0013: Could not find your fromAddress in the keys.dat file."
       // "API Error 0024: Chan address is already present."
       // Maybe a result of creating the chan in a slightly different way i.e. not with
       // 'createChan'; everything works by just ignoring this error
+    }
+    else if ((string_value.find("API Error 0013") == 0) && (request.find("leaveChan") != std::string::npos))
+    {
+      // "API Error 0013: Could not find your fromAddress in the keys.dat file."
+      // Error that occurs if one tries to leave an already left / deleted chan, which can happen
+      // if several auto-config participants share one PyBitmessage instance: Also ignore.
     }
     else if ((string_value.find("API Error 0025") == 0) && (request.find("leaveChan") != std::string::npos))
     {
       // "API Error 0025: Specified address is not a chan address. Use deleteAddress API call instead."
       // Error does not really make sense, but everything works by just ignoring
-    }
-    else if ((string_value.find("API Error 0013") == 0) && (request.find("leaveChan") != std::string::npos))
-    {
-      // Error that occurs if one tries to leave an already left / deleted chan, which can happen
-      // if several auto-config participants share one PyBitmessage instance: Also ignore.
     }
     else
     {

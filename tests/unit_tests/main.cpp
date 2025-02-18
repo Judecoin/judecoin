@@ -83,6 +83,7 @@ int main(int argc, char** argv)
 
   // set the test data directory
   unit_test::data_dir = command_line::get_arg(vm, arg_data_dir).c_str();
+
   // set the log level
   if (!command_line::is_arg_defaulted(vm, arg_log_level))
     mlog_set_log(command_line::get_arg(vm, arg_log_level).c_str());

@@ -34,7 +34,6 @@
 #include "cryptonote_basic/subaddress_index.h"
 #include "cryptonote_core/cryptonote_tx_utils.h"
 
-
 namespace hw {
 
   namespace ledger {

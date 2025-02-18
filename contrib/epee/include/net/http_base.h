@@ -34,6 +34,7 @@
 #include <string>
 #include <utility>
 #include <list>
+#include <stdint.h>
 
 #undef JUDE_DEFAULT_LOG_CATEGORY
 #define JUDE_DEFAULT_LOG_CATEGORY "net.http"
