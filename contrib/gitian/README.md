@@ -31,6 +31,8 @@ This guide explains how to set up the environment, and how to start the builds.
 
 * Gitian gives you the option of using any of 3 different virtualization tools: `kvm`, `docker` or `lxc`. This documentation will only show how to build with `lxc` and `docker` (documentation for `kvm` is welcome). Building with `lxc` is the default, but is more complicated, so we recommend docker your first time.
 
+* For a shortcut using `docker` follow the instructions in [DOCKRUN.md](DOCKRUN.md) instead
+of following the rest of this document..
 
 ## Create the gitianuser account
 
@@ -131,10 +133,11 @@ Common setup part:
 su - gitianuser
 
 GH_USER=YOUR_GITHUB_USER_NAME
-VERSION=v0.17.2.0
+VERSION=v0.18.0.0
 ```
 
-Where `GH_USER` is your Github user name and `VERSION` is the version tag you want to build. 
+Where `GH_USER` is your GitHub user name and `VERSION` is the version tag you want to build. 
+The `gitian-build.py`'s `--setup` switch will also refresh the environment of any stale files and submodules.
 
 Setup for LXC:
 
@@ -162,15 +165,6 @@ popd
 
 Build the binaries
 ------------------
-
-**Note:** if you intend to build MacOS binaries, please follow [these instructions](https://github.com/bitcoin-core/docs/blob/master/gitian-building/gitian-building-mac-os-sdk.md) to get the required SDK.
-
-Currently working MacOS solution:
-
-```bash
-curl -O https://bitcoincore.org/depends-sources/sdks/MacOSX10.11.sdk.tar.gz
-mv MacOSX10.11.sdk.tar.gz builder/inputs
-```
 
 To build the most recent tag (pass in `--docker` if using docker):
 

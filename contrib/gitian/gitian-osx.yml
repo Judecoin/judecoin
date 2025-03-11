@@ -1,5 +1,5 @@
 ---
-name: "jude-osx-0.17"
+name: "jude-osx-0.18"
 enable_cache: true
 suites:
 - "bionic"
@@ -26,8 +26,7 @@ packages:
 remotes:
 - "url": "https://github.com/jude-project/jude.git"
   "dir": "jude"
-files:
-- "MacOSX10.11.sdk.tar.gz"
+files: []
 script: |
   WRAP_DIR=$HOME/wrapped
   HOSTS="x86_64-apple-darwin aarch64-apple-darwin"
@@ -88,9 +87,6 @@ script: |
 
   BASEPREFIX=`pwd`/contrib/depends
 
-  mkdir -p ${BASEPREFIX}/SDKs
-  tar -C ${BASEPREFIX}/SDKs -xf ${BUILD_DIR}/MacOSX10.11.sdk.tar.gz
-
   # Build dependencies for each host
   export TAR_OPTIONS=--mtime=2000-01-01T12:00:00
   for i in $HOSTS; do
@@ -112,8 +108,8 @@ script: |
     cmake .. -DCMAKE_TOOLCHAIN_FILE=${BASEPREFIX}/${i}/share/toolchain.cmake
     make ${MAKEOPTS}
     chmod 755 bin/*
-    cp ../LICENSE bin
-    chmod 644 bin/LICENSE
+    cp ../LICENSE ../README.md ../docs/ANONYMITY_NETWORKS.md bin
+    chmod 644 bin/LICENSE bin/*.md
     DISTNAME=jude-${i}-${version}
     mv bin ${DISTNAME}
     find ${DISTNAME}/ | sort | tar --no-recursion --owner=0 --group=0 -c -T - | bzip2 -9 > ${OUTDIR}/${DISTNAME}.tar.bz2

@@ -1,5 +1,5 @@
 ---
-name: "jude-linux-0.17"
+name: "jude-linux-0.18"
 enable_cache: true
 suites:
 - "bionic"
@@ -38,8 +38,8 @@ packages:
 - "python"
 - "cmake"
 remotes:
-- "url": "https://github.com/judecoin/judecoin.git"
-  "dir": "judeCoin"
+- "url": "https://github.com/jude-project/jude.git"
+  "dir": "jude"
 files: []
 script: |
 
@@ -160,7 +160,7 @@ script: |
     fi
     export C_INCLUDE_PATH="$EXTRA_INCLUDES"
     export CPLUS_INCLUDE_PATH="$EXTRA_INCLUDES"
-        #  glibc only added riscv support in 2.27, disable backwards compatibility
+    #  glibc only added riscv support in 2.27, disable backwards compatibility
     if [ "$i" == "riscv64-linux-gnu" ]; then
       BACKCOMPAT_OPTION=OFF
     else
@@ -169,8 +169,8 @@ script: |
     cmake .. -DCMAKE_TOOLCHAIN_FILE=${BASEPREFIX}/${i}/share/toolchain.cmake -DBACKCOMPAT=${BACKCOMPAT_OPTION} -DCMAKE_SKIP_RPATH=ON
     make ${MAKEOPTS}
     chmod 755 bin/*
-    cp ../LICENSE bin
-    chmod 644 bin/LICENSE
+    cp ../LICENSE ../README.md ../docs/ANONYMITY_NETWORKS.md bin
+    chmod 644 bin/LICENSE bin/*.md
     DISTNAME=jude-${i}-${version}
     mv bin ${DISTNAME}
     find ${DISTNAME}/ | sort | tar --no-recursion --owner=0 --group=0 -c -T - | bzip2 -9 > ${OUTDIR}/${DISTNAME}.tar.bz2
