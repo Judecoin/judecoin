@@ -196,7 +196,7 @@ namespace boost
       if (std::strcmp(host, net::i2p_address::unknown_str()) == 0)
         na = net::i2p_address::unknown();
       else
-        na = JUDE_UNWRAP(net::i2p_address::make(host, port));
+        na = JUDE_UNWRAP(net::i2p_address::make(host));
     }
 
     template <class Archive, class ver_type>

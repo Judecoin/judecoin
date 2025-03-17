@@ -1,15 +1,20 @@
+# Jude hard-fork release check-list
+
 - [ ] Security audit
 - [ ] Code audit
 - [ ] Ledger integration
-  - [ ] Implemented in Jude codebase (if needed)
-  - [ ] Ledger app integration coded by Ledger
+  - [ ] Ledger notified
+  - [ ] Pull request made against Jude codebase (if needed)
+  - [ ] Pull request merged into Jude codebase (if needed)
+  - [ ] Ledger app integration coded
   - [ ] Ledger Jude app update available
 - [ ] Trezor integration
-  - [ ] Implemented in Jude codebase (if needed)
-  - [ ] Trezor app integration coded by Trezor
-  - [ ] Trezor firmware update available (if needed)
+  - [ ] Trezor notified
+  - [ ] Pull request made against Jude codebase (if needed)
+  - [ ] Pull request merged into Jude codebase (if needed)
+  - [ ] Trezor firmware update coded
+  - [ ] Trezor firmware update available
 - [ ] Fork height set
-  - [ ] Jude-announce mailer notice
   - [ ] Twitter announcement
   - [ ] Reddit announcement
   - [ ] Getjude.org announcement
@@ -26,13 +31,15 @@
   - [ ] Edge Wallet
   - [ ] Exodus
   - [ ] JUDEWallet
+  - [ ] Feather Wallet
 - [ ] Notify exchanges
-  - [ ] https://web.getjude.org/community/merchants/#exchanges
+  - [ ] https://www.getjude.org/community/merchants/#exchanges
 - [ ] Notify 3rd party payment processors
-  - [ ] https://web.getjude.org/community/merchants/#payment-gateways
+  - [ ] https://www.getjude.org/community/merchants/#payment-gateways
+  - [ ] BTCPayServer
 - [ ] Notify mining pools
   - [ ] https://miningpoolstats.stream/jude
-- [ ] Release tagged
+- [ ] Release branch created
   - [ ] Update src/version.cpp.in with new version AND new name (if necessary)
   - [ ] Update Gitian YML files in contrib/gitian/ to the new version number
   - [ ] Update README.md with new fork table entry (or at least update the Recommended Jude version)
@@ -46,16 +53,21 @@
   - [ ] Trezor
   - [ ] Release-specific testing
   - [ ] RPC testing/update RPC documentation
+- [ ] Stagenet forked
+- [ ] Stagenet testing/verification
+  - [ ] Ledger
+  - [ ] Trezor
+  - [ ] Release-specific testing
 - [ ] CLI reproducible builds validated
 - [ ] CLI released
-  - [ ] https://web.getjude.org/downloads/ updated
+  - [ ] https://www.getjude.org/downloads/ updated
   - [ ] Update hashes.txt on website
   - [ ] Update downloads.yml on website
   - [ ] Update auto-update DNS records
   - [ ] Update redirects on downloads box
   - [ ] Update seed nodes
 - [ ] GUI released
-  - [ ] https://web.getjude.org/downloads/ updated
+  - [ ] https://www.getjude.org/downloads/ updated
   - [ ] Update hashes.txt on website
   - [ ] Update hashes.txt.sig on website
   - [ ] Update downloads.yml on website
