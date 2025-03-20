@@ -8113,7 +8113,7 @@ uint32_t wallet2::adjust_priority(uint32_t priority)
       if (blocks.size() != 1)
       {
         MERROR("Bad estimated backlog array size");
-        return priority;
+        return 2;
       }
       else if (blocks[0].first > 0)
       {
@@ -8163,7 +8163,7 @@ uint32_t wallet2::adjust_priority(uint32_t priority)
       if (P > 80)
       {
         MINFO("We don't use the low priority because recent blocks are quite full.");
-        return priority;
+        return 2;
       }
       MINFO("We'll use the low priority because probably it's safe to do so.");
       return 1;
