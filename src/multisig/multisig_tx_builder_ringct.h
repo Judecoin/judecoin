@@ -71,6 +71,7 @@ public:
   bool init(
     const cryptonote::account_keys& account_keys,
     const std::vector<std::uint8_t>& extra,
+    const std::uint64_t unlock_time,
     const std::uint32_t subaddr_account,
     const std::set<std::uint32_t>& subaddr_minor_indices,
     std::vector<cryptonote::tx_source_entry>& sources,

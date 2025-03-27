@@ -422,16 +422,6 @@ namespace rpc
         if (!res.error_details.empty()) res.error_details += " and ";
         res.error_details += "too few outputs";
       }
-      if (tvc.m_tx_extra_too_big)
-      {
-        if (!res.error_details.empty()) res.error_details += " and ";
-        res.error_details += "tx_extra too long";
-      }
-      if (tvc.m_nonzero_unlock_time)
-      {
-        if (!res.error_details.empty()) res.error_details += " and ";
-        res.error_details += "non-zero unlock time";
-      }
       if (res.error_details.empty())
       {
         res.error_details = "an unknown issue was found with the transaction";
@@ -841,14 +831,11 @@ namespace rpc
   void DaemonHandler::handle(const GetFeeEstimate::Request& req, GetFeeEstimate::Response& res)
   {
     res.hard_fork_version = m_core.get_blockchain_storage().get_current_hard_fork_version();
-    res.estimated_base_fee = m_core.get_blockchain_storage().get_dynamic_base_fee_estimate(req.num_grace_blocks);
 
-    if (res.hard_fork_version < HF_VERSION_PER_BYTE_FEE)
-    {
-       res.size_scale = 1024; // per KiB fee
-       res.fee_mask = 1;
-    }
-    else
+    std::vector<uint64_t> fees;
+    m_core.get_blockchain_storage().get_dynamic_base_fee_estimate_2025_scaling(req.num_grace_blocks, fees);
+    res.estimated_base_fee = fees[0];
+
     {
       res.size_scale = 1; // per byte fee
       res.fee_mask = Blockchain::get_fee_quantization_mask();
