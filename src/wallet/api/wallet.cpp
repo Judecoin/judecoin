@@ -38,6 +38,7 @@
 #include "subaddress_account.h"
 #include "common_defines.h"
 #include "common/util.h"
+#include "multisig/multisig_account.h"
 
 #include "mnemonics/electrum-words.h"
 #include "mnemonics/english.h"
@@ -87,12 +88,13 @@ namespace {
             throw runtime_error("Wallet is not initialized yet");
         }
 
-        bool ready;
-        if (!wallet->multisig(&ready)) {
+        const multisig::multisig_account_status ms_status{wallet->get_multisig_status()};
+
+        if (!ms_status.multisig_is_active) {
             throw runtime_error("Wallet is not multisig");
         }
 
-        if (!ready) {
+        if (!ms_status.is_ready) {
             throw runtime_error("Multisig wallet is not finalized yet");
         }
     }
@@ -105,12 +107,13 @@ namespace {
             throw runtime_error("Wallet is not initialized yet");
         }
 
-        bool ready;
-        if (!wallet->multisig(&ready)) {
+        const multisig::multisig_account_status ms_status{wallet->get_multisig_status()};
+
+        if (!ms_status.multisig_is_active) {
             throw runtime_error("Wallet is not multisig");
         }
 
-        if (ready) {
+        if (ms_status.is_ready) {
             throw runtime_error("Multisig wallet is already finalized");
         }
     }
@@ -1297,7 +1300,13 @@ void WalletImpl::setSubaddressLabel(uint32_t accountIndex, uint32_t addressIndex
 
 MultisigState WalletImpl::multisig() const {
     MultisigState state;
-    state.isMultisig = m_wallet->multisig(&state.isReady, &state.threshold, &state.total);
+    const multisig::multisig_account_status ms_status{m_wallet->get_multisig_status()};
+
+    state.isMultisig = ms_status.multisig_is_active;
+    state.kexIsDone = ms_status.kex_is_done;
+    state.isReady = ms_status.is_ready;
+    state.threshold = ms_status.threshold;
+    state.total = ms_status.total;
 
     return state;
 }
@@ -1318,7 +1327,7 @@ string WalletImpl::makeMultisig(const vector<string>& info, const uint32_t thres
     try {
         clearStatus();
 
-        if (m_wallet->multisig()) {
+        if (m_wallet->get_multisig_status().multisig_is_active) {
             throw runtime_error("Wallet is already multisig");
         }
 
@@ -1340,6 +1349,21 @@ std::string WalletImpl::exchangeMultisigKeys(const std::vector<std::string> &inf
     } catch (const exception& e) {
         LOG_ERROR("Error on exchanging multisig keys: " << e.what());
         setStatusError(string(tr("Failed to exchange multisig keys: ")) + e.what());
+    }
+
+    return string();
+}
+
+std::string WalletImpl::getMultisigKeyExchangeBooster(const std::vector<std::string> &info,
+    const std::uint32_t threshold,
+    const std::uint32_t num_signers) {
+    try {
+        clearStatus();
+
+        return m_wallet->get_multisig_key_exchange_booster(epee::wipeable_string(m_password), info, threshold, num_signers);
+    } catch (const exception& e) {
+        LOG_ERROR("Error on boosting multisig key exchange: " << e.what());
+        setStatusError(string(tr("Failed to boost multisig key exchange: ")) + e.what());
     }
 
     return string();
@@ -1519,11 +1543,11 @@ PendingTransaction *WalletImpl::createTransactionMultDest(const std::vector<stri
             fake_outs_count = m_wallet->adjust_mixin(mixin_count);
 
             if (amount) {
-                transaction->m_pending_tx = m_wallet->create_transactions_2(dsts, fake_outs_count, 0 /* unlock_time */,
+                transaction->m_pending_tx = m_wallet->create_transactions_2(dsts, fake_outs_count,
                                                                             adjusted_priority,
                                                                             extra, subaddr_account, subaddr_indices);
             } else {
-                transaction->m_pending_tx = m_wallet->create_transactions_all(0, info.address, info.is_subaddress, 1, fake_outs_count, 0 /* unlock_time */,
+                transaction->m_pending_tx = m_wallet->create_transactions_all(0, info.address, info.is_subaddress, 1, fake_outs_count,
                                                                               adjusted_priority,
                                                                               extra, subaddr_account, subaddr_indices);
             }
@@ -2053,8 +2077,8 @@ std::string WalletImpl::signMultisigParticipant(const std::string &message) cons
 {
     clearStatus();
 
-    bool ready = false;
-    if (!m_wallet->multisig(&ready) || !ready) {
+    const multisig::multisig_account_status ms_status{m_wallet->get_multisig_status()};
+    if (!ms_status.multisig_is_active || !ms_status.is_ready) {
         m_status = Status_Error;
         m_errorString = tr("The wallet must be in multisig ready state");
         return {};

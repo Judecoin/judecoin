@@ -322,9 +322,10 @@ struct SubaddressAccount
 };
 
 struct MultisigState {
-    MultisigState() : isMultisig(false), isReady(false), threshold(0), total(0) {}
+    MultisigState() : isMultisig(false), kexIsDone(false), isReady(false), threshold(0), total(0) {}
 
     bool isMultisig;
+    bool kexIsDone;
     bool isReady;
     uint32_t threshold;
     uint32_t total;
@@ -801,6 +802,15 @@ struct Wallet
      * @return new info string if more rounds required or an empty string if wallet creation is done
      */
     virtual std::string exchangeMultisigKeys(const std::vector<std::string> &info, const bool force_update_use_with_caution) = 0;
+    /**
+     * @brief getMultisigKeyExchangeBooster - obtain partial information for the key exchange round after the in-progress round,
+     *                                        to speed up another signer's key exchange process
+     * @param info - base58 encoded key derivations returned by makeMultisig or exchangeMultisigKeys function call
+     * @param threshold - number of required signers to make valid transaction. Must be <= number of participants.
+     * @param num_signers - total number of multisig participants.
+     * @return new info string if more rounds required or exception if no more rounds (i.e. no rounds to boost)
+     */
+    virtual std::string getMultisigKeyExchangeBooster(const std::vector<std::string> &info, const uint32_t threshold, const uint32_t num_signers) = 0;
     /**
      * @brief exportMultisigImages - exports transfers' key images
      * @param images - output paramter for hex encoded array of images

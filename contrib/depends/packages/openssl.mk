@@ -5,7 +5,7 @@ $(package)_file_name=$(package)-$($(package)_version).tar.gz
 $(package)_sha256_hash=88525753f79d3bec27d2fa7c66aa0b92b3aa9498dafd93d7cfa4b3780cdae313
 
 # The bundled ranlib in Android NDK 18b inserts timestamps by default.
-# To prevent reproducibility issues, we must enable [D]eterministic mode. 
+# To prevent reproducibility issues, we must enable [D]eterministic mode.
 
 define $(package)_set_vars
 $(package)_config_env=AR="$($(package)_ar)" RANLIB="$($(package)_ranlib)" CC="$($(package)_cc)"

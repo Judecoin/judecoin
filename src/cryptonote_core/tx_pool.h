@@ -70,7 +70,7 @@ namespace cryptonote
       // sort by greatest first, not least
       if (a.first.first > b.first.first) return true;
       if (a.first.first < b.first.first) return false;
- 
+
       if (a.first.second < b.first.second) return true;
       if (a.first.second > b.first.second) return false;
 
