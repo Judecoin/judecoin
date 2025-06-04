@@ -723,7 +723,10 @@ namespace cryptonote
         }
       }
 
-      size_t max_blocks = COMMAND_RPC_GET_BLOCKS_FAST_MAX_BLOCK_COUNT;
+      size_t max_blocks = req.max_block_count > 0
+        ? std::min(req.max_block_count, (uint64_t)COMMAND_RPC_GET_BLOCKS_FAST_MAX_BLOCK_COUNT)
+        : COMMAND_RPC_GET_BLOCKS_FAST_MAX_BLOCK_COUNT;
+        
       if (m_rpc_payment)
       {
         max_blocks = res.credits / COST_PER_BLOCK;

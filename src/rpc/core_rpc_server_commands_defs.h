@@ -178,6 +178,8 @@ namespace cryptonote
       bool        no_miner_tx;
       bool        high_height_ok;
       uint64_t    pool_info_since;
+      uint64_t    max_block_count;
+
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE_PARENT(rpc_access_request_base)
         KV_SERIALIZE_OPT(requested_info, (uint8_t)0)
@@ -186,6 +188,7 @@ namespace cryptonote
         KV_SERIALIZE(prune)
         KV_SERIALIZE_OPT(high_height_ok, false) // default false maintains backwards compatibility for clients that relied on failure on high height
         KV_SERIALIZE_OPT(pool_info_since, (uint64_t)0)
+        KV_SERIALIZE_OPT(max_block_count, (uint64_t)0)
       END_KV_SERIALIZE_MAP()
     };
     typedef epee::misc_utils::struct_init<request_t> request;
