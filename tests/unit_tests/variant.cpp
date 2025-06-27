@@ -361,7 +361,7 @@ TEST(variant, same_type)
 //-------------------------------------------------------------------------------------------------------------------
 TEST(variant, visit)
 {
-    variant<int8_t, uint8_t, int16_t, uint16_t, std::string> v;
+    optional_variant<int8_t, uint8_t, int16_t, uint16_t, std::string> v;
     EXPECT_THROW(v.visit(test_stringify_visitor()), std::runtime_error);
 
     v = "Rev";
