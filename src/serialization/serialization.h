@@ -78,15 +78,6 @@ inline std::enable_if_t<is_blob_type<T>::type::value, bool> do_serialize(Archive
   ar.serialize_blob(&v, sizeof(v));
   return true;
 }
-template <class Archive, class T, typename... Args>
-inline auto do_serialize(Archive &ar, T &v, Args&&... args)
-  -> decltype(do_serialize_object(ar, v, args...), true)
-{
-  ar.begin_object();
-  const bool r = do_serialize_object(ar, v, args...);
-  ar.end_object();
-  return r && ar.good();
-}
 template <class Archive, class T>
 inline std::enable_if_t<boost::is_integral<T>::value, bool> do_serialize(Archive &ar, T &v)
 {
@@ -103,6 +94,15 @@ inline bool do_serialize(Archive &ar, bool &v)
 {
   ar.serialize_blob(&v, sizeof(v));
   return true;
+}
+template <class Archive, class T, typename... Args>
+inline auto do_serialize(Archive &ar, T &v, Args&&... args)
+  -> decltype(do_serialize_object(ar, v, args...), true)
+{
+  ar.begin_object();
+  const bool r = do_serialize_object(ar, v, args...);
+  ar.end_object();
+  return r && ar.good();
 }
 
 /* the following add a trait to a set and define the serialization DSL*/
@@ -211,7 +211,7 @@ inline bool do_serialize(Archive &ar, bool &v)
  *
  * \brief serializes a field \a f tagged \a t  
  */
-#define FIELD_N(t, f, ...) 					\
+#define FIELD_N(t, f, ...)                                    \
   do {							\
     ar.tag(t);						\
     bool r = do_serialize(ar, f VA_ARGS_COMMAPREFIX(__VA_ARGS__)); \

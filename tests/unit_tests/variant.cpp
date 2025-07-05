@@ -1,4 +1,4 @@
-// Copyright (c) 2025, The Jude Project
+// Copyright (c) 2025-2025, The Jude Project
 //
 // All rights reserved.
 //
@@ -38,6 +38,7 @@
 #include <type_traits>
 #include <vector>
 
+using tools::optional_variant;
 using tools::variant;
 using tools::variant_static_visitor;
 
@@ -239,7 +240,7 @@ struct test_stringify_visitor: public variant_static_visitor<std::string>
 //-------------------------------------------------------------------------------------------------------------------
 TEST(variant, operatorbool)
 {
-    variant<int8_t, uint8_t, int16_t, uint16_t, std::string> v;
+    optional_variant<int8_t, uint8_t, int16_t, uint16_t, std::string> v;
     EXPECT_FALSE(v);
     v = (int16_t) 2025;
     EXPECT_TRUE(v);
@@ -251,7 +252,7 @@ TEST(variant, operatorbool)
 //-------------------------------------------------------------------------------------------------------------------
 TEST(variant, is_empty)
 {
-    variant<int8_t, uint8_t, int16_t, uint16_t, std::string> v;
+    optional_variant<int8_t, uint8_t, int16_t, uint16_t, std::string> v;
     EXPECT_TRUE(v.is_empty());
     v = (int16_t) 2025;
     EXPECT_FALSE(v.is_empty());
@@ -260,7 +261,7 @@ TEST(variant, is_empty)
     v = boost::blank{};
     EXPECT_TRUE(v.is_empty());
 
-    variant<> v2;
+    optional_variant<> v2;
     EXPECT_TRUE(v2.is_empty());
     v2 = boost::blank{};
     EXPECT_TRUE(v2.is_empty());
@@ -269,7 +270,7 @@ TEST(variant, is_empty)
 TEST(variant, is_type)
 {
     variant<int8_t, uint8_t, int16_t, uint16_t, std::string> v;
-    EXPECT_TRUE(v.is_type<boost::blank>());
+    EXPECT_TRUE(v.is_type<int8_t>());
     v = (int16_t) 2025;
     EXPECT_TRUE(v.is_type<int16_t>());
 
@@ -279,7 +280,7 @@ TEST(variant, is_type)
 TEST(variant, try_unwrap)
 {
     variant<int8_t, uint8_t, int16_t, uint16_t, std::string> v;
-    EXPECT_FALSE(v.try_unwrap<int8_t>());
+    EXPECT_TRUE(v.try_unwrap<int8_t>());
     v = (int16_t) 5252;
     ASSERT_TRUE(v.try_unwrap<int16_t>());
     EXPECT_EQ(5252, *v.try_unwrap<int16_t>());
@@ -290,7 +291,7 @@ TEST(variant, try_unwrap)
 TEST(variant, unwrap)
 {
     variant<int8_t, uint8_t, int16_t, uint16_t, std::string> v;
-    EXPECT_THROW(v.unwrap<int8_t>(), std::runtime_error);
+    EXPECT_EQ(0, v.unwrap<int8_t>());
     v = (int16_t) 5252;
     EXPECT_EQ(5252, v.unwrap<int16_t>());
     EXPECT_THROW(v.unwrap<uint16_t>(), std::runtime_error);
@@ -321,35 +322,55 @@ TEST(variant, index)
     variant<int8_t, uint8_t, int16_t, uint16_t, std::string> v;
     EXPECT_EQ(0, v.index());
     v = (int8_t) 7;
-    EXPECT_EQ(1, v.index());
+    EXPECT_EQ(0, v.index());
     v = (uint8_t) 7;
-    EXPECT_EQ(2, v.index());
+    EXPECT_EQ(1, v.index());
     v = (int16_t) 7;
-    EXPECT_EQ(3, v.index());
+    EXPECT_EQ(2, v.index());
     v = (uint16_t) 7;
-    EXPECT_EQ(4, v.index());
+    EXPECT_EQ(3, v.index());
     v = "verifiable variant vying for vengence versus visa";
-    EXPECT_EQ(5, v.index());
+    EXPECT_EQ(4, v.index());
+
+    optional_variant<int8_t, uint8_t, int16_t, uint16_t, std::string> vo;
+    EXPECT_EQ(0, vo.index());
+    vo = (int8_t) 7;
+    EXPECT_EQ(1, vo.index());
+    vo = (uint8_t) 7;
+    EXPECT_EQ(2, vo.index());
+    vo = (int16_t) 7;
+    EXPECT_EQ(3, vo.index());
+    vo = (uint16_t) 7;
+    EXPECT_EQ(4, vo.index());
+    vo = "verifiable variant vying for vengence versus visa";
+    EXPECT_EQ(5, vo.index());
 }
 //-------------------------------------------------------------------------------------------------------------------
 TEST(variant, type_index_of)
 {
     variant<int8_t, uint8_t, int16_t, uint16_t, std::string> v;
-    EXPECT_EQ(0, decltype(v)::type_index_of<boost::blank>());
-    EXPECT_EQ(1, decltype(v)::type_index_of<int8_t>());
-    EXPECT_EQ(2, decltype(v)::type_index_of<uint8_t>());
-    EXPECT_EQ(3, decltype(v)::type_index_of<int16_t>());
-    EXPECT_EQ(4, decltype(v)::type_index_of<uint16_t>());
-    EXPECT_EQ(5, decltype(v)::type_index_of<std::string>());
+    EXPECT_EQ(0, decltype(v)::type_index_of<int8_t>());
+    EXPECT_EQ(1, decltype(v)::type_index_of<uint8_t>());
+    EXPECT_EQ(2, decltype(v)::type_index_of<int16_t>());
+    EXPECT_EQ(3, decltype(v)::type_index_of<uint16_t>());
+    EXPECT_EQ(4, decltype(v)::type_index_of<std::string>());
+
+    optional_variant<int8_t, uint8_t, int16_t, uint16_t, std::string> vo;
+    EXPECT_EQ(0, decltype(vo)::type_index_of<boost::blank>()); 
+    EXPECT_EQ(1, decltype(vo)::type_index_of<int8_t>());
+    EXPECT_EQ(2, decltype(vo)::type_index_of<uint8_t>());
+    EXPECT_EQ(3, decltype(vo)::type_index_of<int16_t>());
+    EXPECT_EQ(4, decltype(vo)::type_index_of<uint16_t>());
+    EXPECT_EQ(5, decltype(vo)::type_index_of<std::string>());
 }
 //-------------------------------------------------------------------------------------------------------------------
 TEST(variant, constexpr_type_index_of)
 {
     variant<int8_t, uint8_t, int16_t, uint16_t, std::string> v;
-    constexpr int TINDEX0 = decltype(v)::type_index_of<boost::blank>();
-    EXPECT_EQ(0, TINDEX0);
-    constexpr int TINDEX5 = decltype(v)::type_index_of<std::string>();
-    EXPECT_EQ(5, TINDEX5);
+    constexpr int TINDEX2 = decltype(v)::type_index_of<int16_t>();
+    EXPECT_EQ(2, TINDEX2);
+    constexpr int TINDEX4 = decltype(v)::type_index_of<std::string>();
+    EXPECT_EQ(4, TINDEX4);
 }
 //-------------------------------------------------------------------------------------------------------------------
 TEST(variant, same_type)
@@ -361,8 +382,7 @@ TEST(variant, same_type)
 //-------------------------------------------------------------------------------------------------------------------
 TEST(variant, visit)
 {
-    optional_variant<int8_t, uint8_t, int16_t, uint16_t, std::string> v;
-    EXPECT_THROW(v.visit(test_stringify_visitor()), std::runtime_error);
+    variant<int8_t, uint8_t, int16_t, uint16_t, std::string> v;
 
     v = "Rev";
     test_stringify_visitor::test_visitation(v, std::string("Rev"));
@@ -372,12 +392,119 @@ TEST(variant, visit)
     EXPECT_NE(test_stringify_visitor::stringify((uint16_t) 2001), v.visit(test_stringify_visitor()));
 }
 //-------------------------------------------------------------------------------------------------------------------
+TEST(variant, visit_lambda)
+{
+    const auto stringify_lambda = [](auto x) -> std::string
+    {
+        if constexpr (std::is_same_v<decltype(x), std::string>)
+            return x;
+        else if constexpr (std::is_same_v<decltype(x), boost::blank>)
+            throw std::runtime_error("boost blank cannot be stringified");
+        else
+            return std::to_string(x);
+    };
+
+    optional_variant<int8_t, uint8_t, int16_t, uint16_t, std::string> v;
+    EXPECT_THROW(v.visit(stringify_lambda), std::runtime_error);
+
+    v = "Rev";
+    EXPECT_EQ("Rev", v.visit(stringify_lambda));
+
+    v = (int16_t) 2001;
+    EXPECT_EQ("2001", v.visit(stringify_lambda));
+}
+//-------------------------------------------------------------------------------------------------------------------
+TEST(variant, visit_ref_passthru)
+{
+    struct A
+    {
+        int x;
+    };
+
+    struct B
+    {
+        int x;
+    };
+
+    struct x_ref_visitor: tools::variant_static_visitor<const int&>
+    {
+        using tools::variant_static_visitor<const int&>::operator();
+
+        const int& operator()(const A &a) const { return a.x; }
+        const int& operator()(const B &b) const { return b.x; }
+    };
+
+    optional_variant<A, B> v;
+    EXPECT_THROW(v.visit(x_ref_visitor{}), std::runtime_error);
+
+    // A very hairy looking test, but we're just testing that the reference returned from our static
+    // visitor is actually pointing to something in the same stack space as our variant operand.
+    // This will let us catch mistakes where we take a reference to a locally created variable if
+    // the visit() method is changed subtlely.
+    v = A { 2025 };
+    const char * const px = reinterpret_cast<const char*>(std::addressof(v.visit(x_ref_visitor{})));
+    const char * const pv = reinterpret_cast<const char*>(&v);
+    EXPECT_LT(px - pv, sizeof(v));
+}
+//-------------------------------------------------------------------------------------------------------------------
+TEST(variant, value_initialize_to_type_index)
+{
+    optional_variant<int8_t, uint8_t, int16_t, uint16_t, std::string> v;
+    for (int i = 0; i < 6; ++i)
+    {
+        v.value_initialize_to_type_index(i);
+        EXPECT_EQ(i, v.index());
+    }
+
+    v = (int8_t) 69;
+    EXPECT_EQ(1, v.index());
+    EXPECT_EQ(69, v.unwrap<int8_t>());
+    v.value_initialize_to_type_index(1);
+    EXPECT_EQ(1, v.index());
+    EXPECT_EQ(0, v.unwrap<int8_t>());
+
+    v = (uint8_t) 69;
+    EXPECT_EQ(2, v.index());
+    EXPECT_EQ(69, v.unwrap<uint8_t>());
+    v.value_initialize_to_type_index(2);
+    EXPECT_EQ(2, v.index());
+    EXPECT_EQ(0, v.unwrap<uint8_t>());
+
+    v = (int16_t) 69;
+    EXPECT_EQ(3, v.index());
+    EXPECT_EQ(69, v.unwrap<int16_t>());
+    v.value_initialize_to_type_index(3);
+    EXPECT_EQ(3, v.index());
+    EXPECT_EQ(0, v.unwrap<int16_t>());
+
+    v = (uint16_t) 69;
+    EXPECT_EQ(4, v.index());
+    EXPECT_EQ(69, v.unwrap<uint16_t>());
+    v.value_initialize_to_type_index(4);
+    EXPECT_EQ(4, v.index());
+    EXPECT_EQ(0, v.unwrap<uint16_t>());
+
+    v = std::string("69");
+    EXPECT_EQ(5, v.index());
+    EXPECT_EQ("69", v.unwrap<std::string>());
+    v.value_initialize_to_type_index(5);
+    EXPECT_EQ(5, v.index());
+    EXPECT_EQ("", v.unwrap<std::string>());
+
+    v = (int16_t) 69;
+    v.value_initialize_to_type_index(5);
+    EXPECT_EQ("", v.unwrap<std::string>());
+
+    EXPECT_THROW(v.value_initialize_to_type_index(-1), std::runtime_error);
+    EXPECT_THROW(v.value_initialize_to_type_index(6), std::runtime_error);
+}
+//-------------------------------------------------------------------------------------------------------------------
 TEST(variant, ad_hoc_recursion)
 {
     struct left_t;
     struct right_t;
 
-    using twisty = variant<boost::recursive_wrapper<left_t>, boost::recursive_wrapper<right_t>>;
+    using twisty = optional_variant<boost::recursive_wrapper<left_t>, boost::recursive_wrapper<right_t>>;
 
     struct left_t
     {

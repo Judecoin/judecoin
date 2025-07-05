@@ -139,7 +139,7 @@ namespace
     template<typename... T>
     std::array<char, 32> operator()(const T&... args) const
     {      
-      std::unique_ptr<EVP_MD_CTX, decltype(&EVP_MD_CTX_free)> ctx(EVP_MD_CTX_new(), &EVP_MD_CTX_free);More actions
+      std::unique_ptr<EVP_MD_CTX, decltype(&EVP_MD_CTX_free)> ctx(EVP_MD_CTX_new(), &EVP_MD_CTX_free);
       EVP_DigestInit(ctx.get(), EVP_md5());
       boost::fusion::for_each(std::tie(args...), update{ctx.get()});
 

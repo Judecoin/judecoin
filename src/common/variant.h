@@ -1,4 +1,4 @@
-// Copyright (c) 2025, The Jude Project
+// Copyright (c) 2025-2025, The Jude Project
 //
 // All rights reserved.
 //
@@ -37,6 +37,7 @@
 #include <boost/mpl/begin_end.hpp>
 #include <boost/mpl/distance.hpp>
 #include <boost/mpl/find.hpp>
+#include <boost/mpl/for_each.hpp>
 #include <boost/mpl/vector.hpp>
 #include <boost/none_t.hpp>
 #include <boost/variant/apply_visitor.hpp>
@@ -54,6 +55,18 @@
 
 namespace tools
 {
+namespace detail
+{
+template <class Variant>
+struct value_initialize_on_which
+{
+    template <typename T>
+    void operator()(T) { if (Variant::template type_index_of<T>() == target_which) v = T(); }
+
+    Variant &v;
+    const int target_which;
+};
+} // namespace detail
 
 [[noreturn]] inline void variant_static_visitor_blank_err()
 { throw std::runtime_error("variant: tried to visit an empty variant."); }
@@ -74,15 +87,14 @@ struct variant_static_visitor : public boost::static_visitor<ResultT>
 };
 
 template <typename... Types>
-class variant final
+class variant
 {
-    using VType = boost::variant<boost::blank, Types...>;
+    using VType = boost::variant<Types...>;
 
 public:
 //constructors
     /// default constructor
     variant() = default;
-    variant(boost::none_t) : variant{} {}  //act like boost::optional
 
     /// construct from variant type (use enable_if to avoid issues with copy/move constructor)
     template <typename T,
@@ -95,14 +107,7 @@ public:
             >::type = true>
     variant(T &&value) : m_value{std::forward<T>(value)} {}
 
-//overloaded operators
-    /// boolean operator: true if the variant isn't empty/uninitialized
-    explicit operator bool() const noexcept { return !this->is_empty(); }
-
 //member functions
-    /// check if empty/uninitialized
-    bool is_empty() const noexcept { return m_value.which() == 0; }
-
     /// check the variant type
     template <typename T>
     bool is_type() const noexcept { return this->index() == this->type_index_of<T>(); }
@@ -136,7 +141,7 @@ public:
     template <typename T>
     static constexpr int type_index_of() noexcept
     {
-        using types = boost::mpl::vector<boost::blank, Types...>;
+        using types = typename VType::types;
         using elem  = typename boost::mpl::find<types, T>::type;
         using begin = typename boost::mpl::begin<types>::type;
         return boost::mpl::distance<begin, elem>::value;
@@ -148,20 +153,65 @@ public:
 
     /// apply a visitor to the variant
     template <typename VisitorT>
-    typename VisitorT::result_type visit(VisitorT &&visitor)
+    decltype(auto) visit(VisitorT &&visitor) // decltype(auto) since it forwards the return ref type correctly
     {
         return boost::apply_visitor(std::forward<VisitorT>(visitor), m_value);
     }
     template <typename VisitorT>
-    typename VisitorT::result_type visit(VisitorT &&visitor) const
+    decltype(auto) visit(VisitorT &&visitor) const // decltype(auto) since it forwards the return ref type correctly
     {
         return boost::apply_visitor(std::forward<VisitorT>(visitor), m_value);
+    }
+
+    /// value initialize the variant based on a type index
+    void value_initialize_to_type_index(const int which)
+    {
+        if (which < 0 || which >= boost::mpl::size<typename VType::types>::type::value)
+            throw std::runtime_error("value_initialize_to_type_index: type index of out range");
+
+        detail::value_initialize_on_which<variant> viow{*this, which};
+        boost::mpl::for_each<typename VType::types>(viow);
     }
 
 private:
 //member variables
     /// variant of all value types
     VType m_value;
+
+//friend functions
+template <class Archive, typename... Ts>
+friend bool do_serialize(Archive &ar, variant<Ts...> &v);
+};
+
+template <typename... Types>
+class optional_variant: public variant<boost::blank, Types...>
+{
+public:
+//constructors
+    /// default constructor
+    optional_variant() = default;
+
+    /// construct from variant type (use enable_if to avoid issues with copy/move constructor)
+    template <typename T,
+        typename std::enable_if<
+                !std::is_same<
+                        std::remove_cv_t<std::remove_reference_t<T>>,
+                        optional_variant<Types...>
+                    >::value,
+                bool
+            >::type = true>
+    optional_variant(T &&value) : variant<boost::blank, Types...>(std::forward<T>(value)) {}
+
+    // construct like boost::optional
+    optional_variant(boost::none_t) {}
+
+//overloaded operators
+    /// boolean operator: true if the variant isn't empty/uninitialized
+    explicit operator bool() const noexcept { return !this->is_empty(); }
+
+//member functions
+    /// check if empty/uninitialized
+    bool is_empty() const noexcept { return this->index() == 0; }
 };
 
 } //namespace tools

@@ -697,7 +697,7 @@ bool t_command_parser_executor::ban(const std::vector<std::string>& args)
       for (std::string line; std::getline(ifs, line); )
       {
         // ignore comments after '#' character
-        const size_t pound_idx = line.find('#');More actions
+        const size_t pound_idx = line.find('#');
         if (pound_idx != std::string::npos)
           line.resize(pound_idx);
 

@@ -1455,8 +1455,8 @@ TEST(StringTools, GetExtension)
 TEST(StringTools, CutOffExtension)
 {
   EXPECT_EQ(std::string{}, epee::string_tools::cut_off_extension(""));
-  EXPECT_EQ(std::string{"/home/user/Monero/wallets/wallet"}, epee::string_tools::cut_off_extension("/home/user/Monero/wallets/wallet"));
-  EXPECT_EQ(std::string{"/home/user/Monero/wallets/wallet"}, epee::string_tools::cut_off_extension("/home/user/Monero/wallets/wallet.keys"));
+  EXPECT_EQ(std::string{"/home/user/Jude/wallets/wallet"}, epee::string_tools::cut_off_extension("/home/user/Jude/wallets/wallet"));
+  EXPECT_EQ(std::string{"/home/user/Jude/wallets/wallet"}, epee::string_tools::cut_off_extension("/home/user/Jude/wallets/wallet.keys"));
 }
 
 TEST(NetUtils, IPv4NetworkAddress)

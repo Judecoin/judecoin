@@ -718,7 +718,6 @@ public:
    */
   virtual std::string get_db_name() const = 0;
 
-
   /**
    * @brief tells the BlockchainDB to start a new "batch" of blocks
    *

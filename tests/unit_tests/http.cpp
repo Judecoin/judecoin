@@ -52,6 +52,7 @@
 #include <boost/spirit/include/qi_sequence.hpp>
 #include <boost/spirit/include/qi_string.hpp>
 #include <cstdint>
+#include <iterator>
 #include <openssl/evp.h>
 #include <string>
 #include <unordered_map>
@@ -200,10 +201,10 @@ auth_responses parse_response(const http::http_response_info& response)
 
 std::string md5_hex(const std::string& in)
 {
-    std::unique_ptr<EVP_MD_CTX, decltype(&EVP_MD_CTX_free)> ctx(EVP_MD_CTX_new(), &EVP_MD_CTX_free);More actions
-    EVP_DigestInit(ctx.get(), EVP_md5());
-    EVP_DigestUpdate(
-      ctx.get(),
+  std::unique_ptr<EVP_MD_CTX, decltype(&EVP_MD_CTX_free)> ctx(EVP_MD_CTX_new(), &EVP_MD_CTX_free);
+  EVP_DigestInit(ctx.get(), EVP_md5());
+  EVP_DigestUpdate(
+    ctx.get(),
     reinterpret_cast<const std::uint8_t*>(in.data()),
     in.size()
   );

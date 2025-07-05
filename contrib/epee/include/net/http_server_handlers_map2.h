@@ -166,7 +166,7 @@
       return true; \
     } \
     epee::serialization::storage_entry params_; \
-    params_ = epee::serialization::storage_entry(epee::serialization::section()); \More actions
+    params_ = epee::serialization::storage_entry(epee::serialization::section()); \
     if(!ps.get_value("params", params_, nullptr)) \
     { \
       epee::serialization::section params_section; \

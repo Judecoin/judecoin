@@ -1,4 +1,3 @@
-
 // Copyright (c) 2025, The Jude Project
 //
 // All rights reserved.
@@ -26,12 +25,15 @@
 // INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 #pragma once
+
 // Check for __VA_OPT__ support
 // Apdated from cpplearner's StackOverflow answer: https://stackoverflow.com/a/48045656
 #define PP_THIRD_ARG(a,b,c,...) c
 #define VA_OPT_SUPPORTED_I(...) PP_THIRD_ARG(__VA_OPT__(,),true,false,)
 #define VA_OPT_SUPPORTED VA_OPT_SUPPORTED_I(?)
+
 // VA_ARGS_COMMAPREFIX(): VA_ARGS_COMMAPREFIX(__VA_ARGS__) expands to __VA_ARGS__ with a comma in
 // front if more than one argument, else nothing.
 // If __VA_OPT__ supported, use that. Else, use GCC's ,## hack
@@ -40,3 +42,4 @@
 #else
 #    define VA_ARGS_COMMAPREFIX(...) , ## __VA_ARGS__
 #endif
+

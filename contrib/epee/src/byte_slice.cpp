@@ -154,7 +154,7 @@ namespace epee
     for (const auto& source : sources)
     {
       if (std::numeric_limits<std::size_t>::max() - space_needed < source.size())
-      throw std::bad_alloc{};
+        throw std::bad_alloc{};
       space_needed += source.size();
     }
 

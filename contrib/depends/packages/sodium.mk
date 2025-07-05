@@ -10,6 +10,12 @@ $(package)_config_opts=--enable-static --disable-shared
 $(package)_config_opts+=--prefix=$(host_prefix)
 endef
 
+define $(package)_preprocess_cmds
+  patch -p1 < $($(package)_patch_dir)/disable-glibc-getrandom-getentropy.patch &&\
+  autoconf &&\
+  patch -p1 < $($(package)_patch_dir)/fix-whitespace.patch
+endef
+
 define $(package)_config_cmds
   $($(package)_autoconf) AR_FLAGS=$($(package)_arflags)
 endef

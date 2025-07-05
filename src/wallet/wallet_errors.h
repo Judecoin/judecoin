@@ -38,8 +38,8 @@
 #include "cryptonote_basic/cryptonote_format_utils.h"
 #include "cryptonote_core/cryptonote_tx_utils.h"
 #include "net/jsonrpc_structs.h"
-#include "rpc/core_rpc_server_error_codes.h"
 #include "rpc/core_rpc_server_commands_defs.h"
+#include "rpc/core_rpc_server_error_codes.h"
 #include "include_base_utils.h"
 
 
@@ -65,6 +65,7 @@ namespace tools
     //       invalid_password
     //       invalid_priority
     //       invalid_multisig_seed
+    //       invalid_spend_key
     //       refresh_error *
     //         acc_outs_lookup_error
     //         block_parse_error
@@ -99,6 +100,9 @@ namespace tools
     //       wallet_files_doesnt_correspond
     //       scan_tx_error *
     //         wont_reprocess_recent_txs_via_untrusted_daemon
+    //       background_sync_error *
+    //         background_wallet_already_open
+    //         background_custom_password_same_as_wallet_password
     //
     // * - class with protected ctor
 
@@ -300,6 +304,16 @@ namespace tools
     {
       explicit invalid_multisig_seed(std::string&& loc)
         : wallet_logic_error(std::move(loc), "invalid multisig seed")
+      {
+      }
+
+      std::string to_string() const { return wallet_logic_error::to_string(); }
+    };
+
+    struct invalid_spend_key : public wallet_logic_error
+    {
+      explicit invalid_spend_key(std::string&& loc)
+        : wallet_logic_error(std::move(loc), "invalid spend key")
       {
       }
 
@@ -950,6 +964,31 @@ namespace tools
       }
     };
     //----------------------------------------------------------------------------------------------------
+    struct background_sync_error : public wallet_logic_error
+    {
+    protected:
+      explicit background_sync_error(std::string&& loc, const std::string& message)
+        : wallet_logic_error(std::move(loc), message)
+      {
+      }
+    };
+    //----------------------------------------------------------------------------------------------------
+    struct background_wallet_already_open : public background_sync_error
+    {
+      explicit background_wallet_already_open(std::string&& loc, const std::string& background_wallet_file)
+        : background_sync_error(std::move(loc), "background wallet " + background_wallet_file + " is already opened by another wallet program")
+      {
+      }
+    };
+    //----------------------------------------------------------------------------------------------------
+    struct background_custom_password_same_as_wallet_password : public background_sync_error
+    {
+      explicit background_custom_password_same_as_wallet_password(std::string&& loc)
+        : background_sync_error(std::move(loc), "custom background password must be different than wallet password")
+      {
+      }
+    };
+    //----------------------------------------------------------------------------------------------------
 
 #if !defined(_MSC_VER)
 
@@ -1009,7 +1048,7 @@ namespace tools
   namespace error
   {
     inline void throw_on_rpc_response_error(bool r, const epee::json_rpc::error &error, const std::string &status, const char *method)
-    {More actions
+    {
       // Treat all RPC payment access errors the same, whether payment is actually required or not
       THROW_WALLET_EXCEPTION_IF(error.code == CORE_RPC_ERROR_CODE_INVALID_CLIENT, tools::error::deprecated_rpc_access, method);
       THROW_WALLET_EXCEPTION_IF(error.code, tools::error::wallet_coded_rpc_error, method, error.code, get_rpc_server_error_message(error.code));

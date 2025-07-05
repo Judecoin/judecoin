@@ -77,12 +77,11 @@ struct ObjOfInts
     KV_SERIALIZE(x)
   END_KV_SERIALIZE_MAP()
 };
-}
 
 template<typename t_param>
 struct ParentObjWithOptChild
 {
-  t_param     params;More actions
+  t_param     params;
 
   ParentObjWithOptChild(): params{} {}
 
@@ -99,9 +98,10 @@ struct ObjWithOptChild
     KV_SERIALIZE_OPT(test_value, true);
   END_KV_SERIALIZE_MAP()
 };
+}
 
-TEST(epee_binary, serialize_deserialize)More actions
-{More actions
+TEST(epee_binary, serialize_deserialize)
+{
   ParentObjWithOptChild<ObjWithOptChild> o;
   std::string o_json;
   o.params.test_value = true;
