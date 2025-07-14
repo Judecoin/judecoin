@@ -33,32 +33,22 @@ import json
 
 class Response(dict):
     def __init__(self, d):
-        for k in d.keys():
-            if type(d[k]) == dict:
-                self[k] = Response(d[k])
-            elif type(d[k]) == list:
-                self[k] = []
-                for i in range(len(d[k])):
-                    if type(d[k][i]) == dict:
-                        self[k].append(Response(d[k][i]))
-                    else:
-                        self[k].append(d[k][i])
-            else:
-                self[k] = d[k]
+        for k, v in d.items():
+            self[k] = self._decode(v)
+
+    @staticmethod
+    def _decode(o):
+        if isinstance(o, dict):
+            return Response(o)
+        elif isinstance(o, list):
+            return [Response._decode(i) for i in o]
+        else:
+            return o        
 
     def __getattr__(self, key):
         return self[key]
     def __setattr__(self, key, value):
         self[key] = value
-    def __eq__(self, other):
-        if type(other) == dict:
-            return self == Response(other)
-        if self.keys() != other.keys():
-            return False
-        for k in self.keys():
-            if self[k] != other[k]:
-                return False
-        return True
 
 class JSONRPC(object):
     def __init__(self, url, username=None, password=None):
