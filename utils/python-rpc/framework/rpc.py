@@ -43,7 +43,7 @@ class Response(dict):
         elif isinstance(o, list):
             return [Response._decode(i) for i in o]
         else:
-            return o        
+            return o
 
     def __getattr__(self, key):
         return self[key]
@@ -63,7 +63,7 @@ class JSONRPC(object):
             headers={'content-type': 'application/json'},
             auth=HTTPDigestAuth(self.username, self.password) if self.username is not None else None)
         res = res.json()
-        
+
         assert 'error' not in res, res
 
         if result_field:

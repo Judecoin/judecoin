@@ -1,28 +1,30 @@
-packages:=boost openssl zeromq expat unbound sodium
+native_packages := native_protobuf
+packages := boost openssl zeromq unbound sodium protobuf
 
-hardware_packages := hidapi protobuf libusb
-hardware_native_packages := native_protobuf
-
-android_native_packages = android_ndk $(hardware_native_packages)
-android_packages = ncurses readline protobuf
-
-darwin_native_packages = $(hardware_native_packages)
-darwin_packages = ncurses readline $(hardware_packages)
-
-# not really native...
-freebsd_native_packages = freebsd_base $(hardware_native_packages)
-freebsd_packages = ncurses readline protobuf libusb
-
-linux_packages = eudev ncurses readline $(hardware_packages)
-linux_native_packages = $(hardware_native_packages)
-
-ifeq ($(build_tests),ON)
-packages += gtest
+ifneq ($(host_os),android)
+packages += libusb
 endif
 
-mingw32_packages = $(hardware_packages)
-mingw32_native_packages = $(hardware_native_packages)
+ifneq ($(host_os),freebsd)
+ifneq ($(host_os),android)
+packages += hidapi
+endif
+endif
+
+ifneq ($(host_os),mingw32)
+packages += ncurses readline
+endif
+
+linux_native_packages :=
+linux_packages :=
+
+freebsd_native_packages := freebsd_base
+freebsd_packages :=
 
 ifneq ($(build_os),darwin)
-darwin_native_packages += darwin_sdk native_cctools native_libtapi
+darwin_native_packages := darwin_sdk native_cctools native_libtapi
 endif
+darwin_packages :=
+
+android_native_packages := android_ndk
+android_packages :=
