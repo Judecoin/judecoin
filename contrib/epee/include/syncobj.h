@@ -76,48 +76,7 @@ namespace epee
     bool m_rised;
   };
 
-  class critical_region;
-
-  class critical_section
-  {
-    boost::recursive_mutex m_section;
-
-  public:
-    //to make copy fake!
-    critical_section(const critical_section& section)
-    {
-    }
-
-    critical_section()
-    {
-    }
-
-    ~critical_section()
-    {
-    }
-
-    void lock()
-    {
-      m_section.lock();
-      //EnterCriticalSection( &m_section );
-    }
-
-    void unlock()
-    {
-      m_section.unlock();
-    }
-
-    bool tryLock()
-    {
-      return m_section.try_lock();
-    }
-
-    // to make copy fake
-    critical_section& operator=(const critical_section& section)
-    {
-      return *this;
-    }
-  };
+  using critical_section = boost::recursive_mutex;
 
 
   template<class t_lock>
@@ -149,11 +108,9 @@ namespace epee
     }
   };
 
-
-#define  CRITICAL_REGION_LOCAL(x) {} epee::critical_region_t<decltype(x)>   critical_region_var(x)
-#define  CRITICAL_REGION_BEGIN(x) { boost::this_thread::sleep_for(boost::chrono::milliseconds(epee::debug::g_test_dbg_lock_sleep())); epee::critical_region_t<decltype(x)>   critical_region_var(x)
-#define  CRITICAL_REGION_LOCAL1(x) {boost::this_thread::sleep_for(boost::chrono::milliseconds(epee::debug::g_test_dbg_lock_sleep()));} epee::critical_region_t<decltype(x)>   critical_region_var1(x)
-#define  CRITICAL_REGION_BEGIN1(x) {  boost::this_thread::sleep_for(boost::chrono::milliseconds(epee::debug::g_test_dbg_lock_sleep())); epee::critical_region_t<decltype(x)>   critical_region_var1(x)
+#define  CRITICAL_REGION_LOCAL(x) boost::unique_lock critical_region_var(x)
+#define  CRITICAL_REGION_BEGIN(x) { boost::this_thread::sleep_for(boost::chrono::milliseconds(epee::debug::g_test_dbg_lock_sleep())); boost::unique_lock critical_region_var(x)
+#define  CRITICAL_REGION_LOCAL1(x) { boost::this_thread::sleep_for(boost::chrono::milliseconds(epee::debug::g_test_dbg_lock_sleep()));} boost::unique_lock critical_region_var1(x)
 
 #define  CRITICAL_REGION_END() }
 
