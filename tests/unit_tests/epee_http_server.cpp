@@ -177,6 +177,7 @@ TEST(http_server, private_ip_limit)
     parser.body_limit(payload_size + 1024);
 
     http::read(streams.back(), buffer, parser, error);
+    EXPECT_FALSE(bool(error));
     EXPECT_TRUE(parser.is_done());
   }
 

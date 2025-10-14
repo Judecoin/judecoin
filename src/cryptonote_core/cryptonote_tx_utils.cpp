@@ -610,7 +610,7 @@ namespace cryptonote
   {
     hw::device &hwdev = sender_account_keys.get_device();
     hwdev.open_tx(tx_key);
-      const auto auto_close_tx = epee::misc_utils::create_scope_leave_handler([&hwdev](){
+    const auto auto_close_tx = epee::misc_utils::create_scope_leave_handler([&hwdev](){
       hwdev.close_tx();
     });
     {

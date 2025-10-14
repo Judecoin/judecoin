@@ -230,7 +230,6 @@ INSTANTIATE_TEST_SUITE_P(
         std::make_tuple("basic-256color-unsupported", false)
     ));
 
-
 // These operations might segfault
 TEST(logging, copy_ctor_segfault)
 {

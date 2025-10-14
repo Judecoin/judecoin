@@ -31,6 +31,9 @@
 #pragma once
 
 #include "rpc/core_rpc_server.h"
+#include "daemon/command_line_args.h"
+#include "cryptonote_protocol/cryptonote_protocol_handler.h"
+#include "p2p.h"
 
 #undef JUDE_DEFAULT_LOG_CATEGORY
 #define JUDE_DEFAULT_LOG_CATEGORY "daemon"

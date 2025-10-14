@@ -370,7 +370,7 @@ namespace rpc
 
     tx_verification_context tvc = AUTO_VAL_INIT(tvc);
 
-    if(!m_core.handle_incoming_tx({tx_blob, crypto::null_hash}, tvc, (relay ? relay_method::local : relay_method::none), false) || tvc.m_verifivation_failed)
+    if(!m_core.handle_incoming_tx(tx_blob, tvc, (relay ? relay_method::local : relay_method::none), false) || tvc.m_verifivation_failed)
     {
       if (tvc.m_verifivation_failed)
       {
@@ -844,8 +844,9 @@ namespace rpc
   {
     res.hard_fork_version = m_core.get_blockchain_storage().get_current_hard_fork_version();
 
-    m_core.get_blockchain_storage().get_dynamic_base_fee_estimate_2021_scaling(req.num_grace_blocks, res.fees);
-    res.estimated_base_fee = res.fees.at(0);
+    std::vector<uint64_t> fees;
+    m_core.get_blockchain_storage().get_dynamic_base_fee_estimate_2025_scaling(req.num_grace_blocks, fees);
+    res.estimated_base_fee = fees[0];
 
     {
       res.size_scale = 1; // per byte fee
