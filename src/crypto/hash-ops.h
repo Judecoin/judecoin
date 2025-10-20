@@ -30,12 +30,7 @@
 
 #pragma once
 
-#if defined(__cplusplus)
-
-#include <cstddef>
-#include <cstdint>
-
-#else
+#if !defined(__cplusplus)
 
 #include <assert.h>
 #include <stdbool.h>

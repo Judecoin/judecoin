@@ -28,7 +28,6 @@
 
 #pragma once
 
-#include "serialization/serialization.h"
 #include "serialization/keyvalue_serialization.h"
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/version.hpp>

@@ -3,7 +3,6 @@
 
 #include <math.h>
 #include <float.h>
-#include <stdint.h>
 
 #define VARIANT2_INTEGER_MATH_SQRT_STEP_SSE2() \
   do { \

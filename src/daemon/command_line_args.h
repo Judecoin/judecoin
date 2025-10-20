@@ -32,7 +32,6 @@
 #include "common/command_line.h"
 #include "cryptonote_config.h"
 #include "daemonizer/daemonizer.h"
-#include "cryptonote_core/cryptonote_core.h"
 
 namespace daemon_args
 {

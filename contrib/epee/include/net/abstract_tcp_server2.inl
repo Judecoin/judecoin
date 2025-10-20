@@ -30,7 +30,6 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // 
 
-#pragma once
 
 #include <boost/asio/post.hpp>
 #include <boost/foreach.hpp>
@@ -46,7 +45,6 @@
 #include "warnings.h"
 #include "string_tools_lexical.h"
 #include "misc_language.h"
-#include "net/abstract_tcp_server2.h"
 
 #include <sstream>
 #include <iomanip>

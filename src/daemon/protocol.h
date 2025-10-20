@@ -30,10 +30,6 @@
 
 #pragma once
 
-#include "cryptonote_protocol/cryptonote_protocol_handler.h"
-#include "daemon/core.h"
-#include "p2p/net_node.h"
-
 #undef JUDE_DEFAULT_LOG_CATEGORY
 #define JUDE_DEFAULT_LOG_CATEGORY "daemon"
 

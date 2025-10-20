@@ -30,16 +30,8 @@
 #pragma once 
 
 #ifdef __cplusplus
-
-#include <cstddef>
-
 extern "C" {
-
-#else // C compiler
-
-#include <stddef.h>
-
-#endif // __cplusplus
+#endif
 
 void *aligned_malloc(size_t bytes, size_t align);
 void *aligned_realloc(void *ptr, size_t bytes, size_t align);

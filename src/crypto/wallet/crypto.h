@@ -31,7 +31,6 @@
 
 #include <cstddef>
 #include "crypto/wallet/ops.h"
-#include "crypto/crypto.h"
 
 namespace crypto {
   namespace wallet {

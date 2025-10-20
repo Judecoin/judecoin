@@ -33,7 +33,6 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/preprocessor/stringize.hpp>
 #include <cstdint>
-#include <chrono>
 #include "include_base_utils.h"
 using namespace epee;
 
@@ -56,12 +55,13 @@ using namespace epee;
 #include "rpc/rpc_args.h"
 #include "rpc/core_rpc_server_commands_defs.h"
 #include "daemonizer/daemonizer.h"
+#include "fee_priority.h"
 
 #undef JUDE_DEFAULT_LOG_CATEGORY
 #define JUDE_DEFAULT_LOG_CATEGORY "wallet.rpc"
 
 #define DEFAULT_AUTO_REFRESH_PERIOD 20 // seconds
-#define REFRESH_INDICATIVE_BLOCK_CHUNK_SIZE 256    // just to split refresh in separate calls to play nicer with other threads
+#define REFRESH_INFICATIVE_BLOCK_CHUNK_SIZE 256    // just to split refresh in separate calls to play nicer with other threads
 
 #define CHECK_MULTISIG_ENABLED() \
   do \
@@ -199,77 +199,24 @@ namespace tools
   bool wallet_rpc_server::run()
   {
     m_stop = false;
-
-    const bool enable_auto_refresh = m_auto_refresh_period != 0;
-    const auto auto_refresh_evaluation_ms = std::chrono::milliseconds(200);
-
-    m_net_server.add_idle_handler([=] { // Implicit capture of this-pointer deprecated in C++20.
-      if (!enable_auto_refresh) // disabled
+    m_net_server.add_idle_handler([this](){
+      if (m_auto_refresh_period == 0) // disabled
         return true;
-
-      // Check if m_auto_refresh_period seconds have passed since the last refresh attempt.
-      const auto auto_refresh_interval_ms = std::chrono::milliseconds(m_auto_refresh_period * 1'000);
-      if (auto_refresh_interval_ms <= auto_refresh_evaluation_ms)
-      {
-        LOG_PRINT_L0((boost::format(tr("The auto wallet sync evaluation interval of %i ms must be larger than the refresh interval of %i ms"))
-          % auto_refresh_evaluation_ms.count()
-          % auto_refresh_interval_ms.count()).str());
+      if (boost::posix_time::microsec_clock::universal_time() < m_last_auto_refresh_time + boost::posix_time::seconds(m_auto_refresh_period))
         return true;
-      }
-
-      const auto now = std::chrono::steady_clock::now();
-      if (now < m_last_auto_refresh_time + auto_refresh_interval_ms)
-        return true;
-
       uint64_t blocks_fetched = 0;
-      bool refresh_success = false;
-      const auto start = std::chrono::steady_clock::now();
-
-      try
-      {
+      try {
         bool received_money = false;
-        if (m_wallet) m_wallet->refresh(m_wallet->is_trusted_daemon(), 0, blocks_fetched, received_money, true, true, REFRESH_INDICATIVE_BLOCK_CHUNK_SIZE);
-        refresh_success = true;
-      }
-      catch (const std::exception& ex)
-      {
+        if (m_wallet) m_wallet->refresh(m_wallet->is_trusted_daemon(), 0, blocks_fetched, received_money, true, true, REFRESH_INFICATIVE_BLOCK_CHUNK_SIZE);
+      } catch (const std::exception& ex) {
         LOG_ERROR("Exception at while refreshing, what=" << ex.what());
       }
-
-      if (blocks_fetched == 0)
-        return true;
-
-      const auto end = std::chrono::steady_clock::now();
-      const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-
-      if (refresh_success)
-        LOG_PRINT_L3((boost::format(tr("Automated wallet block refresh took %i ms")) % elapsed.count()).str());
-
-      const bool syncing_against_tip_of_chain = blocks_fetched < REFRESH_INDICATIVE_BLOCK_CHUNK_SIZE;
-      if (syncing_against_tip_of_chain)
-      {
-        // At this point, we can poll for a refresh every m_auto_refresh_period seconds.
-        m_last_auto_refresh_time = end;
-      }
-      else
-      {
-        // We are in a state of synchronization, blasting through the maximum chunks of blocks
-        // because we are not at the tip of the chain. In this case, if we update m_last_auto_refresh_time,
-        // we'll need to wait an entire m_refresh_interval_ms before processing the next batch. On the other hand,
-        // if we do not update m_last_auto_refresh_time, we'll never yield (other calls to the RPC will hang)
-        // in the case that elapsed > auto_refresh_evaluation_ms since we'll immediately be scheduled for another block sync.
-        const bool over_one_refresh_period_passed = end > m_last_auto_refresh_time + auto_refresh_interval_ms;
-        if (over_one_refresh_period_passed)
-        {
-          // auto_refresh_interval_ms of straight-blasting through blocks has elapsed without end.
-          // Let's freee up the network thread for between 200ms to 300ms (non-deterministic) to handle other requests.
-          const auto refresh_throttle = auto_refresh_evaluation_ms + std::chrono::milliseconds(100);
-          m_last_auto_refresh_time = end - auto_refresh_interval_ms + refresh_throttle;
-          LOG_PRINT_L3((boost::format(tr("Temporarily throttling wallet block refresh by around %i ms")) % refresh_throttle.count()).str());
-        }
-      }
+      // if we got the max amount of blocks, do not set the last refresh time, we did only part of the refresh and will
+      // continue asap, and only set the last refresh time once the refresh is actually finished
+      if (blocks_fetched < REFRESH_INFICATIVE_BLOCK_CHUNK_SIZE)
+        m_last_auto_refresh_time = boost::posix_time::microsec_clock::universal_time();
       return true;
-    }, auto_refresh_evaluation_ms.count());
+    }, 1000);
     m_net_server.add_idle_handler([this](){
       if (m_stop.load(std::memory_order_relaxed))
       {
@@ -379,8 +326,7 @@ namespace tools
     } // end auth enabled
 
     m_auto_refresh_period = DEFAULT_AUTO_REFRESH_PERIOD;
-    const auto over_one_period_ago = std::chrono::steady_clock::now() - std::chrono::seconds(m_auto_refresh_period * 2);
-    m_last_auto_refresh_time = over_one_period_ago;
+    m_last_auto_refresh_time = boost::posix_time::min_date_time;
 
     check_background_mining();
 
@@ -702,32 +648,6 @@ namespace tools
       return false;
     }
     res.index = *index;
-    return true;
-  }
-  bool wallet_rpc_server::on_set_subaddr_lookahead(const wallet_rpc::COMMAND_RPC_SET_SUBADDR_LOOKAHEAD::request& req, wallet_rpc::COMMAND_RPC_SET_SUBADDR_LOOKAHEAD::response& res, epee::json_rpc::error& er, const connection_context *ctx)
-  {
-    if (!m_wallet) return not_open(er);
-    
-    CHECK_IF_BACKGROUND_SYNCING();
-    const std::string wallet_file = m_wallet->get_wallet_file();
-    if (wallet_file == "" || m_wallet->verify_password(req.password))
-    {
-      try
-      {
-        m_wallet->set_subaddress_lookahead(req.major_idx, req.minor_idx);
-        m_wallet->rewrite(wallet_file, req.password);
-      }
-      catch (const std::exception& e) {
-        handle_rpc_exception(std::current_exception(), er, WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR);
-        return false;
-      }
-    }
-    else
-    {
-      er.code = WALLET_RPC_ERROR_CODE_INVALID_PASSWORD;
-      er.message = "Invalid password.";
-      return false;
-    }
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
@@ -1251,6 +1171,12 @@ namespace tools
       er.message = "Transaction cannot have non-zero unlock time";
       return false;
     }
+    else if (!fee_priority_utilities::is_valid(req.priority))
+    {
+      er.code = WALLET_RPC_ERROR_CODE_INVALID_FEE_PRIORITY;
+      er.message = "Invalid priority value. Must be between 0 and 4.";
+      return false;
+    }
 
     CHECK_MULTISIG_ENABLED();
 
@@ -1263,7 +1189,7 @@ namespace tools
     try
     {
       uint64_t mixin = m_wallet->adjust_mixin(req.ring_size ? req.ring_size - 1 : 0);
-      uint32_t priority = m_wallet->adjust_priority(req.priority);
+      const fee_priority priority = m_wallet->adjust_priority(fee_priority_utilities::from_integral(req.priority));
       std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_transactions_2(dsts, mixin, priority, extra, req.account_index, req.subaddr_indices, req.subtract_fee_from_outputs);
 
       if (ptx_vector.empty())
@@ -1311,6 +1237,12 @@ namespace tools
       er.message = "Transaction cannot have non-zero unlock time";
       return false;
     }
+    else if (!fee_priority_utilities::is_valid(req.priority))
+    {
+      er.code = WALLET_RPC_ERROR_CODE_INVALID_FEE_PRIORITY;
+      er.message = "Invalid priority value. Must be between 0 and 4.";
+      return false;
+    }
 
     CHECK_MULTISIG_ENABLED();
 
@@ -1323,7 +1255,7 @@ namespace tools
     try
     {
       uint64_t mixin = m_wallet->adjust_mixin(req.ring_size ? req.ring_size - 1 : 0);
-      uint32_t priority = m_wallet->adjust_priority(req.priority);
+      const fee_priority priority = m_wallet->adjust_priority(fee_priority_utilities::from_integral(req.priority));
       LOG_PRINT_L2("on_transfer_split calling create_transactions_2");
       std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_transactions_2(dsts, mixin, priority, extra, req.account_index, req.subaddr_indices);
       LOG_PRINT_L2("on_transfer_split called create_transactions_2");
@@ -1756,6 +1688,12 @@ namespace tools
       er.message = "Transaction cannot have non-zero unlock time";
       return false;
     }
+    else if (!fee_priority_utilities::is_valid(req.priority))
+    {
+      er.code = WALLET_RPC_ERROR_CODE_INVALID_FEE_PRIORITY;
+      er.message = "Invalid priority value. Must be between 0 and 4.";
+      return false;
+    }
 
     CHECK_MULTISIG_ENABLED();
 
@@ -1790,7 +1728,7 @@ namespace tools
     try
     {
       uint64_t mixin = m_wallet->adjust_mixin(req.ring_size ? req.ring_size - 1 : 0);
-      uint32_t priority = m_wallet->adjust_priority(req.priority);
+      const fee_priority priority = m_wallet->adjust_priority(fee_priority_utilities::from_integral(req.priority));
       std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_transactions_all(req.below_amount, dsts[0].addr, dsts[0].is_subaddress, req.outputs, mixin, priority, extra, req.account_index, subaddr_indices);
 
       return fill_response(ptx_vector, req.get_tx_keys, res.tx_key_list, res.amount_list, res.amounts_by_dest_list, res.fee_list, res.weight_list, res.multisig_txset, res.unsigned_txset, req.do_not_relay,
@@ -1820,6 +1758,12 @@ namespace tools
     {
       er.code = WALLET_RPC_ERROR_CODE_NONZERO_UNLOCK_TIME;
       er.message = "Transaction cannot have non-zero unlock time";
+      return false;
+    }
+    else if (!fee_priority_utilities::is_valid(req.priority))
+    {
+      er.code = WALLET_RPC_ERROR_CODE_INVALID_FEE_PRIORITY;
+      er.message = "Invalid priority value. Must be between 0 and 4.";
       return false;
     }
 
@@ -1853,7 +1797,7 @@ namespace tools
     try
     {
       uint64_t mixin = m_wallet->adjust_mixin(req.ring_size ? req.ring_size - 1 : 0);
-      uint32_t priority = m_wallet->adjust_priority(req.priority);
+      const fee_priority priority = m_wallet->adjust_priority(fee_priority_utilities::from_integral(req.priority));
       std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_transactions_single(ki, dsts[0].addr, dsts[0].is_subaddress, req.outputs, mixin, priority, extra);
 
       if (ptx_vector.empty())
@@ -3973,14 +3917,6 @@ namespace tools
       return false;
     }
 
-    hw::device &hwdev = hw::get_device("default");
-    if (!hwdev.verify_keys(viewkey, info.address.m_view_public_key))
-    {
-      er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-      er.message = "view secret key does not match main address";
-      return false;
-    }
-
     if (m_wallet && req.autosave_current)
     {
       try
@@ -4007,14 +3943,6 @@ namespace tools
           er.message = "Failed to parse spend key secret key";
           return false;
         }
-
-        if (!hwdev.verify_keys(spendkey, info.address.m_spend_public_key))
-        {
-          er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
-          er.message = "spend secret key does not match main address";
-          return false;
-        }
-
         wal->generate(wallet_file, std::move(rc.second).password(), info.address, spendkey, viewkey, false);
         res.info = "Wallet has been generated successfully.";
       }
@@ -4882,14 +4810,14 @@ namespace tools
     if (!m_wallet) return not_open(er);
     try
     {
-      uint32_t priority = m_wallet->adjust_priority(0);
-      if (priority == 0)
+      const fee_priority priority = m_wallet->adjust_priority(fee_priority::Default);
+      if (priority == fee_priority::Default)
       {
         er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
         er.message = "Failed to get adjusted fee priority";
         return false;
       }
-      res.priority = priority;
+      res.priority = fee_priority_utilities::as_integral(priority);
     }
     catch (const std::exception& e)
     {

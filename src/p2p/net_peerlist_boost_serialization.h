@@ -31,7 +31,6 @@
 #pragma once
 
 #include <cstring>
-#include <boost/serialization/split_free.hpp>
 
 #include "common/expect.h"
 #include "net/net_utils_base.h"

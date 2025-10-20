@@ -1093,7 +1093,7 @@ class File : base::StaticClass {
   static std::string extractPathFromFilename(const std::string& fullPath,
       const char* seperator = base::consts::kFilePathSeperator);
   /// @brief builds stripped filename and puts it in buff
-  static void buildStrippedFilename(const char* filename, char buff[], const std::string &commonPrefix = "",
+  static void buildStrippedFilename(const char* filename, char buff[], const std::string &commonPrefix = NULL,
                                     std::size_t limit = base::consts::kSourceFilenameMaxLength);
   /// @brief builds base filename and puts it in buff
   static void buildBaseFilename(const std::string& fullPath, char buff[],
@@ -1210,9 +1210,7 @@ class OS : base::StaticClass {
   ///
   /// @detail For android systems this is device name with its manufacturer and model seperated by hyphen
   static std::string currentHost(void);
-  /// @brief Whether or not the named terminal supports colors
-  static bool termSupportsColor(std::string& term);
-  /// @brief Whether or not the process's current terminal supports colors
+  /// @brief Whether or not terminal supports colors
   static bool termSupportsColor(void);
 };
 /// @brief Contains utilities for cross-platform date/time. This class make use of el::base::utils::Str
@@ -1995,7 +1993,7 @@ class TypedConfigurations : public base::threading::ThreadSafe {
   }
 
   template <typename Conf_T>
-  inline const Conf_T& getConfigByRef(Level level, std::unordered_map<Level, Conf_T>* confMap, const char* confName) {
+  inline Conf_T& getConfigByRef(Level level, std::unordered_map<Level, Conf_T>* confMap, const char* confName) {
     base::threading::ScopedLock scopedLock(lock());
     return unsafeGetConfigByRef(level, confMap, confName);  // This is not unsafe anymore - mutex locked in scope
   }
@@ -2018,9 +2016,8 @@ class TypedConfigurations : public base::threading::ThreadSafe {
   }
 
   template <typename Conf_T>
-  const Conf_T& unsafeGetConfigByRef(Level level, std::unordered_map<Level, Conf_T>* confMap, const char* confName) {
+  Conf_T& unsafeGetConfigByRef(Level level, std::unordered_map<Level, Conf_T>* confMap, const char* confName) {
     ELPP_UNUSED(confName);
-    static const Conf_T empty;
     typename std::unordered_map<Level, Conf_T>::iterator it = confMap->find(level);
     if (it == confMap->end()) {
       try {
@@ -2029,7 +2026,7 @@ class TypedConfigurations : public base::threading::ThreadSafe {
         ELPP_INTERNAL_ERROR("Unable to get configuration [" << confName << "] for level ["
                             << LevelHelper::convertToString(level) << "]"
                             << std::endl << "Please ensure you have properly configured logger.", false);
-        return empty;
+        throw; // The exception has to be rethrown, to abort a branch leading to UB.
       }
     }
     return it->second;

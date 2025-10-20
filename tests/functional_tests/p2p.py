@@ -150,18 +150,15 @@ class P2PTest():
         # reconnect and wait for sync
         daemon2.out_peers(8)
         daemon3.out_peers(8)
-        deadline = time.monotonic() + 240
-        result = None
-        while result is None:
+        loops = 100
+        while True:
             res2 = daemon2.get_info()
             res3 = daemon3.get_info()
             if res2.top_block_hash == res3.top_block_hash:
-                result = True
-            elif time.monotonic() >= deadline:
-                result = False
-            else:
-                time.sleep(.25)
-        assert result, 'Sync timed out'
+                break
+            time.sleep(10)
+            loops -= 1
+            assert loops >= 0
 
     def test_p2p_tx_propagation(self):
         print('Testing P2P tx propagation')

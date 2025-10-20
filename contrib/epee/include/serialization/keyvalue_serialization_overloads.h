@@ -26,8 +26,6 @@
 
 #pragma once
 
-#include <cstddef>
-#include <cstdint>
 #include <set>
 #include <list>
 #include <vector>
