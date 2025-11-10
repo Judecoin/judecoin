@@ -552,26 +552,22 @@ The produced binaries still link libc dynamically. If the binary is compiled on 
 
 Packages are available for
 
-* Debian Buster
 
-    See the [instructions in the whonix/judecoin-gui repository](https://gitlab.com/whonix/judecoin-gui#how-to-install-judecoin-using-apt-get)
-
-* Debian Bullseye and Sid
+* Debian 12 (Bookworm) or later
 
     ```bash
     sudo apt install judecoin
     ```
 More info and versions in the [Debian package tracker](https://tracker.debian.org/pkg/judecoin).
 
-* Arch Linux (via Community packages):
-    [`judecoin`](https://www.archlinux.org/packages/community/x86_64/judecoin/)
+* Arch Linux:
 
 * Void Linux:
 
     ```bash
     xbps-install -S judecoin
     ```
-* GuixSD
+* Guix
 
     ```bash
     guix package -i judecoin
@@ -607,7 +603,7 @@ More info and versions in the [Debian package tracker](https://tracker.debian.or
     ```
 
 * The build needs 3 GB space.
-* Wait one  hour or more
+* Wait one hour or more
 
 Packaging for your favorite distribution would be a welcome contribution!
 
