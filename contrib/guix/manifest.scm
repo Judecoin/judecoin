@@ -295,7 +295,8 @@ chain for " target " development."))
            (list
              gcc-toolchain-12
              (list gcc-toolchain-12 "static")
-             clang-toolchain-11 binutils))
+             clang-toolchain-18
+             binutils))
           ((string-contains target "android")
             (list
               gcc-toolchain-12
