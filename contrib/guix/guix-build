@@ -345,7 +345,7 @@ EOF
         rm -f "$(profiledir_for_host "${HOST}")"
 
         # First run produces a different GUIX_ENVIRONMENT.
-        time-machine environment --manifest="${PWD}/contrib/guix/manifest.scm" \
+        time-machine shell --manifest="${PWD}/contrib/guix/manifest.scm" \
                                  --container \
                                  --pure \
                                  --no-cwd \
@@ -366,7 +366,7 @@ EOF
         # Run the build script 'contrib/guix/libexec/build.sh' in the build
         # container specified by 'contrib/guix/manifest.scm'.
         #
-        # Explanation of `guix environment` flags:
+        # Explanation of `guix shell` flags:
         #
         #   --container        run command within an isolated container
         #
