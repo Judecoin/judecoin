@@ -40,7 +40,6 @@
 #include "tx_pool.h"
 #include "blockchain.h"
 #include "blockchain_db/blockchain_db.h"
-#include "cryptonote_basic/cryptonote_boost_serialization.h"
 #include "cryptonote_basic/events.h"
 #include "cryptonote_config.h"
 #include "cryptonote_basic/miner.h"
@@ -2656,8 +2655,8 @@ bool Blockchain::get_transactions(const t_ids_container& txs_ids, t_tx_container
       bool res = pruned ? m_db->get_pruned_tx_blob(tx_hash, tx) : m_db->get_tx_blob(tx_hash, tx);
       if (res)
       {
-        txs.push_back(transaction());
-        res = pruned ? parse_and_validate_tx_base_from_blob(tx, txs.back()) : parse_and_validate_tx_from_blob(tx, txs.back());
+        auto& added_tx = txs.emplace_back();
+        res = pruned ? parse_and_validate_tx_base_from_blob(tx, added_tx) : parse_and_validate_tx_from_blob(tx, added_tx);
         if (!res)
         {
           LOG_ERROR("Invalid transaction");
@@ -3267,10 +3266,6 @@ bool Blockchain::check_tx_inputs(transaction& tx, tx_verification_context &tvc, 
   size_t sig_index = 0;
   if(pmax_used_block_height)
     *pmax_used_block_height = 0;
-
-  // pruned txes are skipped, as they're only allowed in sync-pruned-blocks mode, which is within the builtin hashes
-  if (tx.pruned)
-    return true;
 
   crypto::hash tx_prefix_hash = get_transaction_prefix_hash(tx);
 
@@ -4260,7 +4255,7 @@ leave:
       {
         tx = std::move(extra_txs_it->second.first);
         txblob = std::move(extra_txs_it->second.second);
-        tx_weight = get_transaction_weight(tx, txblob.size());
+        tx_weight = tx.pruned ? get_pruned_transaction_weight(tx) : get_transaction_weight(tx, txblob.size());
         fee = get_tx_fee(tx);
         pruned = tx.pruned;
         extra_block_txs.txs_by_txid.erase(extra_txs_it);
@@ -5530,7 +5525,7 @@ void Blockchain::cancel()
 }
 
 #if defined(PER_BLOCK_CHECKPOINT)
-static const char expected_block_hashes_hash[] = "8ada865350270fd008397684d978dac75ea4029a8a1ffcaa9975c43be119ec19";
+static const char expected_block_hashes_hash[] = "12b86a377b4d914182c382efc8b1c23bcf3b758434c47a88ac09f12f4576cd90";
 void Blockchain::load_compiled_in_block_hashes(const GetCheckpointsCallback& get_checkpoints)
 {
   if (get_checkpoints == nullptr || !m_fast_sync)

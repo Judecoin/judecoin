@@ -32,6 +32,7 @@
 #include "common/command_line.h"
 #include "cryptonote_config.h"
 #include "daemonizer/daemonizer.h"
+#include "cryptonote_core/cryptonote_core.h"
 
 namespace daemon_args
 {
@@ -79,7 +80,7 @@ namespace daemon_args
   };
   const command_line::arg_descriptor<std::string> arg_log_level = {
     "log-level"
-  , ""
+  , "0-4 or categories"
   , ""
   };
   const command_line::arg_descriptor<std::vector<std::string>> arg_command = {

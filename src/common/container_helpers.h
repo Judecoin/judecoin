@@ -138,7 +138,6 @@ bool keys_match_internal_values(const std::unordered_map<KeyT, ValueT> &map, Pre
 
     return true;
 }
-
 /// convenience erasor for unordered maps: std::erase_if(std::unordered_map) is C++20
 template <typename KeyT, typename ValueT, typename PredT>
 void for_all_in_map_erase_if(std::unordered_map<KeyT, ValueT> &map_inout, PredT predicate)

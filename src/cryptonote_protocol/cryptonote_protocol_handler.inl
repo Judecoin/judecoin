@@ -36,9 +36,13 @@
 // developer rfree: this code is caller of our new network code, and is modded; e.g. for rate limiting
 
 #include <boost/optional/optional.hpp>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
 #include <list>
 #include <ctime>
 
+#include <cryptonote_core/cryptonote_core.h>
+#include "cryptonote_protocol/cryptonote_protocol_handler.h"
 #include "cryptonote_basic/cryptonote_format_utils.h"
 #include "profile_tools.h"
 #include "net/network_throttle-detail.hpp"
@@ -81,6 +85,7 @@ namespace cryptonote
   inline bool make_pool_supplement_from_block_entry(
     const std::vector<cryptonote::tx_blob_entry>& tx_entries,
     const CryptoHashContainer& blk_tx_hashes,
+    const bool allow_pruned,
     cryptonote::pool_supplement& pool_supplement)
   {
     pool_supplement.nic_verified_hf_version = 0;
@@ -91,7 +96,7 @@ namespace cryptonote
       return false;
     }
 
-    for (const auto& tx_entry: tx_entries)
+    for (const cryptonote::tx_blob_entry& tx_entry: tx_entries)
     {
       if (tx_entry.blob.size() > get_max_tx_size())
       {
@@ -99,15 +104,36 @@ namespace cryptonote
         return false;
       }
 
+      const bool is_pruned = tx_entry.prunable_hash != crypto::null_hash;
+      if (is_pruned && !allow_pruned)
+      {
+        MERROR("Pruned transaction not allowed here");
+        return false;
+      }
+
       cryptonote::transaction tx;
       crypto::hash tx_hash;
-      if (!cryptonote::parse_and_validate_tx_from_blob(tx_entry.blob, tx, tx_hash)
-          || !blk_tx_hashes.count(tx_hash)
-          || tx.pruned)
+      bool parse_success = false;
+      if (is_pruned)
       {
-        MERROR("failed to parse and/or validate unpruned transaction as inside block: "
+        if ((parse_success = cryptonote::parse_and_validate_tx_base_from_blob(tx_entry.blob, tx)))
+          tx_hash = cryptonote::get_pruned_transaction_hash(tx, tx_entry.prunable_hash);
+      }
+      else
+      {
+        parse_success = cryptonote::parse_and_validate_tx_from_blob(tx_entry.blob, tx, tx_hash);
+      }
+
+      if (!parse_success)
+      {
+        MERROR("failed to parse and/or validate transaction: "
           << epee::string_tools::buff_to_hex_nodelimer(tx_entry.blob)
         );
+        return false;
+      }
+      else if (!blk_tx_hashes.count(tx_hash))
+      {
+        MERROR("transaction " << tx_hash << " not in block");
         return false;
       }
 
@@ -146,7 +172,9 @@ namespace cryptonote
       return false;
     }
 
-    return make_pool_supplement_from_block_entry(blk_entry.txs, blk_tx_hashes, pool_supplement);
+    // We set `allow_pruned` equal to whether this block entry is pruned since the pruned flag
+    // should be checked anyways by the time we deserialize transactions
+    return make_pool_supplement_from_block_entry(blk_entry.txs, blk_tx_hashes, blk_entry.pruned, pool_supplement);
   }
 
 
@@ -624,7 +652,7 @@ namespace cryptonote
     // can skip the mempool for faster block propagation. Later in the function, we will erase all
     // transactions from the relayed block.
     pool_supplement extra_block_txs;
-    if (!make_pool_supplement_from_block_entry(arg.b.txs, blk_txids_set, extra_block_txs))
+    if (!make_pool_supplement_from_block_entry(arg.b.txs, blk_txids_set, /*allow_pruned=*/false, extra_block_txs))
     {
       LOG_ERROR_CCONTEXT
       (

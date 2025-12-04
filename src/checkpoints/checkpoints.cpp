@@ -158,6 +158,19 @@ namespace cryptonote
     return m_points.rbegin()->first;
   }
   //---------------------------------------------------------------------------
+  uint64_t checkpoints::get_nearest_checkpoint_height(uint64_t block_height) const
+  {
+    if (m_points.empty())
+      return 0;
+
+    auto it = m_points.upper_bound(block_height);
+    if (it == m_points.begin())
+      return 0;
+
+    --it;
+    return it->first;
+  }
+  //---------------------------------------------------------------------------
   const std::map<uint64_t, crypto::hash>& checkpoints::get_points() const
   {
     return m_points;
@@ -251,6 +264,8 @@ namespace cryptonote
     ADD_CHECKPOINT2(3088000, "bddf8ca09110d33d6d497f13a113630c2b6af1c84d4f3a6f35cb1446f2604ade", "0x4aed3615c2f8c3e");
     ADD_CHECKPOINT2(3102800, "083f4a34f9490403b564286e7f13fd1ed45c52c86fa47195f151594e5bc87504", "0x4bbed52d4da5dfb");
     ADD_CHECKPOINT2(3198000, "1d685b39be51e4e84e0af69fa78e023c7cb21de7d33acd012d0371d5f78712d5", "0x517d415fee3a816");
+    ADD_CHECKPOINT2(3375700, "96ef57b830ef7a7ccb61ada8595a4670765b6954d8cbf45c6cf583700a676302", "0x61209b7da8a0fa6");
+    ADD_CHECKPOINT2(3451000, "0cbc912e06e1adae11f6c9cb675d3159d225b4b04d4a6c61defe50ae1816dd60", "0x6aa5fc4226bab97");
     return true;
   }
 
