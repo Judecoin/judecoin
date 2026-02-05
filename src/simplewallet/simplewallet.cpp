@@ -133,7 +133,7 @@ typedef cryptonote::simple_wallet sw;
 
 #define REFRESH_PERIOD 90 // seconds
 
-#define MAX_MNEW_ADDRESSES 1000
+#define MAX_MNEW_ADDRESSES 65536
 
 #define CHECK_MULTISIG_ENABLED() \
   do \
