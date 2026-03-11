@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2025, The Jude Project
+// Copyright (c) 2014-2026, The Jude Project
 //
 // All rights reserved.
 //
@@ -266,6 +266,8 @@ namespace cryptonote
     ADD_CHECKPOINT2(3198000, "1d685b39be51e4e84e0af69fa78e023c7cb21de7d33acd012d0371d5f78712d5", "0x517d415fee3a816");
     ADD_CHECKPOINT2(3375700, "96ef57b830ef7a7ccb61ada8595a4670765b6954d8cbf45c6cf583700a676302", "0x61209b7da8a0fa6");
     ADD_CHECKPOINT2(3451000, "0cbc912e06e1adae11f6c9cb675d3159d225b4b04d4a6c61defe50ae1816dd60", "0x6aa5fc4226bab97");
+    ADD_CHECKPOINT2(3482000, "629071b10ddad67bdc6156102aba8e008a754c91da252eede852fff9175a9f0a", "0x6f1063da7e70c0e");
+    ADD_CHECKPOINT2(3516300, "fa08acbcda99fcc3cd94a749364a29fa6de9501a023cb6673d0c68fdf988b7c3", "0x738f0af4d65d459");
     return true;
   }
 

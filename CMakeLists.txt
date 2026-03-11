@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2025, The Jude Project
+# Copyright (c) 2014-2026, The Jude Project
 #
 # All rights reserved.
 #
@@ -484,8 +484,8 @@ endif()
 option(SANITIZE "Use ASAN memory sanitizer" OFF)
 if(SANITIZE)
   message(STATUS "Using ASAN")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address,undefined")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address,undefined")
 endif()
 
 # Set default blockchain storage location:

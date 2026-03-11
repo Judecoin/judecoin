@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2025, The Jude Project
+# Copyright (c) 2014-2026, The Jude Project
 #
 # All rights reserved.
 #
@@ -45,7 +45,8 @@ target_link_libraries(blockchain_db
   PUBLIC
     common
     cncrypto
-    ringct
+    cryptonote_basic
+    ringct_basic
     ${LMDB_LIBRARY}
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_THREAD_LIBRARY}

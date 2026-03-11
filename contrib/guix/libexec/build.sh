@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Copyright (c) 2019-2025 The Bitcoin Core developers
-# Copyright (c) 2025-2025 The Jude Project
+# Copyright (c) 2019-2026 The Bitcoin Core developers
+# Copyright (c) 2026-2026 The Jude Project
 # Distributed under the MIT software license, see the accompanying
 # file ../LICENSE.txt or http://www.opensource.org/licenses/mit-license.php.
 export LC_ALL=C
@@ -12,7 +12,7 @@ source contrib/shell/git-utils.bash
 
 # Although Guix _does_ set umask when building its own packages (in our case,
 # this is all packages in manifest.scm), it does not set it for `guix
-# environment`. It does make sense for at least `guix environment --container`
+# shell`. It does make sense for at least `guix shell --container`
 # to set umask, so if that change gets merged upstream and we bump the
 # time-machine to a commit which includes the aforementioned change, we can
 # remove this line.
@@ -132,7 +132,7 @@ case "$HOST" in
         # See depends/hosts/darwin.mk for more details.
         ;;
     *android*)
-        export LD_LIBRARY_PATH="$(find /gnu/store -maxdepth 1 -name "*zlib*" | sort | head -n 1)/lib:$(find /gnu/store -maxdepth 1 -name "*gcc-11*-lib" | sort | head -n 1)/lib"
+        export LD_LIBRARY_PATH="$(find /gnu/store -maxdepth 1 -name "*zlib*" | sort | head -n 1)/lib:$(find /gnu/store -maxdepth 1 -name "*gcc-14*-lib" | sort | head -n 1)/lib"
         ;;
     *linux-gnu*)
         CROSS_GLIBC="$(store_path "glibc-cross-${HOST}")"
@@ -326,6 +326,13 @@ mkdir -p "$DISTSRC"
     # extracted source archive. The guix-build script makes sure submodules are
     # checked out before starting a build.
     CMAKEFLAGS+=" -DMANUAL_SUBMODULES=1"
+
+    # Enabling stack traces causes a compilation issue on Linux targets.
+    # Gitian builds did not enable stack traces either, so this is not a
+    # regression.
+    case "$HOST" in
+        *linux-gnu*)  CMAKEFLAGS+=" -DSTACK_TRACE=OFF" ;;
+    esac
 
     # Configure this DISTSRC for $HOST
     # shellcheck disable=SC2086

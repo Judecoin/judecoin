@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2025, The Jude Project
+// Copyright (c) 2017-2026, The Jude Project
 // 
 // All rights reserved.
 // 
@@ -844,7 +844,7 @@ namespace rpc
   {
     res.hard_fork_version = m_core.get_blockchain_storage().get_current_hard_fork_version();
 
-    m_core.get_blockchain_storage().get_dynamic_base_fee_estimate_2025_scaling(req.num_grace_blocks, res.fees);
+    m_core.get_blockchain_storage().get_dynamic_base_fee_estimate_2026_scaling(req.num_grace_blocks, res.fees);
     res.estimated_base_fee = res.fees.at(0);
 
     {

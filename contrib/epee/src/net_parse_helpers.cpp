@@ -98,7 +98,7 @@ namespace net_utils
     out_port = 0;
     return boost::conversion::try_lexical_convert(port_str, out_port) && out_port <= 65535;
   }
-  
+
   bool parse_uri(const std::string uri, http::uri_content& content)
   {
 
@@ -159,7 +159,7 @@ namespace net_utils
     }
     if(result[6].matched)
     {
-        if (!parse_port(result[6].str(), content.port))
+      if (!parse_port(result[6].str(), content.port))
         return false;
     }
     if(result[7].matched)
@@ -197,7 +197,7 @@ namespace net_utils
     if(result[6].matched)
     {
       if (!parse_port(result[6].str(), content.port))
-      return false;
+        return false;
     }
     if(result[7].matched)
     {

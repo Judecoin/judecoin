@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2025, The Jude Project
+// Copyright (c) 2019-2026, The Jude Project
 // 
 // All rights reserved.
 // 
@@ -138,7 +138,7 @@ static uint32_t lcg()
 
 static void test(test_t t, uint64_t blocks)
 {
-  PREFIX(HF_VERSION_2025_SCALING);
+  PREFIX(HF_VERSION_2026_SCALING);
 
   for (uint64_t h = 0; h < LONG_TERM_BLOCK_WEIGHT_WINDOW; ++h)
   {
@@ -177,8 +177,8 @@ static void test(test_t t, uint64_t blocks)
     }
     uint64_t ltw = bc->get_next_long_term_block_weight(w);
     cryptonote::block b;
-    b.major_version = HF_VERSION_2025_SCALING;
-    b.minor_version = HF_VERSION_2025_SCALING;
+    b.major_version = HF_VERSION_2026_SCALING;
+    b.minor_version = HF_VERSION_2026_SCALING;
     bc->get_db().add_block(std::make_pair(std::move(b), ""), w, ltw, bc->get_db().height(), bc->get_db().height(), {});
 
     if (!bc->update_next_cumulative_weight_limit())

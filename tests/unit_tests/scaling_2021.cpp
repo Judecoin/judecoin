@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2025, The Jude Project
+// Copyright (c) 2019-2026, The Jude Project
 // 
 // All rights reserved.
 // 
@@ -27,13 +27,13 @@
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // References:
-// - https://github.com/ArticMine/Jude-Documents/blob/master/JudeScaling2025.pdf
+// - https://github.com/ArticMine/Jude-Documents/blob/master/JudeScaling2026.pdf
 // - https://github.com/jude-project/research-lab/issues/70
 
 #include "gtest/gtest.h"
 #include "cryptonote_core/blockchain.h"
 
-TEST(fee_2025_scaling, relay_fee_cases_from_pdf)
+TEST(fee_2026_scaling, relay_fee_cases_from_pdf)
 {
   ASSERT_EQ(cryptonote::Blockchain::get_dynamic_base_fee(1200000000000, 300000), 38000);
   ASSERT_EQ(cryptonote::Blockchain::get_dynamic_base_fee(1200000000000, 1425000), 1684 /*1680*/);
@@ -44,12 +44,12 @@ TEST(fee_2025_scaling, relay_fee_cases_from_pdf)
   ASSERT_EQ(cryptonote::Blockchain::get_dynamic_base_fee(600000000000, 1500000), 760);
 }
 
-TEST(fee_2025_scaling, wallet_fee_cases_from_pdf)
+TEST(fee_2026_scaling, wallet_fee_cases_from_pdf)
 {
   std::vector<uint64_t> fees;
 
   fees.clear();
-  cryptonote::Blockchain::get_dynamic_base_fee_estimate_2025_scaling(600000000000, 300000, 300000, fees);
+  cryptonote::Blockchain::get_dynamic_base_fee_estimate_2026_scaling(600000000000, 300000, 300000, fees);
   ASSERT_EQ(fees.size(), 4);
   ASSERT_EQ(fees[0], 20000);
   ASSERT_EQ(fees[1], 80000);
@@ -57,7 +57,7 @@ TEST(fee_2025_scaling, wallet_fee_cases_from_pdf)
   ASSERT_EQ(fees[3], 4000000);
 
   fees.clear();
-  cryptonote::Blockchain::get_dynamic_base_fee_estimate_2025_scaling(600000000000, 15000000, 300000, fees);
+  cryptonote::Blockchain::get_dynamic_base_fee_estimate_2026_scaling(600000000000, 15000000, 300000, fees);
   ASSERT_EQ(fees.size(), 4);
   ASSERT_EQ(fees[0], 20000);
   ASSERT_EQ(fees[1], 80000);
@@ -65,7 +65,7 @@ TEST(fee_2025_scaling, wallet_fee_cases_from_pdf)
   ASSERT_EQ(fees[3], 1300000);
 
   fees.clear();
-  cryptonote::Blockchain::get_dynamic_base_fee_estimate_2025_scaling(600000000000, 1425000, 1425000, fees);
+  cryptonote::Blockchain::get_dynamic_base_fee_estimate_2026_scaling(600000000000, 1425000, 1425000, fees);
   ASSERT_EQ(fees.size(), 4);
   ASSERT_EQ(fees[0], 890);
   ASSERT_EQ(fees[1], 3600);
@@ -73,7 +73,7 @@ TEST(fee_2025_scaling, wallet_fee_cases_from_pdf)
   ASSERT_EQ(fees[3], 850000 /* 842000 */);
 
   fees.clear();
-  cryptonote::Blockchain::get_dynamic_base_fee_estimate_2025_scaling(600000000000, 1500000, 1500000, fees);
+  cryptonote::Blockchain::get_dynamic_base_fee_estimate_2026_scaling(600000000000, 1500000, 1500000, fees);
   ASSERT_EQ(fees.size(), 4);
   ASSERT_EQ(fees[0], 800);
   ASSERT_EQ(fees[1], 3200);
@@ -81,7 +81,7 @@ TEST(fee_2025_scaling, wallet_fee_cases_from_pdf)
   ASSERT_EQ(fees[3], 800000);
 
   fees.clear();
-  cryptonote::Blockchain::get_dynamic_base_fee_estimate_2025_scaling(600000000000, 75000000, 1500000, fees);
+  cryptonote::Blockchain::get_dynamic_base_fee_estimate_2026_scaling(600000000000, 75000000, 1500000, fees);
   ASSERT_EQ(fees.size(), 4);
   ASSERT_EQ(fees[0], 800);
   ASSERT_EQ(fees[1], 3200);
@@ -89,7 +89,7 @@ TEST(fee_2025_scaling, wallet_fee_cases_from_pdf)
   ASSERT_EQ(fees[3], 260000);
 }
 
-TEST(fee_2025_scaling, rounding)
+TEST(fee_2026_scaling, rounding)
 {
   ASSERT_EQ(cryptonote::round_money_up("27810", 3), "27900.000000000000");
   ASSERT_EQ(cryptonote::round_money_up("37.94", 3), "38.000000000000");

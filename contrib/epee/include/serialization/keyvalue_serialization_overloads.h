@@ -117,11 +117,11 @@ namespace epee
       if(!container.size()) return true;
       std::string mb;
       mb.resize(sizeof(typename stl_container::value_type)*container.size());
-      char *p_elem = mb.data();
+      typename stl_container::value_type* p_elem = (typename stl_container::value_type*)mb.data();
       BOOST_FOREACH(const typename stl_container::value_type& v, container)
       {
-        memcpy(p_elem, std::addressof(v), sizeof(typename stl_container::value_type));
-        p_elem += sizeof(typename stl_container::value_type);
+        *p_elem = v;
+        p_elem++;
       }
       return stg.set_value(pname, std::move(mb), hparent_section);
     }
@@ -135,19 +135,14 @@ namespace epee
       if(res)
       {
         size_t loaded_size = buff.size();
-        char *pelem = buff.data();
+        typename stl_container::value_type* pelem =  (typename stl_container::value_type*)buff.data();
         CHECK_AND_ASSERT_MES(!(loaded_size%sizeof(typename stl_container::value_type)), 
           false, 
           "size in blob " << loaded_size << " not have not zero modulo for sizeof(value_type) = " << sizeof(typename stl_container::value_type) << ", type " << typeid(typename stl_container::value_type).name());
         size_t count = (loaded_size/sizeof(typename stl_container::value_type));
         hint_resize(container, count);
         for(size_t i = 0; i < count; i++)
-        {
-          typename stl_container::value_type v;
-          memcpy(std::addressof(v), pelem, sizeof(v));
-          container.insert(container.end(), v);
-          pelem += sizeof(v);
-        }
+          container.insert(container.end(), *(pelem++));
       }
       return res;
     }

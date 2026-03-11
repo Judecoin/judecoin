@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2025, The Jude Project
+// Copyright (c) 2014-2026, The Jude Project
 // 
 // All rights reserved.
 // 
@@ -644,9 +644,12 @@ bool t_rpc_command_executor::print_connections() {
     }
   }
 
-  int host_field_width = 15;
-  for (const auto &conn : res.connections)
-    host_field_width = std::max(host_field_width, 8 + (int) conn.address.length());
+  auto longest_host = *std::max_element(res.connections.begin(), res.connections.end(),
+                                        [](const auto &info1, const auto &info2)
+                                        {
+                                          return info1.address.length() < info2.address.length();
+                                        });
+  int host_field_width = std::max(15, 8 + (int) longest_host.address.length());
 
   tools::msg_writer() << std::setw(host_field_width) << std::left << "Remote Host"
       << std::setw(8) << "Type"

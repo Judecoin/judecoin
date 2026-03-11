@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2025, The Jude Project
+// Copyright (c) 2014-2026, The Jude Project
 //
 // All rights reserved.
 //
@@ -731,18 +731,18 @@ namespace nodetool
     if (m_nettype == cryptonote::TESTNET)
     {
       full_addrs.insert("176.9.0.187:28080");
-      full_addrs.insert("51.79.173.165:28080");
       full_addrs.insert("192.99.8.110:28080");
       full_addrs.insert("37.187.74.171:28080");
       full_addrs.insert("88.99.195.15:28080");
+      full_addrs.insert("5.104.84.64:28080");
     }
     else if (m_nettype == cryptonote::STAGENET)
     {
       full_addrs.insert("176.9.0.187:38080");
-      full_addrs.insert("51.79.173.165:38080");
       full_addrs.insert("192.99.8.110:38080");
       full_addrs.insert("37.187.74.171:38080");
       full_addrs.insert("88.99.195.15:38080");
+      full_addrs.insert("5.104.84.64:38080");
     }
     else if (m_nettype == cryptonote::FAKECHAIN)
     {
@@ -751,11 +751,10 @@ namespace nodetool
     {
       full_addrs.insert("176.9.0.187:18080");
       full_addrs.insert("88.198.163.90:18080");
-      full_addrs.insert("66.85.74.134:18080");
-      full_addrs.insert("51.79.173.165:18080");
       full_addrs.insert("192.99.8.110:18080");
       full_addrs.insert("37.187.74.171:18080");
       full_addrs.insert("88.99.195.15:18080");
+      full_addrs.insert("5.104.84.64:18080");
     }
     return full_addrs;
   }
@@ -887,11 +886,11 @@ namespace nodetool
       {
         return {
           "zbjkbsxc5munw3qusl7j2hpcmikhqocdf4pqhnhtpzw5nt5jrmofptid.onion:18083",
-          "qz43zul2x56jexzoqgkx2trzwcfnr6l3hbtfcfx54g4r3eahy3bssjyd.onion:18083",
           "plowsof3t5hogddwabaeiyrno25efmzfxyro2vligremt7sxpsclfaid.onion:18083",
           "plowsoffjexmxalw73tkjmf422gq6575fc7vicuu4javzn2ynnte6tyd.onion:18083",
           "plowsofe6cleftfmk2raiw5h2x66atrik3nja4bfd3zrfa2hdlgworad.onion:18083",
           "aclc4e2jhhtr44guufbnwk5bzwhaecinax4yip4wr4tjn27sjsfg6zqd.onion:18083",
+          "lykcas4tus7mkm4bhsgqe4drtd4awi7gja24goscc47xfgzj54yofyqd.onion:18083",
         };
       }
       return {};
@@ -1059,7 +1058,7 @@ namespace nodetool
             {
               ++number_of_in_peers;
             }
-            else
+            else if (!cntxt.is_ping)
             {
               ++number_of_out_peers;
             }
@@ -1327,7 +1326,7 @@ namespace nodetool
     bool used = false;
     server->second.m_net_server.get_config_object().foreach_connection([&, is_public](const p2p_connection_context& cntxt)
     {
-      if((is_public && cntxt.peer_id == peer.id) || (!cntxt.m_is_income && peer.adr == cntxt.m_remote_address))
+      if((is_public && cntxt.peer_id == peer.id && peer.adr.is_same_host(cntxt.m_remote_address)) || (!cntxt.m_is_income && peer.adr == cntxt.m_remote_address))
       {
         used = true;
         return false;//stop enumerating
@@ -1352,7 +1351,7 @@ namespace nodetool
     bool used = false;
     server->second.m_net_server.get_config_object().foreach_connection([&, is_public](const p2p_connection_context& cntxt)
     {
-      if((is_public && cntxt.peer_id == peer.id) || (!cntxt.m_is_income && peer.adr == cntxt.m_remote_address))
+      if((is_public && cntxt.peer_id == peer.id && peer.adr.is_same_host(cntxt.m_remote_address)) || (!cntxt.m_is_income && peer.adr == cntxt.m_remote_address))
       {
         used = true;
         return false;//stop enumerating
@@ -2045,7 +2044,7 @@ namespace nodetool
     size_t count = 0;
     zone.m_net_server.get_config_object().foreach_connection([&](const p2p_connection_context& cntxt)
     {
-      if(!cntxt.m_is_income)
+      if(!cntxt.m_is_income && !cntxt.is_ping)
         ++count;
       return true;
     });
@@ -2534,7 +2533,7 @@ namespace nodetool
         return false;
       }
       return true;
-    }, "0.0.0.0", m_ssl_support);
+    }, "0.0.0.0", m_ssl_support, p2p_connection_context{true /* is_ping */});
     if(!r)
     {
       LOG_WARNING_CC(context, "Failed to call connect_async, network error.");

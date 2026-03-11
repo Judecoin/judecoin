@@ -2,7 +2,7 @@
 # Simulate a maximal block attack on the Jude network
 # This uses the scheme proposed by ArticMine
 # Written by Sarang Nother
-# Copyright (c) 2019-2025, The Jude Project
+# Copyright (c) 2019-2026, The Jude Project
 import sys
 import math
 

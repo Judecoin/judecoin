@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2025, The Jude Project
+// Copyright (c) 2014-2026, The Jude Project
 // 
 // All rights reserved.
 // 
@@ -30,6 +30,7 @@
 
 #include <algorithm>
 #include <numeric>
+#include <optional>
 #include <string>
 #include <tuple>
 #include <queue>
@@ -40,6 +41,7 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/numeric/conversion/cast.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/asio/ip/address.hpp>
 #include <boost/filesystem/operations.hpp>
@@ -921,11 +923,6 @@ bool get_short_payment_id(crypto::hash8 &payment_id8, const tools::wallet2::pend
   return false;
 }
 
-uint64_t get_outgoing_amount(const cryptonote::transaction &tx, const uint64_t amount_spent)
-{
-  return tx.version == 1 ? get_outs_money_amount(tx) : (amount_spent - tx.rct_signatures.txnFee);
-}
-
 tools::wallet2::tx_construction_data get_construction_data_with_decrypted_short_payment_id(const tools::wallet2::pending_tx &ptx, hw::device &hwdev)
 {
   tools::wallet2::tx_construction_data construction_data = ptx.construction_data;
@@ -1102,50 +1099,46 @@ uint64_t gamma_picker::pick()
 };
 
 boost::mutex wallet_keys_unlocker::lockers_lock;
-unsigned int wallet_keys_unlocker::lockers = 0;
-wallet_keys_unlocker::wallet_keys_unlocker(wallet2 &w, const boost::optional<tools::password_container> &password):
+std::map<wallet2*, std::size_t> wallet_keys_unlocker::lockers_per_wallet = {};
+wallet_keys_unlocker::wallet_keys_unlocker(wallet2 &w, const epee::wipeable_string *password):
   w(w),
-  locked(password != boost::none)
+  should_relock(true)
 {
-  boost::lock_guard<boost::mutex> lock(lockers_lock);
-  if (lockers++ > 0)
-    locked = false;
-  if (!locked || w.is_unattended() || w.ask_password() != tools::wallet2::AskPasswordToDecrypt || w.watch_only() || w.is_background_syncing())
+  static_assert(!std::is_move_assignable_v<wallet2> && !std::is_move_constructible_v<wallet2>,
+    "Keeping track of wallet instances by pointer doesn't work if wallet2 can be moved");
+
+  if (password == nullptr || !w.is_key_encryption_enabled())
   {
-    locked = false;
+    should_relock = false;
     return;
   }
-  const epee::wipeable_string pass = password->password();
-  w.generate_chacha_key_from_password(pass, key);
-  w.decrypt_keys(key);
-}
 
-wallet_keys_unlocker::wallet_keys_unlocker(wallet2 &w, bool locked, const epee::wipeable_string &password):
-  w(w),
-  locked(locked)
-{
+  w.generate_chacha_key_from_password(*password, key);
+
   boost::lock_guard<boost::mutex> lock(lockers_lock);
-  if (lockers++ > 0)
-    locked = false;
-  if (!locked)
+  if (lockers_per_wallet[std::addressof(w)]++ > 0)
     return;
-  w.generate_chacha_key_from_password(password, key);
+
   w.decrypt_keys(key);
 }
 
 wallet_keys_unlocker::~wallet_keys_unlocker()
 {
+  if (!should_relock)
+    return;
+
   try
   {
     boost::lock_guard<boost::mutex> lock(lockers_lock);
-    if (lockers == 0)
+    wallet2* w_ptr = std::addressof(w);
+    if (lockers_per_wallet[w_ptr] == 0)
     {
       MERROR("There are no lockers in wallet_keys_unlocker dtor");
       return;
     }
-    --lockers;
-    if (!locked)
-      return;
+    if (--lockers_per_wallet[w_ptr] > 0)
+      return; // there are other unlock-ers for this wallet, do nothing for now
+    lockers_per_wallet.erase(w_ptr);
     w.encrypt_keys(key);
   }
   catch (...)
@@ -1201,7 +1194,7 @@ wallet2::wallet2(network_type nettype, uint64_t kdf_rounds, bool unattended, std
   m_print_ring_members(false),
   m_store_tx_info(true),
   m_default_mixin(0),
-  m_default_priority(0),
+  m_default_priority(fee_priority::Default),
   m_refresh_type(RefreshOptimizeCoinbase),
   m_auto_refresh(true),
   m_first_refresh_done(false),
@@ -1255,7 +1248,6 @@ wallet2::wallet2(network_type nettype, uint64_t kdf_rounds, bool unattended, std
   m_offline(false),
   m_rpc_version(0),
   m_export_format(ExportFormat::Binary),
-  m_load_deprecated_formats(false),
   m_enable_multisig(false),
   m_pool_info_query_time(0),
   m_has_ever_refreshed_from_node(false),
@@ -2211,7 +2203,7 @@ void wallet2::scan_output(const cryptonote::transaction &tx, bool miner_tx, cons
       boost::optional<epee::wipeable_string> pwd = m_callback->on_get_password(pool ? "output found in pool" : "output received");
       THROW_WALLET_EXCEPTION_IF(!pwd, error::password_needed, tr("Password is needed to compute key image for incoming jude"));
       THROW_WALLET_EXCEPTION_IF(!verify_password(*pwd), error::password_needed, tr("Invalid password: password is needed to compute key image for incoming jude"));
-      m_encrypt_keys_after_refresh.reset(new wallet_keys_unlocker(*this, m_ask_password == AskPasswordToDecrypt && !m_unattended && !m_watch_only, *pwd));
+      m_encrypt_keys_after_refresh.reset(new wallet_keys_unlocker(*this, &*pwd));
     }
   }
 
@@ -2700,10 +2692,10 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
         LOG_ERROR("spent funds are from different subaddress accounts; count of incoming/outgoing payments will be incorrect");
       subaddr_account = td.m_subaddr_index.major;
       subaddr_indices.insert(td.m_subaddr_index.minor);
-      LOG_PRINT_L0("Spent money: " << print_money(amount) << ", with tx: " << txid);
-      set_spent(it->second, height);
       if (!pool)
       {
+        LOG_PRINT_L0("Spent money: " << print_money(amount) << ", with tx: " << txid);
+        set_spent(it->second, height);
         if (!ignore_callbacks && 0 != m_callback)
           m_callback->on_money_spent(height, txid, tx, amount, tx, td.m_subaddr_index);
 
@@ -2792,33 +2784,20 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
 
   uint64_t fee = miner_tx ? 0 : tx.version == 1 ? tx_money_spent_in_ins - get_outs_money_amount(tx) : tx.rct_signatures.txnFee;
 
-  if (tx_money_spent_in_ins > 0)
+  if (tx_money_spent_in_ins > 0 && !pool)
   {
     uint64_t self_received = std::accumulate<decltype(tx_money_got_in_outs.begin()), uint64_t>(tx_money_got_in_outs.begin(), tx_money_got_in_outs.end(), 0,
       [&subaddr_account] (uint64_t acc, const std::pair<cryptonote::subaddress_index, uint64_t>& p)
       {
         return acc + (p.first.major == *subaddr_account ? p.second : 0);
       });
-    if (!pool)
+    process_outgoing(txid, tx, height, ts, tx_money_spent_in_ins, self_received, *subaddr_account, subaddr_indices);
+    // if sending to yourself at the same subaddress account, set the outgoing payment amount to 0 so that it's less confusing
+    if (tx_money_spent_in_ins == self_received + fee)
     {
-      process_outgoing(txid, tx, height, ts, tx_money_spent_in_ins, self_received, *subaddr_account, subaddr_indices);
-      // if sending to yourself at the same subaddress account, set the outgoing payment amount to 0 so that it's less confusing
-      if (tx_money_spent_in_ins == self_received + fee)
-      {
-        auto i = m_confirmed_txs.find(txid);
-        THROW_WALLET_EXCEPTION_IF(i == m_confirmed_txs.end(), error::wallet_internal_error,
-          "confirmed tx wasn't found: " + string_tools::pod_to_hex(txid));
-        i->second.m_change = self_received;
-      }
-    }
-    else if (!m_unconfirmed_txs.count(txid))
-    {
-      // Add to unconfirmed txs if not already there (e.g. restoring wallet, or running the wallet in parallel to the sending wallet w/same seed)
-      add_unconfirmed_tx(txid, tx, tx_money_spent_in_ins, {}/*don't know dests*/, crypto::null_hash/*don't know payment_id*/, self_received, *subaddr_account, subaddr_indices);
-      auto i = m_unconfirmed_txs.find(txid);
-      THROW_WALLET_EXCEPTION_IF(i == m_unconfirmed_txs.end(), error::wallet_internal_error,
-        "unconfirmed tx wasn't found: " + string_tools::pod_to_hex(txid));
-      i->second.m_amount_out = get_outgoing_amount(tx, tx_money_spent_in_ins);
+      auto i = m_confirmed_txs.find(txid);
+      THROW_WALLET_EXCEPTION_IF(i == m_confirmed_txs.end(), error::wallet_internal_error,
+        "confirmed tx wasn't found: " + string_tools::pod_to_hex(txid));
       i->second.m_change = self_received;
     }
   }
@@ -2968,7 +2947,10 @@ void wallet2::process_outgoing(const crypto::hash &txid, const cryptonote::trans
     // wallet (eg, we're a cold wallet and the hot wallet sent it). For RCT transactions,
     // we only see 0 input amounts, so have to deduce amount out from other parameters.
     entry.first->second.m_amount_in = spent;
-    entry.first->second.m_amount_out = get_outgoing_amount(tx, spent);
+    if (tx.version == 1)
+      entry.first->second.m_amount_out = get_outs_money_amount(tx);
+    else
+      entry.first->second.m_amount_out = spent - tx.rct_signatures.txnFee;
     entry.first->second.m_change = received;
 
     std::vector<tx_extra_field> tx_extra_fields;
@@ -3933,11 +3915,11 @@ void wallet2::fast_refresh(uint64_t stop_height, uint64_t &blocks_start_height, 
 {
   std::vector<crypto::hash> hashes;
 
-  const uint64_t checkpoint_height = m_checkpoints.get_max_height();
+  const uint64_t checkpoint_height = (stop_height < 1000) ? 0 : m_checkpoints.get_nearest_checkpoint_height(stop_height);
   if ((stop_height > checkpoint_height && m_blockchain.size()-1 < checkpoint_height) && !force)
   {
     // we will drop all these, so don't bother getting them
-    uint64_t missing_blocks = m_checkpoints.get_max_height() - m_blockchain.size();
+    uint64_t missing_blocks = checkpoint_height - m_blockchain.size();
     while (missing_blocks-- > 0)
       m_blockchain.push_back(crypto::null_hash); // maybe a bit suboptimal, but deque won't do huge reallocs like vector
     m_blockchain.push_back(m_checkpoints.get_points().at(checkpoint_height));
@@ -4056,16 +4038,7 @@ void wallet2::refresh(bool trusted_daemon, uint64_t start_height, uint64_t & blo
     return;
   }
 
-  if (!m_first_refresh_done)
-  {
-    // We want to process the whole pool again, in case we identify received outputs in the chain we might have spent in the pool
-    m_pool_info_query_time = 0;
-    m_scanned_pool_txs[0].clear();
-    m_scanned_pool_txs[1].clear();
-    // Clear unconfirmed (received) payments because the data is 100% recovered when scanning
-    m_unconfirmed_payments.clear();
-    // Don't clear unconfirmed (sent) txs because some data is not recover-able when scanning (dests)
-  }
+  received_money = false;
   blocks_fetched = 0;
   uint64_t added_blocks = 0;
   size_t try_count = 0;
@@ -4664,7 +4637,7 @@ boost::optional<wallet2::keys_file_data> wallet2::get_keys_file_data(const crypt
   value2.SetUint(m_default_mixin);
   json.AddMember("default_mixin", value2, json.GetAllocator());
 
-  value2.SetUint(m_default_priority);
+  value2.SetUint(boost::numeric_cast<unsigned>(fee_priority_utilities::as_integral(m_default_priority)));
   json.AddMember("default_priority", value2, json.GetAllocator());
 
   value2.SetInt(m_auto_refresh ? 1 :0);
@@ -4760,7 +4733,7 @@ boost::optional<wallet2::keys_file_data> wallet2::get_keys_file_data(const crypt
   value2.SetInt(m_export_format);
   json.AddMember("export_format", value2, json.GetAllocator());
 
-  value2.SetInt(m_load_deprecated_formats);
+  value2.SetInt(false);
   json.AddMember("load_deprecated_formats", value2, json.GetAllocator());
 
   value2.SetUint(1);
@@ -4996,7 +4969,7 @@ bool wallet2::load_keys_buf(const std::string& keys_buf, const epee::wipeable_st
     m_print_ring_members = false;
     m_store_tx_info = true;
     m_default_mixin = 0;
-    m_default_priority = 0;
+    m_default_priority = fee_priority::Default;
     m_auto_refresh = true;
     m_refresh_type = RefreshType::RefreshDefault;
     m_refresh_from_block_height = 0;
@@ -5026,7 +4999,6 @@ bool wallet2::load_keys_buf(const std::string& keys_buf, const epee::wipeable_st
     m_subaddress_lookahead_minor = SUBADDRESS_LOOKAHEAD_MINOR;
     m_original_keys_available = false;
     m_export_format = ExportFormat::Binary;
-    m_load_deprecated_formats = false;
     m_device_name = "";
     m_device_derivation_path = "";
     m_key_device_type = hw::device::device_type::SOFTWARE;
@@ -5129,15 +5101,15 @@ bool wallet2::load_keys_buf(const std::string& keys_buf, const epee::wipeable_st
     GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, default_priority, unsigned int, Uint, false, 0);
     if (field_default_priority_found)
     {
-      m_default_priority = field_default_priority;
+      m_default_priority = fee_priority_utilities::from_integral(boost::numeric_cast<uint32_t>(field_default_priority));
     }
     else
     {
       GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, default_fee_multiplier, unsigned int, Uint, false, 0);
       if (field_default_fee_multiplier_found)
-        m_default_priority = field_default_fee_multiplier;
+        m_default_priority = fee_priority_utilities::from_integral(boost::numeric_cast<uint32_t>(field_default_fee_multiplier));
       else
-        m_default_priority = 0;
+        m_default_priority = fee_priority::Default;
     }
     GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, auto_refresh, int, Int, false, true);
     m_auto_refresh = field_auto_refresh;
@@ -5210,9 +5182,6 @@ bool wallet2::load_keys_buf(const std::string& keys_buf, const epee::wipeable_st
 
     GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, export_format, ExportFormat, Int, false, Binary);
     m_export_format = field_export_format;
-
-    GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, load_deprecated_formats, int, Int, false, false);
-    m_load_deprecated_formats = field_load_deprecated_formats;
 
     GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, device_name, std::string, String, false, std::string());
     if (m_device_name.empty())
@@ -5464,6 +5433,14 @@ bool wallet2::verify_password(const std::string& keys_file_name, const epee::wip
     r = r && hwdev.verify_keys(keys.m_spend_secret_key, keys.m_account_address.m_spend_public_key);
   spend_key_out = (!no_spend_key && r) ? keys.m_spend_secret_key : crypto::null_skey;
   return r;
+}
+
+bool wallet2::is_key_encryption_enabled() const
+{
+  return !is_unattended()
+    && ask_password() == tools::wallet2::AskPasswordToDecrypt
+    && !watch_only()
+    && !is_background_syncing();
 }
 
 void wallet2::encrypt_keys(const crypto::chacha_key &key)
@@ -5866,27 +5843,6 @@ void wallet2::restore(const std::string& wallet_, const epee::wipeable_string& p
   }
 }
 //----------------------------------------------------------------------------------------------------
-epee::misc_utils::auto_scope_leave_caller wallet2::decrypt_account_for_multisig(const epee::wipeable_string &password)
-{
-  // decrypt account keys
-  // note: this conditional's clauses are old and undocumented
-  epee::misc_utils::auto_scope_leave_caller keys_reencryptor;
-  if (m_ask_password == AskPasswordToDecrypt && !m_unattended && !m_watch_only)
-  {
-    crypto::chacha_key chacha_key;
-    crypto::generate_chacha_key(password.data(), password.size(), chacha_key, m_kdf_rounds);
-    this->decrypt_keys(chacha_key);
-    keys_reencryptor = epee::misc_utils::create_scope_leave_handler(
-        [this, chacha_key]()
-        {
-          this->encrypt_keys(chacha_key);
-        }
-      );
-  }
-
-  return keys_reencryptor;
-}
-//----------------------------------------------------------------------------------------------------
 void wallet2::get_uninitialized_multisig_account(multisig::multisig_account &account_out) const
 {
   // create uninitialized multisig account
@@ -5932,7 +5888,7 @@ std::string wallet2::make_multisig(const epee::wipeable_string &password,
   const std::uint32_t threshold)
 {
   // decrypt account keys
-  epee::misc_utils::auto_scope_leave_caller keys_reencryptor{this->decrypt_account_for_multisig(password)};
+  std::optional<wallet_keys_unlocker> unlocker(std::in_place, *this, &password);
 
   // create multisig account
   multisig::multisig_account multisig_account;
@@ -6010,7 +5966,7 @@ std::string wallet2::make_multisig(const epee::wipeable_string &password,
   m_account_public_address.m_spend_public_key = multisig_account.get_multisig_pubkey();
 
   // re-encrypt keys
-  keys_reencryptor = epee::misc_utils::auto_scope_leave_caller();
+  unlocker.reset();
 
   if (!m_wallet_file.empty())
     this->create_keys_file(m_wallet_file, false, password, boost::filesystem::exists(m_wallet_file + ".address.txt"));
@@ -6031,7 +5987,7 @@ std::string wallet2::exchange_multisig_keys(const epee::wipeable_string &passwor
   CHECK_AND_ASSERT_THROW_MES(ms_status.multisig_is_active, "The wallet is not multisig");
 
   // decrypt account keys
-  epee::misc_utils::auto_scope_leave_caller keys_reencryptor{this->decrypt_account_for_multisig(password)};
+  std::optional<wallet_keys_unlocker> unlocker(std::in_place, *this, &password);
 
   // reconstruct multisig account
   multisig::multisig_account multisig_account;
@@ -6083,7 +6039,7 @@ std::string wallet2::exchange_multisig_keys(const epee::wipeable_string &passwor
   if (multisig_account.multisig_is_ready())
   {
     // keys are encrypted again
-    keys_reencryptor = epee::misc_utils::auto_scope_leave_caller();
+    unlocker.reset();
 
     if (!m_wallet_file.empty())
     {
@@ -6129,7 +6085,7 @@ std::string wallet2::get_multisig_key_exchange_booster(const epee::wipeable_stri
   CHECK_AND_ASSERT_THROW_MES(kex_messages.size() > 0, "No key exchange messages passed in.");
 
   // decrypt account keys
-  epee::misc_utils::auto_scope_leave_caller keys_reencryptor{this->decrypt_account_for_multisig(password)};
+  wallet_keys_unlocker unlocker(*this, &password);
 
   // prepare multisig account
   multisig::multisig_account multisig_account;
@@ -6517,7 +6473,7 @@ void wallet2::load(const std::string& wallet_, const epee::wipeable_string& pass
     THROW_WALLET_EXCEPTION_IF(true, error::file_read_error, "failed to load keys from buffer");
   }
 
-  wallet_keys_unlocker unlocker(*this, m_ask_password == AskPasswordToDecrypt && !m_unattended && !m_watch_only && !m_is_background_wallet, password);
+  wallet_keys_unlocker unlocker(*this, &password);
 
   //keys loaded ok!
   //try to load wallet cache. but even if we failed, it is not big problem
@@ -6559,7 +6515,7 @@ void wallet2::load(const std::string& wallet_, const epee::wipeable_string& pass
   try
   {
     if (use_fs)
-      m_message_store.read_from_file(get_multisig_wallet_state(), m_mms_file, m_load_deprecated_formats);
+      m_message_store.read_from_file(get_multisig_wallet_state(), m_mms_file);
   }
   catch (const std::exception &e)
   {
@@ -7508,9 +7464,9 @@ uint64_t wallet2::select_transfers(uint64_t needed_money, std::vector<size_t> un
   return found_money;
 }
 //----------------------------------------------------------------------------------------------------
-void wallet2::add_unconfirmed_tx(const crypto::hash &txid, const cryptonote::transaction& tx, uint64_t amount_in, const std::vector<cryptonote::tx_destination_entry> &dests, const crypto::hash &payment_id, uint64_t change_amount, uint32_t subaddr_account, const std::set<uint32_t>& subaddr_indices)
+void wallet2::add_unconfirmed_tx(const cryptonote::transaction& tx, uint64_t amount_in, const std::vector<cryptonote::tx_destination_entry> &dests, const crypto::hash &payment_id, uint64_t change_amount, uint32_t subaddr_account, const std::set<uint32_t>& subaddr_indices)
 {
-  unconfirmed_transfer_details& utd = m_unconfirmed_txs[txid];
+  unconfirmed_transfer_details& utd = m_unconfirmed_txs[cryptonote::get_transaction_hash(tx)];
   utd.m_amount_in = amount_in;
   utd.m_amount_out = 0;
   for (const auto &d: dests)
@@ -7625,7 +7581,7 @@ void wallet2::commit_tx(pending_tx& ptx)
     for(size_t idx: ptx.selected_transfers)
       amount_in += m_transfers[idx].amount();
   }
-  add_unconfirmed_tx(txid, ptx.tx, amount_in, dests, payment_id, ptx.change_dts.amount, ptx.construction_data.subaddr_account, ptx.construction_data.subaddr_indices);
+  add_unconfirmed_tx(ptx.tx, amount_in, dests, payment_id, ptx.change_dts.amount, ptx.construction_data.subaddr_account, ptx.construction_data.subaddr_indices);
   if (store_tx_info() && ptx.tx_key != crypto::null_skey)
   {
     m_tx_keys[txid] = ptx.tx_key;
@@ -7734,50 +7690,13 @@ bool wallet2::parse_unsigned_tx_from_str(const std::string &unsigned_tx_st, unsi
   s = s.substr(1);
   if (version == '\003')
   {
-    if (!m_load_deprecated_formats)
-    {
       LOG_PRINT_L0("Not loading deprecated format");
       return false;
-    }
-    try
-    {
-      std::istringstream iss(s);
-      boost::archive::portable_binary_iarchive ar(iss);
-      ar >> exported_txs;
-    }
-    catch (...)
-    {
-      LOG_PRINT_L0("Failed to parse data from unsigned tx");
-      return false;
-    }
   }
   else if (version == '\004')
   {
-    if (!m_load_deprecated_formats)
-    {
       LOG_PRINT_L0("Not loading deprecated format");
       return false;
-    }
-    try
-    {
-      s = decrypt_with_view_secret_key(s);
-      try
-      {
-        std::istringstream iss(s);
-        boost::archive::portable_binary_iarchive ar(iss);
-        ar >> exported_txs;
-      }
-      catch (...)
-      {
-        LOG_PRINT_L0("Failed to parse data from unsigned tx");
-        return false;
-      }
-    }
-    catch (const std::exception &e)
-    {
-      LOG_PRINT_L0("Failed to decrypt unsigned tx: " << e.what());
-      return false;
-    }
   }
   else if (version == '\005')
   {
@@ -8049,50 +7968,13 @@ bool wallet2::parse_tx_from_str(const std::string &signed_tx_st, std::vector<too
   s = s.substr(1);
   if (version == '\003')
   {
-    if (!m_load_deprecated_formats)
-    {
       LOG_PRINT_L0("Not loading deprecated format");
       return false;
-    }
-    try
-    {
-      std::istringstream iss(s);
-      boost::archive::portable_binary_iarchive ar(iss);
-      ar >> signed_txs;
-    }
-    catch (...)
-    {
-      LOG_PRINT_L0("Failed to parse data from signed transaction");
-      return false;
-    }
   }
   else if (version == '\004')
   {
-    if (!m_load_deprecated_formats)
-    {
       LOG_PRINT_L0("Not loading deprecated format");
       return false;
-    }
-    try
-    {
-      s = decrypt_with_view_secret_key(s);
-      try
-      {
-        std::istringstream iss(s);
-        boost::archive::portable_binary_iarchive ar(iss);
-        ar >> signed_txs;
-      }
-      catch (...)
-      {
-        LOG_PRINT_L0("Failed to parse decrypted data from signed transaction");
-        return false;
-      }
-    }
-    catch (const std::exception &e)
-    {
-      LOG_PRINT_L0("Failed to decrypt signed transaction: " << e.what());
-      return false;
-    }
   }
   else if (version == '\005')
   {
@@ -8244,17 +8126,6 @@ bool wallet2::parse_multisig_tx_from_str(std::string multisig_tx_st, multisig_tx
         loaded = true;
   }
   catch (...) {}
-  try
-  {
-    if (!loaded && m_load_deprecated_formats)
-    {
-      std::istringstream iss(multisig_tx_st);
-      boost::archive::portable_binary_iarchive ar(iss);
-      ar >> exported_txs;
-      loaded = true;
-    }
-  }
-  catch(...) {}
 
   if (!loaded)
   {
@@ -8519,42 +8390,45 @@ uint64_t wallet2::estimate_fee(bool use_per_byte_fee, bool use_rct, int n_inputs
   }
 }
 
-uint64_t wallet2::get_fee_multiplier(uint32_t priority, int fee_algorithm)
+uint64_t wallet2::get_fee_multiplier(fee_priority priority, fee_algorithm fee_algorithm)
 {
-  static const struct
+  struct fee_step
   {
-    size_t count;
-    uint64_t multipliers[4];
-  }
-  multipliers[] =
-  {
-    { 3, {1, 2, 3} },
-    { 3, {1, 20, 166} },
-    { 4, {1, 4, 20, 166} },
-    { 4, {1, 5, 25, 1000} },
+    fee_priority maximum_priority; // Determines the maximum priority available for said fee algorithm.
+    uint64_t fee_multipliers[4]; // Determines the fee multiplier applied at various priorities for said fee algorithm.
   };
 
-  if (fee_algorithm == -1)
+  static constexpr fee_step fee_steps[] =
+  {
+    { fee_priority::Elevated, {1, 2, 3} },
+    { fee_priority::Elevated, {1, 20, 166} },
+    { fee_priority::Priority, {1, 4, 20, 166} },
+    { fee_priority::Priority, {1, 5, 25, 1000} },
+  };
+
+  if (fee_algorithm == fee_algorithm::Unset)
     fee_algorithm = get_fee_algorithm();
 
   // 0 -> default (here, x1 till fee algorithm 2, x4 from it)
-  if (priority == 0)
+  if (priority == fee_priority::Default)
     priority = m_default_priority;
-  if (priority == 0)
+  if (priority == fee_priority::Default)
   {
-    if (fee_algorithm >= 2)
-      priority = 2;
+    if (fee_algorithm >= fee_algorithm::HardforkV5)
+      priority = fee_priority::Normal;
     else
-      priority = 1;
+      priority = fee_priority::Unimportant;
   }
 
-  THROW_WALLET_EXCEPTION_IF(fee_algorithm < 0 || fee_algorithm > 3, error::invalid_priority);
+  const auto fee_algorithm_index = fee_algorithm_utilities::as_integral(fee_algorithm);
+  THROW_WALLET_EXCEPTION_IF(fee_algorithm_index < 0 || fee_algorithm_index > static_cast<int>(std::size(fee_steps)), error::invalid_priority);
 
   // 1 to 3/4 are allowed as priorities
-  const uint32_t max_priority = multipliers[fee_algorithm].count;
-  if (priority >= 1 && priority <= max_priority)
+  const fee_priority max_priority = fee_steps[fee_algorithm_index].maximum_priority;
+  if (priority >= fee_priority::Unimportant && priority <= max_priority)
   {
-    return multipliers[fee_algorithm].multipliers[priority-1];
+    const fee_priority adjusted_priority = fee_priority_utilities::decrease(priority);
+    return fee_steps[fee_algorithm_index].fee_multipliers[fee_priority_utilities::as_integral(adjusted_priority)];
   }
 
   THROW_WALLET_EXCEPTION_IF (false, error::invalid_priority);
@@ -8583,29 +8457,33 @@ uint64_t wallet2::get_base_fee()
 //----------------------------------------------------------------------------------------------------
 uint64_t wallet2::get_base_fee(uint32_t priority)
 {
-  const bool use_2021_scaling = use_fork_rules(HF_VERSION_2021_SCALING, -30 * 1);
-  if (use_2021_scaling)
+  return get_base_fee(fee_priority_utilities::from_integral(priority));
+}
+//----------------------------------------------------------------------------------------------------
+uint64_t wallet2::get_base_fee(fee_priority priority)
+{
+  const bool use_2026_scaling = use_fork_rules(HF_VERSION_2026_SCALING, -30 * 1);
+  if (use_2026_scaling)
   {
     // clamp and map to 0..3 indices, mapping 0 (default, but should not end up here) to 0, and 1..4 to 0..3
-    if (priority == 0)
-      priority = 1;
-    else if (priority > 4)
-      priority = 4;
-    --priority;
+    priority = fee_priority_utilities::clamp_modified(priority);
+    priority = fee_priority_utilities::decrease(priority);
 
     std::vector<uint64_t> fees;
-    boost::optional<std::string> result = m_node_rpc_proxy.get_dynamic_base_fee_estimate_2021_scaling(FEE_ESTIMATE_GRACE_BLOCKS, fees);
+    boost::optional<std::string> result = m_node_rpc_proxy.get_dynamic_base_fee_estimate_2026_scaling(FEE_ESTIMATE_GRACE_BLOCKS, fees);
     if (result)
     {
       MERROR("Failed to determine base fee, using default");
       return FEE_PER_BYTE;
     }
-    if (priority >= fees.size())
+
+    const auto priority_index = fee_priority_utilities::as_integral(priority);
+    if (priority_index >= fees.size())
     {
-      MERROR("Failed to determine base fee for priority " << priority << ", using default");
+      MERROR("Failed to determine base fee for priority " << priority_index << ", using default");
       return FEE_PER_BYTE;
     }
-    return fees[priority];
+    return fees[priority_index];
   }
   else
   {
@@ -8628,16 +8506,16 @@ uint64_t wallet2::get_fee_quantization_mask()
   return fee_quantization_mask;
 }
 //----------------------------------------------------------------------------------------------------
-int wallet2::get_fee_algorithm()
+fee_algorithm wallet2::get_fee_algorithm()
 {
   // changes at v3, v5, v8
   if (use_fork_rules(HF_VERSION_PER_BYTE_FEE, 0))
-    return 3;
+    return fee_algorithm::HardforkV8;
   if (use_fork_rules(5, 0))
-    return 2;
+    return fee_algorithm::HardforkV5;
   if (use_fork_rules(3, -30 * 14))
-   return 1;
-  return 0;
+   return fee_algorithm::HardforkV3;
+  return fee_algorithm::PreHardforkV3;
 }
 //------------------------------------------------------------------------------------------------------------------------------
 uint64_t wallet2::get_min_ring_size()
@@ -8681,15 +8559,20 @@ uint64_t wallet2::adjust_mixin(uint64_t mixin)
   return mixin;
 }
 //----------------------------------------------------------------------------------------------------
-uint32_t wallet2::adjust_priority(uint32_t priority)
+fee_priority wallet2::adjust_priority(uint32_t priority)
 {
-  if (priority == 0 && m_default_priority == 0 && auto_low_priority())
+  return adjust_priority(fee_priority_utilities::from_integral(priority));
+}
+//----------------------------------------------------------------------------------------------------
+fee_priority wallet2::adjust_priority(fee_priority priority)
+{
+  if (priority == fee_priority::Default && m_default_priority == fee_priority::Default && auto_low_priority())
   {
     try
     {
       // check if there's a backlog in the tx pool
       const bool use_per_byte_fee = use_fork_rules(HF_VERSION_PER_BYTE_FEE, 0);
-      const uint64_t base_fee = get_base_fee(1);
+      const uint64_t base_fee = get_base_fee(fee_priority::Unimportant);
       const double fee_level = base_fee * (use_per_byte_fee ? 1 : (12/(double)13 / (double)1024));
       const std::vector<std::pair<uint64_t, uint64_t>> blocks = estimate_backlog({std::make_pair(fee_level, fee_level)});
       if (blocks.size() != 1)
@@ -8700,7 +8583,7 @@ uint32_t wallet2::adjust_priority(uint32_t priority)
       else if (blocks[0].first > 0)
       {
         MINFO("We don't use the low priority because there's a backlog in the tx pool.");
-        return 2;
+        return fee_priority::Normal;
       }
 
       // get the current full reward zone
@@ -8745,10 +8628,10 @@ uint32_t wallet2::adjust_priority(uint32_t priority)
       if (P > 80)
       {
         MINFO("We don't use the low priority because recent blocks are quite full.");
-        return 2;
+        return fee_priority::Normal;
       }
       MINFO("We'll use the low priority because probably it's safe to do so.");
-      return 1;
+      return fee_priority::Unimportant;
     }
     catch (const std::exception &e)
     {
@@ -8933,7 +8816,6 @@ bool wallet2::find_and_save_rings(bool force)
     MWARNING("wallet2::find_and_save_rings() is deprecated");
     return false;
   }
-
   m_ring_history_saved = true;
   return true;
 }
@@ -9096,9 +8978,7 @@ void wallet2::get_outs(std::vector<std::vector<tools::wallet2::get_outs_entry>> 
       return;
 
     const auto unique = outs_unique(outs);
-    const uint64_t rct_outs_available = rct_offsets.size() >= CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE
-      ? rct_offsets.at(rct_offsets.size() - CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE) : 0;
-    if (tx_sanity_check(unique.first, unique.second, rct_outs_available))
+    if (tx_sanity_check(unique.first, unique.second, rct_offsets.empty() ? 0 : rct_offsets.back()))
     {
       return;
     }
@@ -10422,7 +10302,7 @@ static uint32_t get_count_above(const std::vector<wallet2::transfer_details> &tr
 // This system allows for sending (almost) the entire balance, since it does
 // not generate spurious change in all txes, thus decreasing the instantaneous
 // usable balance.
-std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryptonote::tx_destination_entry> dsts, const size_t fake_outs_count, uint32_t priority, const std::vector<uint8_t>& extra, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices, const unique_index_container& subtract_fee_from_outputs)
+std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryptonote::tx_destination_entry> dsts, const size_t fake_outs_count, fee_priority priority, const std::vector<uint8_t>& extra, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices, const unique_index_container& subtract_fee_from_outputs)
 {
   //ensure device is let in NONE mode in any case
   hw::device &hwdev = m_account.get_device();
@@ -11190,7 +11070,7 @@ bool wallet2::sanity_check(const std::vector<wallet2::pending_tx> &ptx_vector, c
   return true;
 }
 
-std::vector<wallet2::pending_tx> wallet2::create_transactions_all(uint64_t below, const cryptonote::account_public_address &address, bool is_subaddress, const size_t outputs, const size_t fake_outs_count, uint32_t priority, const std::vector<uint8_t>& extra, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices)
+std::vector<wallet2::pending_tx> wallet2::create_transactions_all(uint64_t below, const cryptonote::account_public_address &address, bool is_subaddress, const size_t outputs, const size_t fake_outs_count, fee_priority priority, const std::vector<uint8_t>& extra, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices)
 {
   std::vector<size_t> unused_transfers_indices;
   std::vector<size_t> unused_dust_indices;
@@ -11263,7 +11143,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_all(uint64_t below
   return create_transactions_from(address, is_subaddress, outputs, unused_transfers_indices, unused_dust_indices, fake_outs_count, priority, extra);
 }
 
-std::vector<wallet2::pending_tx> wallet2::create_transactions_single(const crypto::key_image &ki, const cryptonote::account_public_address &address, bool is_subaddress, const size_t outputs, const size_t fake_outs_count, uint32_t priority, const std::vector<uint8_t>& extra)
+std::vector<wallet2::pending_tx> wallet2::create_transactions_single(const crypto::key_image &ki, const cryptonote::account_public_address &address, bool is_subaddress, const size_t outputs, const size_t fake_outs_count, fee_priority priority, const std::vector<uint8_t>& extra)
 {
   std::vector<size_t> unused_transfers_indices;
   std::vector<size_t> unused_dust_indices;
@@ -11284,7 +11164,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_single(const crypt
   return create_transactions_from(address, is_subaddress, outputs, unused_transfers_indices, unused_dust_indices, fake_outs_count, priority, extra);
 }
 
-std::vector<wallet2::pending_tx> wallet2::create_transactions_from(const cryptonote::account_public_address &address, bool is_subaddress, const size_t outputs, std::vector<size_t> unused_transfers_indices, std::vector<size_t> unused_dust_indices, const size_t fake_outs_count, uint32_t priority, const std::vector<uint8_t>& extra)
+std::vector<wallet2::pending_tx> wallet2::create_transactions_from(const cryptonote::account_public_address &address, bool is_subaddress, const size_t outputs, std::vector<size_t> unused_transfers_indices, std::vector<size_t> unused_dust_indices, const size_t fake_outs_count, fee_priority priority, const std::vector<uint8_t>& extra)
 {
   //ensure device is let in NONE mode in any case
   hw::device &hwdev = m_account.get_device();
@@ -11753,7 +11633,7 @@ std::vector<wallet2::pending_tx> wallet2::create_unmixable_sweep_transactions()
   const bool hf1_rules = use_fork_rules(2, 10); // first hard fork has version 2
   tx_dust_policy dust_policy(hf1_rules ? 0 : ::config::DEFAULT_DUST_THRESHOLD);
 
-  const uint64_t base_fee  = get_base_fee(1);
+  const uint64_t base_fee  = get_base_fee(fee_priority::Unimportant);
 
   // may throw
   std::vector<size_t> unmixable_outputs = select_available_unmixable_outputs();
@@ -11774,7 +11654,7 @@ std::vector<wallet2::pending_tx> wallet2::create_unmixable_sweep_transactions()
       unmixable_transfer_outputs.push_back(n);
   }
 
-  return create_transactions_from(m_account_public_address, false, 1, unmixable_transfer_outputs, unmixable_dust_outputs, 0 /*fake_outs_count */, 1 /*priority */, std::vector<uint8_t>());
+  return create_transactions_from(m_account_public_address, false, 1, unmixable_transfer_outputs, unmixable_dust_outputs, 0 /*fake_outs_count */, fee_priority::Unimportant, std::vector<uint8_t>());
 }
 //----------------------------------------------------------------------------------------------------
 void wallet2::discard_unmixable_outputs()
@@ -12773,12 +12653,6 @@ bool wallet2::check_reserve_proof(const cryptonote::account_public_address &addr
           loaded = true;
   }
   catch(...) {}
-  if (!loaded && m_load_deprecated_formats)
-  {
-    std::istringstream iss(sig_decoded);
-    boost::archive::portable_binary_iarchive ar(iss);
-    ar >> proofs >> subaddr_spendkeys;
-  }
 
   THROW_WALLET_EXCEPTION_IF(subaddr_spendkeys.count(address.m_spend_public_key) == 0, error::wallet_internal_error,
     "The given address isn't found in the proof");
@@ -14501,19 +14375,6 @@ size_t wallet2::import_outputs_from_str(const std::string &outputs_st)
     }
     catch (...) {}
 
-    if (!loaded && m_load_deprecated_formats)
-    {
-      try
-      {
-        std::stringstream iss;
-        iss << body;
-        boost::archive::portable_binary_iarchive ar(iss);
-        ar >> outputs;
-        loaded = true;
-      }
-      catch (...) {}
-    }
-
     if (!loaded)
     {
       std::get<0>(outputs) = 0;
@@ -14775,13 +14636,6 @@ size_t wallet2::import_multisig(std::vector<cryptonote::blobdata> blobs)
           loaded = true;
     }
     catch(...) {}
-    if (!loaded && m_load_deprecated_formats)
-    {
-      std::istringstream iss(body);
-      boost::archive::portable_binary_iarchive ar(iss);
-      ar >> i;
-      loaded = true;
-    }
     CHECK_AND_ASSERT_THROW_MES(loaded, "Failed to load output data");
 
     for (const auto &e: i)

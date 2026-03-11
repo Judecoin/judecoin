@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2025, The Jude Project
+// Copyright (c) 2014-2026, The Jude Project
 // 
 // All rights reserved.
 // 
@@ -38,7 +38,7 @@
 #include "cryptonote_config.h"
 #include "crypto/crypto.h"
 #include "crypto/hash.h"
-#include "ringct/rctSigs.h"
+#include "ringct/rctOps.h"
 
 using namespace epee;
 

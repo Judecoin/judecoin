@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2025, The Jude Project
+// Copyright (c) 2014-2026, The Jude Project
 // 
 // All rights reserved.
 // 
@@ -958,7 +958,7 @@ TEST(Serialization, tuple_3_4_backwards_compatibility)
 
   /////////////////////////////////////////
 
-  Tuple4 t4{1999, "Caneck Caneck", (uint64_t)-1, {20259, 242, {1, 1, 2, 3, 5, 8, 13, 21}}};
+  Tuple4 t4{1999, "Caneck Caneck", (uint64_t)-1, {20269, 242, {1, 1, 2, 3, 5, 8, 13, 21}}};
   EXPECT_TRUE(::serialization::dump_binary(t4, serialized));
 
   EXPECT_EQ("04cf0700000d43616e65636b2043616e65636bffffffffffffffffff01054f0000f20000000101020305080d15",
@@ -1006,8 +1006,8 @@ TEST(Serialization, tuple_many_tuples)
     {42, 420},
     {1876, "Hullabaloo", 1963},
     {1876, "Hullabaloo", 1963},
-    {1999, "Caneck Caneck", (uint64_t)-1, {20259, 242, {1, 1, 2, 3, 5, 8, 13, 21}}},
-    {1999, "Caneck Caneck", (uint64_t)-1, {20259, 242, {1, 1, 2, 3, 5, 8, 13, 21}}},
+    {1999, "Caneck Caneck", (uint64_t)-1, {20269, 242, {1, 1, 2, 3, 5, 8, 13, 21}}},
+    {1999, "Caneck Caneck", (uint64_t)-1, {20269, 242, {1, 1, 2, 3, 5, 8, 13, 21}}},
     {72982, "He is now rising from affluence to poverty.", false, 256,
       {
         13, 37, { 1, 1, 1, 2, 3, 7, 11, 26 }

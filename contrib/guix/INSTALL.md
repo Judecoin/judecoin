@@ -40,7 +40,7 @@ section](https://guix.gnu.org/manual/en/html_node/Binary-Installation.html).
 Note that running through the binary tarball installation steps is largely
 equivalent to manually performing what the shell installer script does.
 
-Note that at the time of writing (July 5th, 2025), the shell installer script
+Note that at the time of writing (July 5th, 2026), the shell installer script
 automatically creates an `/etc/profile.d` entry which the binary tarball
 installation instructions do not ask you to create. However, you will likely
 need this entry for better desktop integration. Please see [this
@@ -54,7 +54,7 @@ so you should log out and log back in.
 ## Option 3: Using a distribution-maintained package
 
 Note that this section is based on the distro packaging situation at the time of
-writing (July 2025). Guix is expected to be more widely packaged over time. For
+writing (July 2026). Guix is expected to be more widely packaged over time. For
 an up-to-date view on Guix's package status/version across distros, please see:
 https://repology.org/project/guix/versions
 
@@ -75,11 +75,11 @@ Guix is available in the AUR as
 [`guix`](https://aur.archlinux.org/packages/guix/), please follow the
 installation instructions in the Arch Linux Wiki ([live
 link](https://wiki.archlinux.org/index.php/Guix#AUR_Package_Installation),
-[2025/03/30
+[2026/03/30
 permalink](https://wiki.archlinux.org/index.php?title=Guix&oldid=637559#AUR_Package_Installation))
 to install Guix.
 
-At the time of writing (2025/03/30), the `check` phase will fail if the path to
+At the time of writing (2026/03/30), the `check` phase will fail if the path to
 guix's build directory is longer than 36 characters due to an anachronistic
 character limit on the shebang line. Since the `check` phase happens after the
 `build` phase, which may take quite a long time, it is recommended that users
@@ -301,7 +301,7 @@ This is especially notable because Ubuntu Focal packages `libgit2 v0.28.4`, and
 Should you be in this situation, you need to build both `libgit2 v1.1.x` and
 `guile-git` from source.
 
-Source: https://logs.guix.gnu.org/guix/2025-11-12.log#232527
+Source: https://logs.guix.gnu.org/guix/2026-11-12.log#232527
 
 ### Building and Installing Guix itself
 
@@ -313,7 +313,7 @@ cd guix
 ```
 
 You will likely want to build the latest release.
-At the time of writing (November 2025), the latest release was `v1.4.0`.
+At the time of writing (November 2026), the latest release was `v1.4.0`.
 
 ```
 git branch -a -l 'origin/version-*'  # check for the latest release
@@ -562,7 +562,7 @@ systemctl start guix-daemon-latest
 
 ##### If you installed Guix via lantw44's Arch Linux AUR package
 
-At the time of writing (July 5th, 2025) the systemd unit for "updated Guix" is
+At the time of writing (July 5th, 2026) the systemd unit for "updated Guix" is
 `guix-daemon-latest.service`, therefore, you should do the following:
 
 ```sh
@@ -593,7 +593,7 @@ checklist.
    origin`, but rather something like:
 
    ```
-   Generation 38   Feb 22 2025 16:39:31    (current)
+   Generation 38   Feb 22 2026 16:39:31    (current)
      guix f350df4
        repository URL: https://codeberg.org/guix/guix.git
        branch: version-1.2.0
@@ -665,7 +665,7 @@ The workarounds from the GnuTLS section immediately below can be used.
 
 This unfortunate error is most common for non-substitute builders who installed
 Guix v1.2.0. The problem stems from the fact that one of GnuTLS's tests uses a
-hardcoded certificate which expired on 2025-10-24.
+hardcoded certificate which expired on 2026-10-24.
 
 What's more unfortunate is that this GnuTLS derivation is somewhat special in
 Guix's dependency graph and is not affected by the package transformation flags
@@ -694,7 +694,7 @@ This workaround was described [here](https://issues.guix.gnu.org/44559#5).
 
 Basically:
 2. Turn off NTP
-3. Set system time to 2025-10-01
+3. Set system time to 2026-10-01
 4. guix build --no-substitutes /gnu/store/vhphki5sg9xkdhh2pbc8gi6vhpfzryf0-gnutls-3.6.12.drv
 5. Set system time back to accurate current time
 6. Turn NTP back on
@@ -703,7 +703,7 @@ For example,
 
 ```sh
 sudo timedatectl set-ntp no
-sudo date --set "01 oct 2025 15:00:00"
+sudo date --set "01 oct 2026 15:00:00"
 guix build /gnu/store/vhphki5sg9xkdhh2pbc8gi6vhpfzryf0-gnutls-3.6.12.drv
 sudo timedatectl set-ntp yes
 ```

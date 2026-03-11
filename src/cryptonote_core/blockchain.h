@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2025, The Jude Project
+// Copyright (c) 2014-2026, The Jude Project
 //
 // All rights reserved.
 //
@@ -665,13 +665,13 @@ namespace cryptonote
      *
      * The dynamic fee is based on the block weight in a past window, and
      * the current block reward. It is expressed per byte, and is based on
-     * https://github.com/ArticMine/Jude-Documents/blob/master/JudeScaling2025-02.pdf
+     * https://github.com/ArticMine/Jude-Documents/blob/master/JudeScaling2026-02.pdf
      *
      * @param Mnw min(Msw, 50*Mlw)
      * @param Mlw The median over the last 99990 and future 10 blocks of max(min(Mbw, 2*Ml), Zm, Ml/2)
      * @param[out] fees fee estimate levels [Fl, Fn, Fm, Fh]
      */
-    static void get_dynamic_base_fee_estimate_2025_scaling(uint64_t base_reward, uint64_t Mnw,
+    static void get_dynamic_base_fee_estimate_2026_scaling(uint64_t base_reward, uint64_t Mnw,
       uint64_t Mlw, std::vector<uint64_t> &fees);
 
     /**
@@ -679,14 +679,14 @@ namespace cryptonote
      *
      * The dynamic fee is based on the block weight in a past window, and
      * the current block reward. It is expressed per byte, and is based on
-     * https://github.com/ArticMine/Jude-Documents/blob/master/JudeScaling2025-02.pdf
+     * https://github.com/ArticMine/Jude-Documents/blob/master/JudeScaling2026-02.pdf
      * This function calculates an estimate for a dynamic fee which will be
      * valid for the next grace_blocks
      *
      * @param grace_blocks number of blocks we want the fee to be valid for
      * @param[out] fees fee estimate levels [Fl, Fn, Fm, Fh]
      */
-    void get_dynamic_base_fee_estimate_2025_scaling(uint64_t grace_blocks, std::vector<uint64_t> &fees) const;
+    void get_dynamic_base_fee_estimate_2026_scaling(uint64_t grace_blocks, std::vector<uint64_t> &fees) const;
 
     /**
      * @brief validate a transaction's fee

@@ -1,6 +1,6 @@
 # Jude Blockchain Utilities
 
-Copyright (c) 2014-2025, The Jude Project
+Copyright (c) 2014-2026, The Jude Project
 
 ## Introduction
 

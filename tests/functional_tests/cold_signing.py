@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2019-2025, The Jude Project
+# Copyright (c) 2019-2026, The Jude Project
 # 
 # All rights reserved.
 # 
@@ -122,13 +122,15 @@ class ColdSigningTest():
                     # new outputs first
                     if 'Imported outputs omit more outputs that we know of' not in str(e):
                         raise
+                    else:
+                        continue
                 for i in range(start, start + count):
                     if i < len(done):
                         done[i] = True
         else:
             res = self.hot_wallet.export_outputs()
             self.cold_wallet.import_outputs(res.outputs_data_hex)
-        
+
         # Check consistency between hot & cold transfers list, especially that one-time addresses and amounts line up
         def check_transfers_list_consistency(do_check_key_images):
             hot_transfers_list = self.hot_wallet.incoming_transfers()

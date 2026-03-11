@@ -44,7 +44,7 @@ describes the patch, with an optional longer body that gives details,
 documentation, etc.
 
 Please reference the current merged PR list for a general subject line
-format of the current contributors. As of 2025 the subject line uses the
+format of the current contributors. As of 2026 the subject line uses the
 following format:
 
 subdirectory under src where changes were made: description of change
@@ -65,7 +65,7 @@ the previous paragraph is here.
 ## License
 
 Copyright (c) 2009-2015 Pieter Hintjens.
-Copyright (c) 2017-2025, The Jude Project
+Copyright (c) 2017-2026, The Jude Project
 
 This Specification is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
 
@@ -76,11 +76,6 @@ You should have received a copy of the GNU General Public License along with thi
 ## Language
 
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in RFC 2119.
-
-The "Jude Maintainer Team" is defined in this document as the following users:
-- fluffypony
-- judemooo
-- hyc
 
 ## Goals
 
@@ -115,13 +110,12 @@ C4 is meant to provide a reusable optimal collaboration model for open source so
 - The project MUST use a share-alike license, such as BSD-3, the GPLv3 or a variant thereof (LGPL, AGPL), or the MPLv2.
 - All contributions to the project source code ("patches") MUST use the same license as the project.
 - All patches are owned by their authors. There MUST NOT be any copyright assignment process.
-- The copyrights in the project MUST be owned collectively by all its Contributors.
 - Each Contributor MUST be responsible for identifying themselves in the project Contributor list.
 
 ### Patch requirements
 
-- Maintainers MUST have a Platform account and SHOULD use their real names or a well-known alias.
-- Contributors SHOULD have a Platform account and MAY use their real names or a well-known alias.
+- Maintainers MUST have a Platform account.
+- Contributors SHOULD have a Platform account.
 - A patch SHOULD be a minimal and accurate answer to exactly one identified and agreed problem.
 - A patch MUST adhere to the code style guidelines of the project if these are defined.
 - A patch MUST adhere to the "Evolution of Public Contracts" guidelines defined below.
@@ -133,33 +127,23 @@ C4 is meant to provide a reusable optimal collaboration model for open source so
 ### Development process
 
 - Change on the project MUST be governed by the pattern of accurately identifying problems and applying minimal, accurate solutions to these problems.
-- To request changes, a user SHOULD log an issue on the project Platform issue tracker.
+- To request changes, a user SHOULD open an issue on the project Platform issue tracker.
 - The user or Contributor SHOULD write the issue by describing the problem they face or observe.
 - The user or Contributor SHOULD seek consensus on the accuracy of their observation, and the value of solving the problem.
 - Users MUST NOT log feature requests, ideas, or suggestions unrelated to Jude code or Jude's dependency code or Jude's potential/future dependency code or research which successfully implements Jude.
 - Users MUST NOT log any solutions to problems (verifiable or hypothetical) of which are not explicitly documented and/or not provable and/or cannot be reasonably proven.
-- Thus, the release history of the project MUST be a list of meaningful issues logged and solved.
 - To work on an issue, a Contributor MUST fork the project repository and then work on their forked repository.
 - To submit a patch, a Contributor MUST create a Platform pull request back to the project.
-- A Contributor MUST NOT commit changes directly to the project.
+- Patches MUST NOT be committed directly to the project.
 - To discuss a patch, people MAY comment on the Platform pull request, on the commit, or elsewhere.
 - To accept or reject a patch, a Maintainer MUST use the Platform interface.
-- Maintainers SHOULD NOT merge their own patches except in exceptional cases, such as non-responsiveness from other Maintainers for an extended period (more than 30 days) or unless urgent as defined by the Jude Maintainers Team.
+- Maintainers SHOULD NOT merge their own patches unless they were added to the merge queue on irc and have at least 3 approvals from contributors OR unless urgent as defined by the Jude Maintainers Team.
 - Maintainers MUST NOT make value judgments on correct patches unless the Maintainer (as may happen in rare circumstances) is a core code developer.
-- Maintainers MUST NOT merge pull requests in less than 168 hours (1 week) unless deemed urgent by at least 2 people from the Jude Maintainer Team.
+- Maintainers MUST NOT merge pull requests in less than 168 hours (1 week) unless deemed urgent by at least 2 Maintainers.
 - The Contributor MAY tag an issue as "Ready" after making a pull request for the issue.
 - The user who created an issue SHOULD close the issue after checking the patch is successful.
 - Maintainers SHOULD ask for improvements to incorrect patches and SHOULD reject incorrect patches if the Contributor does not respond constructively.
 - Any Contributor who has value judgments on a correct patch SHOULD express these via their own patches.
-- Maintainers MAY commit changes to non-source documentation directly to the project.
-
-### Creating stable releases
-
-- The project MUST have one branch ("master") that always holds the latest in-progress version and SHOULD always build.
-- The project MUST NOT use topic branches for any reason. Personal forks MAY use topic branches.
-- To make a stable release someone MUST fork the repository by copying it and thus become maintainer of this repository.
-- Forking a project for stabilization MAY be done unilaterally and without agreement of project maintainers.
-- A patch to a stabilization project declared "stable" MUST be accompanied by a reproducible test case.
 
 ### Evolution of public contracts
 
@@ -174,8 +158,8 @@ C4 is meant to provide a reusable optimal collaboration model for open source so
 
 ### Project administration
 
-- The project founders MUST act as Administrators to manage the set of project Maintainers.
+- The Jude Core Team MUST act as Administrators to manage the set of project Maintainers.
 - The Administrators MUST ensure their own succession over time by promoting the most effective Maintainers.
-- A new Contributor who makes a correct patch MUST be invited to become a Maintainer.
 - Administrators MAY remove Maintainers who are inactive for an extended period of time, or who repeatedly fail to apply this process accurately.
 - Administrators SHOULD block or ban "bad actors" who cause stress and pain to others in the project. This should be done after public discussion, with a chance for all parties to speak. A bad actor is someone who repeatedly ignores the rules and culture of the project, who is needlessly argumentative or hostile, or who is offensive, and who is unable to self-correct their behavior when asked to do so by others.
+- Maintainers MUST NOT merge changes to this specification unless they are also Administrators.

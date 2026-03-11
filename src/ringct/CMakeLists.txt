@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2025, The Jude Project
+# Copyright (c) 2016-2026, The Jude Project
 #
 # All rights reserved.
 #
@@ -69,7 +69,6 @@ target_link_libraries(ringct
   PUBLIC
     common
     cncrypto
-    cryptonote_basic
     device
   PRIVATE
     ${OPENSSL_LIBRARIES}

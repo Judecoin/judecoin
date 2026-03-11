@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2025, The Jude Project
+// Copyright (c) 2014-2026, The Jude Project
 // 
 // All rights reserved.
 // 
@@ -3056,7 +3056,7 @@ namespace cryptonote
     CHECK_PAYMENT(req, res, COST_PER_FEE_ESTIMATE);
 
     {
-      m_core.get_blockchain_storage().get_dynamic_base_fee_estimate_2025_scaling(req.grace_blocks, res.fees);
+      m_core.get_blockchain_storage().get_dynamic_base_fee_estimate_2026_scaling(req.grace_blocks, res.fees);
       res.fee = res.fees[0];
     }
     res.quantization_mask = Blockchain::get_fee_quantization_mask();

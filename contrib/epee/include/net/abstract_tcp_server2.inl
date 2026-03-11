@@ -1001,6 +1001,7 @@ namespace net_utils
     connection_basic(io_context, std::move(socket), shared_state, ssl_support),
     m_handler(this, *shared_state, m_conn_context),
     m_connection_type(connection_type),
+    m_io_context{io_context},
     m_conn_context(std::move(initial)),
     m_strand{m_io_context},
     m_timers{m_io_context}
@@ -1729,7 +1730,7 @@ namespace net_utils
   {
     TRY_ENTRY();
 
-    connection_ptr new_connection_l(new connection<t_protocol_handler>(io_context_, m_state, m_connection_type, ssl_support, std::move(initial)) );
+    connection_ptr new_connection_l(new connection<t_protocol_handler>(io_context_, m_state, m_connection_type, ssl_support) );
     connections_mutex.lock();
     connections_.insert(new_connection_l);
     MDEBUG("connections_ size now " << connections_.size());
@@ -1856,7 +1857,7 @@ namespace net_utils
   bool boosted_tcp_server<t_protocol_handler>::connect_async(const std::string& adr, const std::string& port, uint32_t conn_timeout, const t_callback &cb, const std::string& bind_ip, epee::net_utils::ssl_support_t ssl_support, t_connection_context&& initial)
   {
     TRY_ENTRY();    
-    connection_ptr new_connection_l(new connection<t_protocol_handler>(io_context_, m_state, m_connection_type, ssl_support) );
+    connection_ptr new_connection_l(new connection<t_protocol_handler>(io_context_, m_state, m_connection_type, ssl_support, std::move(initial)) );
     connections_mutex.lock();
     connections_.insert(new_connection_l);
     MDEBUG("connections_ size now " << connections_.size());

@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2025, The Jude Project
+# Copyright (c) 2014-2026, The Jude Project
 #
 # All rights reserved.
 #
@@ -78,4 +78,7 @@ if (REQUESTS_OUTPUT STREQUAL "OK")
 else()
   message(WARNING "functional_tests_rpc and check_missing_rpc_methods skipped, needs the 'requests', 'psutil', 'monotonic', 'zmq', and 'deepdiff' python modules")
   set(CTEST_CUSTOM_TESTS_IGNORE ${CTEST_CUSTOM_TESTS_IGNORE} functional_tests_rpc check_missing_rpc_methods)
+  if (EXPECT_FUNCTIONAL_TESTS)
+    message(FATAL_ERROR "Functional tests are expected")
+  endif()
 endif()
