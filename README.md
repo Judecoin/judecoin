@@ -1,96 +1,115 @@
-JUDECOIN
+# Judecoin
 
-Copyright (c) 2014-2026 The judecoin Project.   
+Copyright (c) 2014-2026 The Judecoin Project.   
 Portions Copyright (c) The Cryptonote developers.
 
 ## Table of Contents
 
-  - [Development resources](#development-resources)
-  - [Vulnerability response](#vulnerability-response)
-  - [Research](#research)
-  - [Announcements](#announcements)
-  - [Translations](#translations)
-  - [Coverage](#coverage)
-  - [Introduction](#introduction)
-  - [About this project](#about-this-project)
-  - [Supporting the project](#supporting-the-project)
-  - [License](#license)
-  - [Contributing](#contributing)
-  - [Scheduled software upgrades](#scheduled-software-upgrades)
-  - [Release staging schedule and protocol](#release-staging-schedule-and-protocol)
-  - [Compiling judecoin from source](#compiling-judecoin-from-source)
-    - [Dependencies](#dependencies)
-  - [Internationalization](#Internationalization)
-  - [Using Tor](#using-tor)
-  - [Pruning](#Pruning)
-  - [Debugging](#Debugging)
-  - [Known issues](#known-issues)
+- [Development Resources](#development-resources)
+- [Documentation](#documentation)
+- [Vulnerability Response](#vulnerability-response)
+- [Research](#research)
+- [Announcements](#announcements)
+- [Translations](#translations)
+- [Coverage](#coverage)
+- [Introduction](#introduction)
+- [About This Project](#about-this-project)
+- [Supporting the Project](#supporting-the-project)
+- [License](#license)
+- [Contributing](#contributing)
+- [Scheduled Software Upgrades](#scheduled-software-upgrades)
+- [Release Staging Schedule and Protocol](#release-staging-schedule-and-protocol)
+- [Compiling Judecoin from Source](#compiling-judecoin-from-source)
+- [Running Judecoind](#running-judecoind)
+- [Internationalization](#internationalization)
+- [Using Tor](#using-tor)
+- [Pruning](#pruning)
+- [Debugging](#debugging)
+- [Known Issues](#known-issues)
 
-## Development resources
+## Development Resources
 
 - Web: [judecoin.io](https://www.judecoin.io/)
-- Forum: [forum.judecoin.io](https://www.judecoin.io/blog)
-- GitHub: [https://github.com/judecoin-project/judecoin](https://github.com/judecoin/judecoin)
-- IRC: [#judecoin-dev on Freenode](https://www.judeblock.com/)
-- It is HIGHLY recommended that you join the #judecoin-dev IRC channel if you are developing software that uses judecoin. Due to the nature of this open source software project, joining this channel and idling is the best way to stay updated on best practices and new developments in the judecoin ecosystem. All you need to do is join the IRC channel and idle to stay updated with the latest in judecoin development. If you do not, you risk wasting resources on developing integrations that are not compatible with the judecoin network. The judecoin core team and community continuously make efforts to communicate updates, developments, and documentation via other platforms – but for the best information, you need to talk to other judecoin developers, and they are on IRC. #judecoin-dev is about judecoin development, not getting help about using judecoin, or help about development of other software, including yours, unless it also pertains to judecoin code itself. For these cases, checkout #judecoin. 
+- Blog / Updates: [judecoin.io/blog](https://www.judecoin.io/blog)
+- GitHub: [github.com/Judecoin/judecoin](https://github.com/Judecoin/judecoin)
+- Block Explorer: [judeblock.org](https://www.judeblock.org/)
 
-## Vulnerability response
+## Documentation
 
-- Our [Vulnerability Response Process](https://www.judecoin.io/blog) encourages responsible disclosure
-- We are also available via [HackerOne](https://hackerone.com/judecoin)
+- [CLI Wallet Documentation](https://github.com/Judecoin/wallet/tree/main/CLI-Wallet-Doc)
+- [PoS Evolution and Service Node Documentation](https://github.com/Judecoin/pos-evolution)
+
+## Vulnerability Response
+
+Responsible disclosure is encouraged.
+
+If you discover a security issue, please report it through the official Judecoin communication channels or the official repository issue process when appropriate.
+
+Please do not publicly disclose sensitive vulnerabilities before they have been reviewed.
 
 ## Research
 
-The [judecoin Research Lab](https://www.judecoin.io/roadmap) is an open forum where the community coordinates research into judecoin cryptography, protocols, fungibility, analysis, and more. We welcome collaboration and contributions from outside researchers! Because not all Lab work and publications are distributed as traditional preprints or articles, they may be easy to miss if you are conducting literature reviews for your own judecoin research. You are encouraged to get in touch with our researchers if you have questions, wish to collaborate, or would like guidance to help avoid unnecessarily duplicating earlier or known work.
+Judecoin research and development may include work related to privacy, cryptography, protocols, fungibility, network behavior, wallet tools, and service node operation.
 
-Our researchers are available on IRC in [#judecoin-research-lab on Freenode](https://www.judeblock.com/)
+For roadmap-related research and development directions, please refer to the [Judecoin Roadmap](https://www.judecoin.io/roadmap).
+
+Researchers, developers, and contributors are welcome to review the codebase, discuss technical improvements, and submit relevant contributions.
 
 ## Announcements
 
-- You can subscribe to an [announcement listserv](https://lists.getjudecoin.org) to get critical announcements from the judecoin core team. The announcement list can be very helpful for knowing when software updates are needed.
+Important announcements, software updates, release notes, and upgrade information should be checked through official Judecoin resources.
+
+For updates, please refer to the [Judecoin Blog / Updates](https://www.judecoin.io/blog).
+
+Users, wallet operators, node operators, and service providers should keep their software updated according to official release guidance.
 
 ## Translations
 
-The CLI wallet is available in different languages. If you want to help translate it, see our self-hosted localization platform, Weblate, on [translate.judecoin.io](https://translate.judecoin.io/projects/judecoin/cli-wallet/). Every translation *must* be uploaded on the platform, pull requests directly editing the code in this repository will be closed. If you need help with Weblate, you can find a guide with screenshots [here](https://github.com/judecoin-ecosystem/judecoin-translations/blob/master/weblate.md).
+Judecoin wallet tools may support multiple languages depending on the release version.
 
-&nbsp;
-
-If you need help/support/info about translations, contact the localization workgroup. You can find the complete list of contacts on the repository of the workgroup: [judecoin-translations](https://github.com/judecoin-ecosystem/judecoin-translations#contacts).
+Translation support and localization behavior may vary by wallet type and software release.
 
 ## Coverage
 
-| Type      | Status |
-|-----------|--------|
-| Coverity  | [![Coverity Status](https://scan.coverity.com/projects/9657/badge.svg)](https://scan.coverity.com/projects/9657/) |
-| OSS Fuzz  | [![Fuzzing Status](https://oss-fuzz-build-logs.storage.googleapis.com/badges/judecoin.svg)](https://bugs.chromium.org/p/oss-fuzz/issues/list?sort=-opened&can=1&q=proj:judecoin) |
-| Coveralls | [![Coveralls Status](https://coveralls.io/repos/github/judecoin-project/judecoin/badge.svg?branch=master)](https://coveralls.io/github/judecoin-project/judecoin?branch=master) |
-| License   | [![License](https://img.shields.io/badge/license-BSD3-blue.svg)](https://opensource.org/licenses/BSD-3-Clause) |
+Coverage and testing status may vary by repository configuration, release branch, and development stage.
+
+Please refer to the current repository status, release notes, and available CI/test results where applicable.
+
+| Type | Status |
+|------|--------|
+| License | [![License](https://img.shields.io/badge/license-BSD3-blue.svg)](https://opensource.org/licenses/BSD-3-Clause) |
 
 ## Introduction
 
-judecoin is a private, secure, untraceable, decentralised digital currency. You are your bank, you control your funds, and nobody can trace your transfers unless you allow them to do so.
+Judecoin is a private, secure, untraceable, decentralized digital currency. You are your own bank, you control your funds, and nobody can trace your transfers unless you allow them to do so.
 
-**Privacy:** judecoin uses a cryptographically sound system to allow you to send and receive funds without your transactions being easily revealed on the blockchain (the ledger of transactions that everyone has). This ensures that your purchases, receipts, and all transfers remain private by default.
+**Privacy:** Judecoin uses a cryptographically sound system to allow you to send and receive funds without your transactions being easily revealed on the blockchain (the ledger of transactions that everyone has). This ensures that your purchases, receipts, and all transfers remain private by default.
 
-**Security:** Using the power of a distributed peer-to-peer consensus network, every transaction on the network is cryptographically secured. Individual wallets have a 25-word mnemonic seed that is only displayed once and can be written down to backup the wallet. Wallet files should be encrypted with a strong passphrase to ensure they are useless if ever stolen.
+**Security:** Using the power of a distributed peer-to-peer consensus network, every transaction on the network is cryptographically secured. Individual wallets have a 25-word mnemonic seed that is only displayed once and can be written down to back up the wallet. Wallet files should be encrypted with a strong passphrase to ensure they are useless if ever stolen.
 
-**Untraceability:** By taking advantage of ring signatures, a special property of a certain type of cryptography, judecoin is able to ensure that transactions are not only untraceable but have an optional measure of ambiguity that ensures that transactions cannot easily be tied back to an individual user or computer.
+**Untraceability:** By taking advantage of ring signatures, a special property of a certain type of cryptography, Judecoin is able to ensure that transactions are not only untraceable but have an optional measure of ambiguity that ensures that transactions cannot easily be tied back to an individual user or computer.
 
-**Decentralization:** The utility of judecoin depends on its decentralised peer-to-peer consensus network - anyone should be able to run the judecoin software, validate the integrity of the blockchain, and participate in all aspects of the judecoin network using consumer-grade commodity hardware. Decentralization of the judecoin network is maintained by software development that minimizes the costs of running the judecoin software and inhibits the proliferation of specialized, non-commodity hardware.  
+**Decentralization:** The utility of Judecoin depends on its decentralized peer-to-peer consensus network — anyone should be able to run the Judecoin software, validate the integrity of the blockchain, and participate in all aspects of the Judecoin network using consumer-grade commodity hardware. Decentralization of the Judecoin network is maintained by software development that minimizes the costs of running the Judecoin software and inhibits the proliferation of specialized, non-commodity hardware.  
 
-## About this project
+## About This Project
 
-This is the core implementation of judecoin. It is open source and completely free to use without restrictions, except for those specified in the license agreement below. There are no restrictions on anyone creating an alternative implementation of judecoin that uses the protocol and network in a compatible manner.
+This repository contains the core implementation of Judecoin. It is open source and free to use under the terms specified in the license agreement below.
 
-As with many development projects, the repository on Github is considered to be the "staging" area for the latest changes. Before changes are merged into that branch on the main repository, they are tested by individual developers in their own branches, submitted as a pull request, and then subsequently tested by contributors who focus on testing and code reviews. That having been said, the repository should be carefully considered before using it in a production environment, unless there is a patch in the repository for a particular show-stopping issue you are experiencing. It is generally a better idea to use a tagged release for stability.
+The project includes the core daemon, wallet tools, build files, network components, and related technical documentation needed to build, run, and contribute to the Judecoin network.
 
-**Anyone is welcome to contribute to judecoin's codebase!** If you have a fix or code change, feel free to submit it as a pull request directly to the "master" branch. In cases where the change is relatively small or does not affect other parts of the codebase, it may be merged in immediately by any one of the collaborators. On the other hand, if the change is particularly large or complex, it is expected that it will be discussed at length either well in advance of the pull request being submitted, or even directly on the pull request.
+As with many open source projects, this repository may include ongoing development work. Users running production systems should follow official release guidance and use tagged stable releases whenever possible.
 
-## Supporting the project
+**Anyone is welcome to contribute to Judecoin's codebase and documentation.** Clear, accurate, and relevant pull requests are welcome. Larger or more complex changes should be discussed in advance or reviewed carefully through the pull request process.
 
-judecoin is a 100% community-sponsored endeavor. If you want to join our efforts, the easiest thing you can do is support the project financially. Both judecoin and Bitcoin donations can be made to **donate.getjudecoin.org** if using a client that supports the [OpenAlias](https://openalias.org) standard. Alternatively, you can send JUDE to the judecoin donation address via the `donate` command (type `help` in the command-line wallet for details).
+## Supporting the Project
 
-The judecoin donation address is: `J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF`
+Judecoin is a community-supported open source project.
+
+If you would like to support the project, you may do so through the official donation address below, or by using the `donate` command in the command-line wallet.
+
+The Judecoin donation address is:
+
+`J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF`
 
 ## License
 
@@ -98,20 +117,25 @@ See [LICENSE](LICENSE).
 
 ## Contributing
 
-If you want to help out, see [CONTRIBUTING](docs/CONTRIBUTING.md) for a set of guidelines.
+If you want to help, see [CONTRIBUTING](docs/CONTRIBUTING.md) for contribution guidelines.
 
-## Scheduled software upgrades
+You may contribute by improving documentation, reporting issues, testing releases, submitting code, or helping improve user guides.
 
-judecoin uses a fixed-schedule software upgrade (hard fork) mechanism to implement new features. This means that users of judecoin (end users and service providers) should run current versions and upgrade their software on a regular schedule. Software upgrades occur during the months of April and October. The required software for these upgrades will be available prior to the scheduled date. Please check the repository prior to this date for the proper judecoin software version. Below is the historical schedule and the projected schedule for the next upgrade.
+Before submitting changes, please make sure your contribution is clear, accurate, and relevant to the Judecoin project.
+
+## Scheduled Software Upgrades
+
+Judecoin uses a fixed-schedule software upgrade (hard fork) mechanism to implement new features. This means that users of Judecoin (end users and service providers) should run current versions and upgrade their software on a regular schedule. Software upgrades occur during the months of April and October. The required software for these upgrades will be available prior to the scheduled date. Please check the repository prior to this date for the proper Judecoin software version. Below is the historical schedule and the projected schedule for the next upgrade.
 Dates are provided in the format YYYY-MM-DD.
 
-| Software upgrade block height | Date       | Fork version | Minimum judecoin version | Recommended judecoin version | Details                                                      
+| Software upgrade block height | Date | Fork version | Minimum Judecoin version | Recommended Judecoin version | Details |
+|-------------------------------|------|--------------|--------------------------|------------------------------|---------|
 
-## Release staging schedule and protocol
+## Release Staging Schedule and Protocol
 
 Approximately three months prior to a scheduled software upgrade, a branch from master will be created with the new release version tag. Pull requests that address bugs should then be made to both master and the new release branch. Pull requests that require extensive review and testing (generally, optimizations and new features) should *not* be made to the release branch.
 
-## Compiling judecoin from source
+## Compiling Judecoin from Source
 
 ### Dependencies
 
@@ -169,7 +193,7 @@ FreeBSD 12.1 one-liner required to build dependencies:
 
 Clone recursively to pull-in needed submodule(s):
 
-`$ git clone --recursive https://github.com/judecoin-project/judecoin`
+`$ git clone --recursive https://github.com/Judecoin/judecoin`
 
 If you already have a repo cloned, initialize and update:
 
@@ -177,17 +201,17 @@ If you already have a repo cloned, initialize and update:
 
 ### Build instructions
 
-judecoin uses the CMake build system and a top-level [Makefile](Makefile) that
+Judecoin uses the CMake build system and a top-level [Makefile](Makefile) that
 invokes cmake commands as needed.
 
 #### On Linux and macOS
 
 * Install the dependencies
-* Change to the root of the source code directory, change to the most recent release branch, and build:
+* Change to the root of the source code directory, change to the most recent release tag, and build:
 
     ```bash
     cd judecoin
-    git checkout release-v0.17
+    git checkout <latest-release-tag>
     make
     ```
 
@@ -197,7 +221,7 @@ invokes cmake commands as needed.
     available per thread.
 
     *Note*: The instructions above will compile the most stable release of the
-    judecoin software. If you would like to use and test the most recent software,
+    Judecoin software. If you would like to use and test the most recent software,
     use ```git checkout master```. The master branch may contain updates that are
     both unstable and incompatible with release software, though testing is always
     encouraged.
@@ -206,7 +230,7 @@ invokes cmake commands as needed.
 
 * Add `PATH="$PATH:$HOME/judecoin/build/release/bin"` to `.profile`
 
-* Run judecoin with `judecoind --detach`
+* Run Judecoin with `judecoind --detach`
 
 * **Optional**: build and run the test suite to verify the binaries:
 
@@ -236,13 +260,13 @@ Dependencies need to be built with -fPIC. Static libraries usually aren't, so yo
     HAVE_DOT=YES doxygen Doxyfile
     ```
 
- On the Raspberry Pi
+#### On the Raspberry Pi
 
-Tested on a Raspberry Pi Zero with a clean install of minimal Raspbian Stretch (2017-09-07 or later) from https://www.raspberrypi.org/downloads/raspbian/. If you are using Raspian Jessie, [please see note in the following section](#note-for-raspbian-jessie-users).
+Tested on a Raspberry Pi Zero with a clean install of minimal Raspbian Stretch (2017-09-07 or later). If you are using Raspbian Jessie, [please see note in the following section](#note-for-raspbian-jessie-users).
 
 * `apt-get update && apt-get upgrade` to install all of the latest software
 
-* Install the dependencies for judecoin from the 'Debian' column in the table above.
+* Install the dependencies for Judecoin from the 'Debian' column in the table above.
 
 * Increase the system swap size:
 
@@ -255,12 +279,12 @@ Tested on a Raspberry Pi Zero with a clean install of minimal Raspbian Stretch (
 
 * If using an external hard disk without an external power supply, ensure it gets enough power to avoid hardware issues when syncing, by adding the line "max_usb_current=1" to /boot/config.txt
 
-* Clone judecoin and checkout the most recent release version:
+* Clone Judecoin and checkout the most recent release version:
 
     ```bash
-    git clone https://github.com/judecoin-project/judecoin.git
+    git clone https://github.com/Judecoin/judecoin.git
     cd judecoin
-    git checkout tags/v0.17.1.0
+    git checkout <latest-release-tag>
     ```
 
 * Build:
@@ -275,13 +299,13 @@ Tested on a Raspberry Pi Zero with a clean install of minimal Raspbian Stretch (
 
 * Add `PATH="$PATH:$HOME/judecoin/build/release/bin"` to `.profile`
 
-* Run judecoin with `judecoind --detach`
+* Run Judecoin with `judecoind --detach`
 
 * You may wish to reduce the size of the swap file after the build has finished, and delete the boost directory from your home directory
 
-# *Note for Raspbian Jessie users:*
+#### Note for Raspbian Jessie users
 
-If you are using the older Raspbian Jessie image, compiling judecoin is a bit more complicated. The version of Boost available in the Debian Jessie repositories is too old to use with judecoin, and thus you must compile a newer version yourself. The following explains the extra steps and has been tested on a Raspberry Pi 2 with a clean install of minimal Raspbian Jessie.
+If you are using the older Raspbian Jessie image, compiling Judecoin is a bit more complicated. The version of Boost available in the Debian Jessie repositories is too old to use with Judecoin, and thus you must compile a newer version yourself. The following explains the extra steps and has been tested on a Raspberry Pi 2 with a clean install of minimal Raspbian Jessie.
 
 * As before, `apt-get update && apt-get upgrade` to install all of the latest software, and increase the system swap size
 
@@ -292,7 +316,7 @@ If you are using the older Raspbian Jessie image, compiling judecoin is a bit mo
     sudo /etc/init.d/dphys-swapfile start
     ```
     
-* Then, install the dependencies for judecoin except for `libunwind` and `libboost-all-dev`
+* Then, install the dependencies for Judecoin except for `libunwind` and `libboost-all-dev`
 
 * Install the latest version of boost (this may first require invoking `apt-get remove --purge libboost*-dev` to remove a previous version if you're not using a clean install):
 
@@ -313,9 +337,9 @@ If you are using the older Raspbian Jessie image, compiling judecoin is a bit mo
 
 * Wait ~4 hours
 
-* From here, follow the [general Raspberry Pi instructions](#on-the-raspberry-pi) from the "Clone judecoin and checkout most recent release version" step.
+* From here, follow the [general Raspberry Pi instructions](#on-the-raspberry-pi) from the "Clone Judecoin and checkout most recent release version" step.
 
-#On Windows:
+### On Windows
 
 Binaries for Windows are built on Windows using the MinGW toolchain within
 [MSYS2 environment](https://www.msys2.org). The MSYS2 environment emulates a
@@ -365,7 +389,7 @@ application.
 * To git clone, run:
 
     ```bash
-    git clone --recursive https://github.com/judecoin-project/judecoin.git
+    git clone --recursive https://github.com/Judecoin/judecoin.git
     ```
 
 **Building**
@@ -376,10 +400,10 @@ application.
     cd judecoin
     ```
 
-* If you would like a specific [version/tag](https://github.com/judecoin-project/judecoin/tags), do a git checkout for that version. eg. 'v0.17.1.0'. If you don't care about the version and just want binaries from master, skip this step:
+* If you would like a specific [version/tag](https://github.com/Judecoin/judecoin/tags), do a git checkout for that version. eg. 'v0.17.1.0'. If you don't care about the version and just want binaries from master, skip this step:
 
     ```bash
-    git checkout v0.17.1.0
+    git checkout <latest-release-tag>
     ```
 
 * If you are on a 64-bit system, run:
@@ -410,23 +434,23 @@ application.
 
 * The resulting executables can be found in `build/debug/bin`
 
-### On FreeBSD:
+### On FreeBSD
 
 The project can be built from scratch by following instructions for Linux above(but use `gmake` instead of `make`). 
-If you are running judecoin in a jail, you need to add `sysvsem="new"` to your jail configuration, otherwise lmdb will throw the error message: `Failed to open lmdb environment: Function not implemented`.
+If you are running Judecoin in a jail, you need to add `sysvsem="new"` to your jail configuration, otherwise lmdb will throw the error message: `Failed to open lmdb environment: Function not implemented`.
 
-judecoin is also available as a port or package as 'judecoin-cli`.
+Judecoin is also available as a port or package as `judecoin-cli`.
 
-### On OpenBSD:
+### On OpenBSD
 
 You will need to add a few packages to your system. `pkg_add cmake gmake zeromq libiconv boost`.
 
 The `doxygen` and `graphviz` packages are optional and require the xbase set.
 Running the test suite also requires `py-requests` package.
 
-Build judecoin: `env DEVELOPER_LOCAL_TOOLS=1 BOOST_ROOT=/usr/local gmake release-static`
+Build Judecoin: `env DEVELOPER_LOCAL_TOOLS=1 BOOST_ROOT=/usr/local gmake release-static`
 
-Note: you may encounter the following error when compiling the latest version of judecoin as a normal user:
+Note: you may encounter the following error when compiling the latest version of Judecoin as a normal user:
 
 ```
 LLVM ERROR: out of memory
@@ -435,15 +459,15 @@ c++: error: unable to execute command: Abort trap (core dumped)
 
 Then you need to increase the data ulimit size to 2GB and try again: `ulimit -d 2000000`
 
-### On NetBSD:
+### On NetBSD
 
 Check that the dependencies are present: `pkg_info -c libexecinfo boost-headers boost-libs protobuf readline libusb1 zeromq git-base pkgconf gmake cmake | more`, and install any that are reported missing, using `pkg_add` or from your pkgsrc tree.  Readline is optional but worth having.
 
 Third-party dependencies are usually under `/usr/pkg/`, but if you have a custom setup, adjust the "/usr/pkg" (below) accordingly.
 
-Clone the judecoin repository recursively and checkout the most recent release as described above. Then build judecoin: `gmake BOOST_ROOT=/usr/pkg LDFLAGS="-Wl,-R/usr/pkg/lib" release`.  The resulting executables can be found in `build/NetBSD/[Release version]/Release/bin/`.
+Clone the Judecoin repository recursively and checkout the most recent release as described above. Then build Judecoin: `gmake BOOST_ROOT=/usr/pkg LDFLAGS="-Wl,-R/usr/pkg/lib" release`.  The resulting executables can be found in `build/NetBSD/[Release version]/Release/bin/`.
 
-### On Solaris:
+### On Solaris
 
 The default Solaris linker can't be used, you have to install GNU ld, then run cmake manually with the path to your copy of GNU ld:
 
@@ -456,7 +480,7 @@ cd ../..
 
 Then you can run make as usual.
 
-### On Linux for Android (using docker):
+### On Linux for Android (using docker)
 
 ```bash
 # Build image (for ARM 32-bit)
@@ -510,11 +534,11 @@ You can also cross-compile static binaries on Linux for Windows and macOS with t
 
 The required packages are the names for each toolchain on apt. Depending on your distro, they may have different names.
 
-Using `depends` might also be easier to compile judecoin on Windows than using MSYS. Activate Windows Subsystem for Linux (WSL) with a distro (for example Ubuntu), install the apt build-essentials and follow the `depends` steps as depicted above.
+Using `depends` might also be easier to compile Judecoin on Windows than using MSYS. Activate Windows Subsystem for Linux (WSL) with a distro (for example Ubuntu), install the apt build-essentials and follow the `depends` steps as depicted above.
 
 The produced binaries still link libc dynamically. If the binary is compiled on a current distribution, it might not run on an older distribution with an older installation of libc. Passing `-DBACKCOMPAT=ON` to cmake will make sure that the binary will run on systems having at least libc version 2.17.
 
-## Installing judecoin from a package
+## Installing Judecoin from a package
 
 **DISCLAIMER: These packages are not part of this repository or maintained by this project's contributors, and as such, do not go through the same review process to ensure their trustworthiness and security.**
 
@@ -526,7 +550,6 @@ Packages are available for
     ```bash
     sudo apt install judecoin
     ```
-More info and versions in the [Debian package tracker](https://tracker.debian.org/pkg/judecoin).
 
 * Arch Linux:
 
@@ -541,15 +564,6 @@ More info and versions in the [Debian package tracker](https://tracker.debian.or
     guix package -i judecoin
     ```
 
-* Gentoo [judecoin overlay](https://github.com/gentoo-judecoin/gentoo-judecoin)
-
-    ```bash
-    emerge --noreplace eselect-repository
-    eselect repository enable judecoin
-    emaint sync -r judecoin
-    echo '*/*::judecoin ~amd64' >> /etc/portage/package.accept_keywords
-    emerge net-p2p/judecoin
-    ```
 * macOS (homebrew)
     ```bash
     brew install judecoin
@@ -619,7 +633,7 @@ See [README.i18n.md](docs/README.i18n.md).
 > used solely for relaying transactions received over local RPC. This provides
 > privacy and better protection against surrounding node (sybil) attacks.
 
-While judecoin isn't made to integrate with Tor, it can be used wrapped with torsocks, by
+While Judecoin isn't made to integrate with Tor, it can be used wrapped with torsocks, by
 setting the following configuration parameters and environment variables:
 
 * `--p2p-bind-ip 127.0.0.1` on the command line or `p2p-bind-ip=127.0.0.1` in
@@ -641,14 +655,14 @@ setting the following configuration parameters and environment variables:
 * If you use the wallet with a Tor daemon via the loopback IP (eg, 127.0.0.1:9050),
   then use `--untrusted-daemon` unless it is your own hidden service.
 
-Example command line to start judecoind through Tor:
+Example command line to start Judecoind through Tor:
 
 ```bash
 DNS_PUBLIC=tcp torsocks judecoind --p2p-bind-ip 127.0.0.1 --no-igd
 ```
 
 A helper script is in contrib/tor/judecoin-over-tor.sh. It assumes Tor is installed
-already, and runs Tor and judecoin with the right configuration.
+already, and runs Tor and Judecoin with the right configuration.
 
 ### Using Tor on Tails
 
@@ -664,7 +678,7 @@ DNS_PUBLIC=tcp torsocks ./judecoind --p2p-bind-ip 127.0.0.1 --no-igd --rpc-bind-
 
 ## Pruning
 
-As of May 2020, the full judecoin blockchain file is about 80 GB. One can store a pruned blockchain, which is about 28 GB.
+As of May 2020, the full Judecoin blockchain file is about 80 GB. One can store a pruned blockchain, which is about 28 GB.
 A pruned blockchain can only serve part of the historical chain data to other peers, but is otherwise identical in
 functionality to the full blockchain.
 To use a pruned blockchain, it is best to start the initial sync with --prune-blockchain. However, it is also possible
@@ -674,7 +688,7 @@ and pruned blockchains.
 
 ## Debugging
 
-This section contains general instructions for debugging failed installs or problems encountered with judecoin. First, ensure you are running the latest version built from the Github repo.
+This section contains general instructions for debugging failed installs or problems encountered with Judecoin. First, ensure you are running the latest version built from the GitHub repository.
 
 ### Obtaining stack traces and core dumps on Unix systems
 
@@ -705,7 +719,7 @@ When it terminates with an output along the lines of "Segmentation fault (core d
 You can now analyse this core dump with `gdb` as follows:
 
 ```bash
-gdb /path/to/judecoind /path/to/dumpfile`
+gdb /path/to/judecoind /path/to/dumpfile
 ```
 
 Print the stack trace with `bt`
@@ -716,7 +730,7 @@ Print the stack trace with `bt`
 coredumpctl -1 gdb
 ```
 
-#### To run judecoin within gdb:
+#### To run Judecoin within gdb:
 
 Type `gdb /path/to/judecoind`
 
@@ -730,13 +744,13 @@ There are two tools available:
 
 #### ASAN
 
-Configure judecoin with the -D SANITIZE=ON cmake flag, eg:
+Configure Judecoin with the -D SANITIZE=ON cmake flag, eg:
 
 ```bash
 cd build/debug && cmake -D SANITIZE=ON -D CMAKE_BUILD_TYPE=Debug ../..
 ```
 
-You can then run the judecoin tools normally. Performance will typically halve.
+You can then run the Judecoin tools normally. Performance will typically halve.
 
 #### valgrind
 
@@ -758,19 +772,19 @@ The output of `mdb_dump -s blocks <path to blockchain dir>` and `mdb_dump -s blo
 
 These records are dumped as hex data, where the first line is the key and the second line is the data.
 
-# Known Issues
+## Known Issues
 
-## Protocols
+### Protocols
 
-### Socket-based
+#### Socket-based
 
-Because of the nature of the socket-based protocols that drive judecoin, certain protocol weaknesses are somewhat unavoidable at this time. While these weaknesses can theoretically be fully mitigated, the effort required (the means) may not justify the ends. As such, please consider taking the following precautions if you are a judecoin node operator:
+Because of the nature of the socket-based protocols that drive Judecoin, certain protocol weaknesses are somewhat unavoidable at this time. While these weaknesses can theoretically be fully mitigated, the effort required (the means) may not justify the ends. As such, please consider taking the following precautions if you are a Judecoin node operator:
 
-- Run `judecoind` on a "secured" machine. If operational security is not your forte, at a very minimum, have a dedicated a computer running `judecoind` and **do not** browse the web, use email clients, or use any other potentially harmful apps on your `judecoind` machine. **Do not click links or load URL/MUA content on the same machine**. Doing so may potentially exploit weaknesses in commands which accept "localhost" and "127.0.0.1".
+- Run `judecoind` on a "secured" machine. If operational security is not your forte, at a very minimum, have a dedicated computer running `judecoind` and **do not** browse the web, use email clients, or use any other potentially harmful apps on your `judecoind` machine. **Do not click links or load URL/MUA content on the same machine**. Doing so may potentially exploit weaknesses in commands which accept "localhost" and "127.0.0.1".
 - If you plan on hosting a public "remote" node, start `judecoind` with `--restricted-rpc`. This is a must.
 
-### Blockchain-based
+#### Blockchain-based
 
 Certain blockchain "features" can be considered "bugs" if misused correctly. Consequently, please consider the following:
 
-- When receiving judecoin, be aware that it may be locked for an arbitrary time if the sender elected to, preventing you from spending that judecoin until the lock time expires. You may want to hold off acting upon such a transaction until the unlock time lapses. To get a sense of that time, you can consider the remaining blocktime until unlock as seen in the `show_transfers` command.
+- When receiving Judecoin, be aware that it may be locked for an arbitrary time if the sender elected to, preventing you from spending that Judecoin until the lock time expires. You may want to hold off acting upon such a transaction until the unlock time lapses. To get a sense of that time, you can consider the remaining blocktime until unlock as seen in the `show_transfers` command.
