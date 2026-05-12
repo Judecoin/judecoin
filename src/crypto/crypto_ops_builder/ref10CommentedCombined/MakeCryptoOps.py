@@ -15,7 +15,7 @@ print("maybe someone smart can replace the sed with perl..")
 a = ""
 
 license = textwrap.dedent("""\
-    // Copyright (c) 2014-2026, The Jude Project
+    // Copyright (c) 2014-2026 The Judecoin Project.
     // 
     // All rights reserved.
     // 

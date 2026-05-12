@@ -1,4 +1,4 @@
-// Copyright (c) 2014-2026, The Jude Project
+// Copyright (c) 2014-2026 The Judecoin Project.
 // 
 // All rights reserved.
 //
