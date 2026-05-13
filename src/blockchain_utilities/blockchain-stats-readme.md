@@ -1,56 +1,95 @@
-# Jude Blockchain Stats
+# Judecoin Blockchain Stats
 
-Jude Blockchain Stats utlity exports daily statistics for the jude blockchain from creation through current state.
+The Judecoin Blockchain Stats utility exports daily statistics for the Judecoin
+blockchain from genesis through the current state.
 
-## Usage:
+## Usage
 
-See also the utility's help option. `jude-blockchain-stats --help`
+See the utility's help option for additional details:
 
-From the command line run:
+```bash
+jude-blockchain-stats --help
+```
 
-`$ jude-blockchain-stats`
+From the command line, run:
 
-This loads the existing blockchain and prints the results to the terminal. Default printed data includes Blocks per Day, Total Blocks, Transactions per Day, Total Transactions, Bytes per Day and Total Bytes. The format of the output is in tab delimited csv which is printed to the console. Redirecting or piping the output of the command allows for saving the output to a csv file or feeding your own script accordingly, i.e.:
+```bash
+jude-blockchain-stats
+```
 
-- `jude-blockchain-stats > stats-$(date +'%Y-%m-%d').csv`
-- `jude-blockchain-stats | save-to-database.sh`
+This loads the existing blockchain and prints the results to the terminal.
 
-### Options
-`--data-dir arg` 
-to specify location of blockchain storage
+By default, the printed data includes:
 
-`--testnet` 
-Run on testnet.
+- Blocks per day
+- Total blocks
+- Transactions per day
+- Total transactions
+- Bytes per day
+- Total bytes
+
+The output format is tab-delimited CSV printed to the console. Redirecting or
+piping the command output allows the data to be saved to a CSV file or passed to
+another script.
+
+Examples:
+
+```bash
+jude-blockchain-stats > stats-$(date +'%Y-%m-%d').csv
+
+jude-blockchain-stats | save-to-database.sh
+```
+
+## Options
+
+`--data-dir arg`
+
+Specifies the location of blockchain storage.
+
+`--testnet`
+
+Runs on testnet.
 
 `--stagenet`
-Run on stagenet.
+
+Runs on stagenet.
 
 `--log-level arg`
-0-4 or categories
+
+Sets the log level from `0` to `4`, or by category.
 
 `--block-start arg (=0)`
-start at block number
+
+Starts at the specified block number.
 
 `--block-stop arg (=0)`
-Stop at block number
+
+Stops at the specified block number.
 
 `--with-inputs`
-with input stats
+
+Includes input statistics.
 
 `--with-outputs`
-with output stats
+
+Includes output statistics.
 
 `--with-ringsize`
-with ringsize stats
+
+Includes ring size statistics.
 
 `--with-hours`
-with txns per hour
+
+Includes transactions per hour.
 
 `--with-emission`
-with coin emission
+
+Includes coin emission.
 
 `--with-fees`
-with txn fees
+
+Includes transaction fees.
 
 `--with-diff`
-with difficulty
+
+Includes difficulty statistics.
