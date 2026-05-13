@@ -1,19 +1,19 @@
 # Compiling, debugging and testing efficiently
 
 This document describes ways of compiling, debugging and testing efficiently for various use cases.
-The intended audience are developers, who want to leverage newly added tricks to Jude via `CMake`. The document will lower the entry point for these developers.
+The intended audience is developers who want to use newer `CMake` workflows when working with Judecoin. This document aims to lower the entry barrier for these developers.
 Before reading this document, please consult section "Build instructions" in the main README.md. 
 Some information from README.md will be repeated here, but the aim is to go beyond it.
 
 ## Basic compilation
 
-Jude can be compiled via the main `Makefile`, using one of several targets listed there.
+Judecoin can be compiled via the main `Makefile`, using one of several targets listed there.
 The targets are actually presets for `CMake` calls with various options, plus `make` commands for building or in some cases `make test` for testing.
 It is possible to extract these `CMake` calls and modify them for your specific needs. For example, a minimal external cmake command to compile Jude, executed from within a newly created build directory could look like:
 
 `cmake -S "$DIR_SRC" -DCMAKE_BUILD_TYPE=Release && make`
 
-where the variable `DIR_SRC` is expected to store the path to the Jude source code.
+where the variable `DIR_SRC` is expected to store the path to the Judecoin source code.
 
 ## Use cases
 
@@ -70,17 +70,4 @@ Verify if the expected UTs are being properly executed with `F9` or select:
 If everything looks fine, then after setting some breakpoints of your choice, the target is ready for debugging in CB via:
 
 `Debug -> Start/Continue`
-
-## To be done (and merged):
-### Multihost parallel compilation
-https://github.com/jude-project/jude/pull/7160
-
-### Faster core_tests with caching
-https://github.com/jude-project/jude/pull/5821
-
-### Precompiled headers
-https://github.com/jude-project/jude/pull/7216
-
-### Unity builds
-https://github.com/jude-project/jude/pull/7217
 
