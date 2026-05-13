@@ -1,4 +1,4 @@
-# Contributing to Jude
+# Contributing to Judecoin
 
 A good way to help is to test, and report bugs. See
 [How to Report Bugs Effectively (by Simon Tatham)](https://www.chiark.greenend.org.uk/~sgtatham/bugs.html)
@@ -13,9 +13,8 @@ of software solid and usable.
 * Tests would be nice to have if you're adding functionality.
 
 Patches are preferably to be sent via a GitHub pull request. If that
-can't be done, patches in "git format-patch" format can be sent
-(eg, posted to [paste.debian.net](https://paste.debian.net/) with a long enough timeout and a link
-posted to #jude-dev on irc.libera.chat).
+can't be done, patches in "git format-patch" format can be shared through
+the current official Judecoin development or community channels.
 
 Patches should be self contained. A good rule of thumb is to have
 one patch per separate issue, feature, or logical change. Also, no
@@ -130,14 +129,14 @@ C4 is meant to provide a reusable optimal collaboration model for open source so
 - To request changes, a user SHOULD open an issue on the project Platform issue tracker.
 - The user or Contributor SHOULD write the issue by describing the problem they face or observe.
 - The user or Contributor SHOULD seek consensus on the accuracy of their observation, and the value of solving the problem.
-- Users MUST NOT log feature requests, ideas, or suggestions unrelated to Jude code or Jude's dependency code or Jude's potential/future dependency code or research which successfully implements Jude.
+- Users MUST NOT log feature requests, ideas, or suggestions unrelated to Judecoin code or Judecoin's dependency code or Judecoin's potential/future dependency code or research which successfully implements Judecoin.
 - Users MUST NOT log any solutions to problems (verifiable or hypothetical) of which are not explicitly documented and/or not provable and/or cannot be reasonably proven.
 - To work on an issue, a Contributor MUST fork the project repository and then work on their forked repository.
 - To submit a patch, a Contributor MUST create a Platform pull request back to the project.
 - Patches MUST NOT be committed directly to the project.
 - To discuss a patch, people MAY comment on the Platform pull request, on the commit, or elsewhere.
 - To accept or reject a patch, a Maintainer MUST use the Platform interface.
-- Maintainers SHOULD NOT merge their own patches unless they were added to the merge queue on irc and have at least 3 approvals from contributors OR unless urgent as defined by the Jude Maintainers Team.
+- Maintainers SHOULD NOT merge their own patches unless they were added to the merge queue and have at least 3 approvals from contributors OR unless urgent as defined by the Judecoin Maintainers Team.
 - Maintainers MUST NOT make value judgments on correct patches unless the Maintainer (as may happen in rare circumstances) is a core code developer.
 - Maintainers MUST NOT merge pull requests in less than 168 hours (1 week) unless deemed urgent by at least 2 Maintainers.
 - The Contributor MAY tag an issue as "Ready" after making a pull request for the issue.
@@ -158,7 +157,7 @@ C4 is meant to provide a reusable optimal collaboration model for open source so
 
 ### Project administration
 
-- The Jude Core Team MUST act as Administrators to manage the set of project Maintainers.
+- The Judecoin Core Team MUST act as Administrators to manage the set of project Maintainers.
 - The Administrators MUST ensure their own succession over time by promoting the most effective Maintainers.
 - Administrators MAY remove Maintainers who are inactive for an extended period of time, or who repeatedly fail to apply this process accurately.
 - Administrators SHOULD block or ban "bad actors" who cause stress and pain to others in the project. This should be done after public discussion, with a chance for all parties to speak. A bad actor is someone who repeatedly ignores the rules and culture of the project, who is needlessly argumentative or hostile, or who is offensive, and who is unable to self-correct their behavior when asked to do so by others.
