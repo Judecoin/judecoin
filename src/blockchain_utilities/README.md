@@ -1,88 +1,145 @@
-# Jude Blockchain Utilities
+# Judecoin Blockchain Utilities
 
 Copyright (c) 2014-2026 The Judecoin Project.
 
 ## Introduction
 
-The blockchain utilities allow one to import and export the blockchain.
+The blockchain utilities allow users to import and export the blockchain.
 
-## Usage:
+## Usage
 
-See also each utility's "--help" option.
+See each utility's `--help` option for additional details.
 
 ### Export an existing blockchain database
 
-`$ jude-blockchain-export`
+```bash
+jude-blockchain-export
+```
 
-This loads the existing blockchain and exports it to `$JUDE_DATA_DIR/export/blockchain.raw`
+This loads the existing blockchain and exports it to:
+
+```text
+$JUDE_DATA_DIR/export/blockchain.raw
+```
 
 ### Import the exported file
 
-`$ jude-blockchain-import`
-
-This imports blocks from `$JUDE_DATA_DIR/export/blockchain.raw` (exported using the
-`jude-blockchain-export` tool as described above) into the current database.
-
-Defaults: `--batch on`, `--batch size 20000`, `--verify on`
-
-Batch size refers to number of blocks and can be adjusted for performance based on available RAM.
-
-Verification should only be turned off if importing from a trusted blockchain.
-
-If you encounter an error like "resizing not supported in batch mode", you can just re-run
-the `jude-blockchain-import` command again, and it will restart from where it left off.
-
 ```bash
-## use default settings to import blockchain.raw into database
-$ jude-blockchain-import
-
-## fast import with large batch size, database mode "fastest", verification off
-$ jude-blockchain-import --batch-size 20000 --database lmdb#fastest --verify off
-
+jude-blockchain-import
 ```
 
-### Import options
+This imports blocks from:
+
+```text
+$JUDE_DATA_DIR/export/blockchain.raw
+```
+
+The file should be exported using the `jude-blockchain-export` tool described above.
+
+Defaults:
+
+```text
+--batch on
+--batch-size 20000
+--verify on
+```
+
+Batch size refers to the number of blocks and can be adjusted for performance
+based on available RAM.
+
+Verification should only be turned off when importing from a trusted blockchain
+source.
+
+If you encounter an error such as:
+
+```text
+resizing not supported in batch mode
+```
+
+you can re-run the `jude-blockchain-import` command. It will restart from where
+it left off.
+
+```bash
+# Use default settings to import blockchain.raw into the database
+jude-blockchain-import
+
+# Fast import with a large batch size, database mode "fastest", and verification off
+jude-blockchain-import --batch-size 20000 --database lmdb#fastest --verify off
+```
+
+### Import and export options
 
 `--input-file`
-specifies input file path for importing
 
-default: `<data-dir>/export/blockchain.raw`
+Specifies the input file path for importing.
+
+Default:
+
+```text
+<data-dir>/export/blockchain.raw
+```
 
 `--output-file`
-specifies output file path to export to
 
-default: `<data-dir>/export/blockchain.raw`
+Specifies the output file path for exporting.
+
+Default:
+
+```text
+<data-dir>/export/blockchain.raw
+```
 
 `--block-stop`
-stop at block number
+
+Stops at the specified block number.
 
 `--database <database type>`
 
+Specifies the database type.
+
 `--database <database type>#<flag(s)>`
 
-database type: `lmdb, memory`
+Specifies the database type with one or more database flags.
 
-flags:
+Supported database types:
 
-The flag after the # is interpreted as a composite mode/flag if there's only
-one (no comma separated arguments).
+```text
+lmdb
+memory
+```
 
-The composite mode represents multiple DB flags and support different database types:
+Flags:
 
-`safe, fast, fastest`
+The flag after `#` is interpreted as a composite mode or flag if there is only
+one flag and no comma-separated arguments are provided.
+
+The composite mode represents multiple database flags and supports different
+database types:
+
+```text
+safe
+fast
+fastest
+```
 
 Database-specific flags can be set instead.
 
-LMDB flags (more than one may be specified):
+LMDB flags. More than one may be specified:
 
-`nosync, nometasync, writemap, mapasync, nordahead`
+```text
+nosync
+nometasync
+writemap
+mapasync
+nordahead
+```
 
-## Examples:
+## Examples
 
 ```bash
-$ jude-blockchain-import --database lmdb#fastest
+jude-blockchain-import --database lmdb#fastest
 
-$ jude-blockchain-import --database lmdb#nosync
+jude-blockchain-import --database lmdb#nosync
 
-$ jude-blockchain-import --database lmdb#nosync,nometasync
+jude-blockchain-import --database lmdb#nosync,nometasync
 ```
