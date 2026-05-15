@@ -1,4 +1,4 @@
-// Copyright (c) 2026-2026 The Judecoin Project.
+// Copyright (c) 2026-2026, The Judecoin Project
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification, are

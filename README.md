@@ -1,6 +1,6 @@
 # Judecoin
 
-Copyright (c) 2014-2026 The Judecoin Project.   
+Copyright (c) 2014-2026 The Judecoin Project. 
 Portions Copyright (c) The Cryptonote developers.
 
 ## Table of Contents
@@ -36,7 +36,7 @@ Portions Copyright (c) The Cryptonote developers.
 
 ## Documentation
 
-- [CLI Wallet Documentation](https://github.com/Judecoin/wallet/tree/main/CLI-Wallet-Doc)
+- [Judecoin Wallet Documentation](https://github.com/Judecoin/wallet)
 - [PoS Evolution and Service Node Documentation](https://github.com/Judecoin/pos-evolution)
 
 ## Vulnerability Response
@@ -49,7 +49,7 @@ Please do not publicly disclose sensitive vulnerabilities before they have been 
 
 ## Research
 
-Judecoin research and development may include work related to privacy, cryptography, protocols, fungibility, network behavior, wallet tools, and service node operation.
+Judecoin research and development may include work related to privacy, cryptography, protocols, fungibility, network behavior, wallet tools, and Service Node operation.
 
 For roadmap-related research and development directions, please refer to the [Judecoin Roadmap](https://www.judecoin.io/roadmap).
 
@@ -81,15 +81,21 @@ Please refer to the current repository status, release notes, and available CI/t
 
 ## Introduction
 
-Judecoin is a private, secure, untraceable, decentralized digital currency. You are your own bank, you control your funds, and nobody can trace your transfers unless you allow them to do so.
+Judecoin is a privacy-focused, secure, censorship-resistant digital currency and blockchain network.
 
-**Privacy:** Judecoin uses a cryptographically sound system to allow you to send and receive funds without your transactions being easily revealed on the blockchain (the ledger of transactions that everyone has). This ensures that your purchases, receipts, and all transfers remain private by default.
+It is designed for private digital payments, confidential value transfer, decentralized participation, and long-term ecosystem infrastructure. Judecoin protects user privacy by reducing unnecessary public exposure of transaction information while maintaining a verifiable blockchain network.
 
-**Security:** Using the power of a distributed peer-to-peer consensus network, every transaction on the network is cryptographically secured. Individual wallets have a 25-word mnemonic seed that is only displayed once and can be written down to back up the wallet. Wallet files should be encrypted with a strong passphrase to ensure they are useless if ever stolen.
+JUDE is the native currency of the Judecoin network. It is used for transactions, value transfer, staking, Service Node participation, reward distribution, atomic swaps, and future ecosystem activity.
 
-**Untraceability:** By taking advantage of ring signatures, a special property of a certain type of cryptography, Judecoin is able to ensure that transactions are not only untraceable but have an optional measure of ambiguity that ensures that transactions cannot easily be tied back to an individual user or computer.
+Judecoin brings together private digital currency, wallet infrastructure, Proof of Stake, Service Nodes, atomic swap development, cross-chain value movement, and broader privacy-focused network services.
 
-**Decentralization:** The utility of Judecoin depends on its decentralized peer-to-peer consensus network — anyone should be able to run the Judecoin software, validate the integrity of the blockchain, and participate in all aspects of the Judecoin network using consumer-grade commodity hardware. Decentralization of the Judecoin network is maintained by software development that minimizes the costs of running the Judecoin software and inhibits the proliferation of specialized, non-commodity hardware.  
+**Privacy:** Judecoin uses privacy-oriented cryptographic technology to help users send and receive funds without exposing unnecessary transaction information on the public blockchain. This helps protect purchases, receipts, transfers, and financial activity by default.
+
+**Security:** Using the power of a distributed peer-to-peer consensus network, every transaction on the network is cryptographically secured. Individual wallets have recovery information that should be backed up carefully and protected with strong security practices.
+
+**Censorship resistance:** Judecoin is designed to let users hold, send, receive, and participate in digital value without relying on banks, payment platforms, or centralized intermediaries.
+
+**Decentralization:** The utility of Judecoin depends on its decentralized peer-to-peer network, wallet infrastructure, Service Node operation, and community participation. Anyone should be able to run Judecoin software, validate the integrity of the blockchain, and contribute to the long-term resilience of the Judecoin network. 
 
 ## About This Project
 
@@ -633,8 +639,7 @@ See [README.i18n.md](docs/README.i18n.md).
 > used solely for relaying transactions received over local RPC. This provides
 > privacy and better protection against surrounding node (sybil) attacks.
 
-While Judecoin isn't made to integrate with Tor, it can be used wrapped with torsocks, by
-setting the following configuration parameters and environment variables:
+Judecoin can also be used with torsocks by setting the following configuration parameters and environment variables:
 
 * `--p2p-bind-ip 127.0.0.1` on the command line or `p2p-bind-ip=127.0.0.1` in
   judecoind.conf to disable listening for connections on external interfaces.

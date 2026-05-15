@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (c) 2019-2026 The Judecoin Project.
+# Copyright (c) 2019-2026, The Judecoin Project
 # 
 # All rights reserved.
 # 

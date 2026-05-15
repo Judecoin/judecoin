@@ -1,4 +1,4 @@
-# Copyright (c) 2017-2026 The Judecoin Project.
+# Copyright (c) 2017-2026, The Judecoin Project
 #
 # All rights reserved.
 #

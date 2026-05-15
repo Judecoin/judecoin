@@ -1,6 +1,6 @@
 # Anonymity Networks with Judecoin
 
-Currently only Tor and I2P have been integrated into Jude. The usage of
+Currently only Tor and I2P have been integrated into Judecoin. The usage of
 these networks is still considered experimental - there are a few pessimistic
 cases where privacy is leaked. The design is intended to maximize privacy of
 the source of a transaction by broadcasting it over an anonymity network, while
@@ -170,7 +170,7 @@ and will forward "Tor port" 18084 and 18089 to ports 18084 and 18089 of ip 127.0
 
 I2P must be configured with a standard server tunnel. Configuration differs by
 I2P implementation.  
-You can find guides for i2pd [here](https://docs.getjude.org/running-node/judecoind-tori2p/#__tabbed_1_2).
+For current i2pd configuration guidance, refer to the Judecoin documentation.
 
 ## Privacy Limitations
 
@@ -185,7 +185,7 @@ sees a transaction over Tor, it could _assume_ (possibly incorrectly) that the
 transaction originated from the peer. If both the Tor connection and an
 IPv4/IPv6 connection have timestamps that are approximately close in value they
 could be used to link the two connections. This is less likely to happen if the
-system clock is fairly accurate - many peers on the Judecoin networkshould have
+system clock is fairly accurate - many peers on the Judecoin network should have
 similar timestamps.
 
 #### Mitigation

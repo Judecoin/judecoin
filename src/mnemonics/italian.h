@@ -1,6 +1,6 @@
 // Word list created by Jude contributor Shrikez
 // 
-// Copyright (c) 2014-2026 The Judecoin Project.
+// Copyright (c) 2014-2026, The Judecoin Project
 // 
 // All rights reserved.
 // 
