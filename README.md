@@ -1,6 +1,6 @@
 # Judecoin
 
-Copyright (c) 2014-2026 The Judecoin Project. 
+Copyright (c) 2014-2026 The Judecoin Project.   
 Portions Copyright (c) The Cryptonote developers.
 
 ## Table of Contents
@@ -81,13 +81,17 @@ Please refer to the current repository status, release notes, and available CI/t
 
 ## Introduction
 
-Judecoin is a privacy-focused, secure, censorship-resistant digital currency and blockchain network.
+JUDE is many things. A private cryptocurrency. A secure messaging platform. A network anonymity layer. A vision for a future where privacy is effortless.
 
-It is designed for private digital payments, confidential value transfer, decentralized participation, and long-term ecosystem infrastructure. Judecoin protects user privacy by reducing unnecessary public exposure of transaction information while maintaining a verifiable blockchain network.
+We provide a range of tools and services powered by the JUDE network, enabling people all over the world to leverage the power of decentralised blockchain networks to achieve unparalleled privacy and security as they work, play, and live their day-to-day lives on the internet. But this isn’t a plan we have for the future — our suite of privacy tools already exists, and it is already used by over one million people.
+
+Judecoin is a privacy-focused cryptocurrency and blockchain network built for private digital payments, censorship-resistant value transfer, decentralized participation, and long-term ecosystem infrastructure.
+
+At its core, Judecoin is designed to protect user privacy while enabling secure value transfer on a verifiable blockchain network. It gives users a way to send, receive, store, and participate in the network’s digital value without relying on fully transparent transaction systems that expose financial activity to public tracing.
 
 JUDE is the native currency of the Judecoin network. It is used for transactions, value transfer, staking, Service Node participation, reward distribution, atomic swaps, and future ecosystem activity.
 
-Judecoin brings together private digital currency, wallet infrastructure, Proof of Stake, Service Nodes, atomic swap development, cross-chain value movement, and broader privacy-focused network services.
+Judecoin is built as a privacy-focused network that brings together private digital currency, Proof of Stake, Service Nodes, wallet infrastructure, atomic swap development, cross-chain value movement, privacy tools, network anonymity, and future ecosystem applications.
 
 **Privacy:** Judecoin uses privacy-oriented cryptographic technology to help users send and receive funds without exposing unnecessary transaction information on the public blockchain. This helps protect purchases, receipts, transfers, and financial activity by default.
 
@@ -95,7 +99,7 @@ Judecoin brings together private digital currency, wallet infrastructure, Proof 
 
 **Censorship resistance:** Judecoin is designed to let users hold, send, receive, and participate in digital value without relying on banks, payment platforms, or centralized intermediaries.
 
-**Decentralization:** The utility of Judecoin depends on its decentralized peer-to-peer network, wallet infrastructure, Service Node operation, and community participation. Anyone should be able to run Judecoin software, validate the integrity of the blockchain, and contribute to the long-term resilience of the Judecoin network. 
+**Decentralization:** The utility of Judecoin depends on its decentralized peer-to-peer network, wallet infrastructure, Service Node operation, Proof of Stake participation, research-driven development, atomic swap capability, cross-chain value movement, and community participation. Anyone should be able to run Judecoin software, validate the integrity of the blockchain, and contribute to the long-term resilience of the Judecoin network.
 
 ## About This Project
 
