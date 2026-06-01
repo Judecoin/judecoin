@@ -59,7 +59,7 @@ Researchers, developers, and contributors are welcome to review the codebase, di
 
 Important announcements, software updates, release notes, and upgrade information should be checked through official Judecoin resources.
 
-For updates, please refer to the [Judecoin Blog / Updates](https://www.judecoin.info/community-news).
+For updates, please refer to the [Judecoin Community News](https://www.judecoin.info/community-news).
 
 Users, wallet operators, node operators, and service providers should keep their software updated according to official release guidance.
 
