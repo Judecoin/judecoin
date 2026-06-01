@@ -29,7 +29,7 @@ Portions Copyright (c) The Cryptonote developers.
 
 ## Development Resources
 
-- Web: [judecoin.io](https://www.judecoin.io/)
+- Web: [judecoin.info](https://www.judecoin.info/)
 - Community-News: [github.com/Judecoin/information](https://github.com/Judecoin/information/tree/main/community-news)
 - GitHub: [github.com/Judecoin/judecoin](https://github.com/Judecoin/judecoin)
 - Block Explorer: [judeblock.org](https://www.judeblock.org/)
@@ -51,7 +51,7 @@ Please do not publicly disclose sensitive vulnerabilities before they have been 
 
 Judecoin research and development may include work related to privacy, cryptography, protocols, fungibility, network behavior, wallet tools, and Service Node operation.
 
-For roadmap-related research and development directions, please refer to the [Judecoin Roadmap](https://www.judecoin.io/roadmap).
+For roadmap-related research and development directions, please refer to the [Judecoin Roadmap](https://www.judecoin.info/roadmap).
 
 Researchers, developers, and contributors are welcome to review the codebase, discuss technical improvements, and submit relevant contributions.
 
@@ -59,7 +59,7 @@ Researchers, developers, and contributors are welcome to review the codebase, di
 
 Important announcements, software updates, release notes, and upgrade information should be checked through official Judecoin resources.
 
-For updates, please refer to the [Judecoin Blog / Updates](https://www.judecoin.io/blog).
+For updates, please refer to the [Judecoin Blog / Updates](https://www.judecoin.info/community-news).
 
 Users, wallet operators, node operators, and service providers should keep their software updated according to official release guidance.
 
