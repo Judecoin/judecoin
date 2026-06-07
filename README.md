@@ -43,7 +43,7 @@ Portions Copyright (c) The Cryptonote developers.
 
 Responsible disclosure is encouraged.
 
-If you discover a security issue, please report it through the official Judecoin communication channels or the official repository issue process when appropriate.
+If you discover a security issue, please report it through the community Judecoin communication channels or the community repository issue process when appropriate.
 
 Please do not publicly disclose sensitive vulnerabilities before they have been reviewed.
 
@@ -57,11 +57,11 @@ Researchers, developers, and contributors are welcome to review the codebase, di
 
 ## Announcements
 
-Important announcements, software updates, release notes, and upgrade information should be checked through official Judecoin resources.
+Important dynamic, software updates, release notes, and upgrade information should be checked through community Judecoin resources.
 
 For updates, please refer to the [Judecoin Community News](https://www.judecoin.info/community-news).
 
-Users, wallet operators, node operators, and service providers should keep their software updated according to official release guidance.
+Users, wallet operators, node operators, and service providers should keep their software updated according to community release guidance.
 
 ## Translations
 
@@ -115,7 +115,7 @@ As with many open source projects, this repository may include ongoing developme
 
 Judecoin is a community-supported open source project.
 
-If you would like to support the project, you may do so through the official donation address below, or by using the `donate` command in the command-line wallet.
+If you would like to support the project, you may do so through the community donation address below, or by using the `donate` command in the command-line wallet.
 
 The Judecoin donation address is:
 
