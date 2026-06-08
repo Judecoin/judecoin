@@ -26,6 +26,8 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <algorithm>
+#include <cctype>
 #include <boost/algorithm/string.hpp>
 #include "misc_log_ex.h"
 #include "util.h"
@@ -37,6 +39,18 @@
 
 namespace tools
 {
+  namespace
+  {
+    bool is_valid_update_hash(const std::string &hash)
+    {
+      return hash.size() == 64 && std::all_of(hash.begin(), hash.end(),
+        [](unsigned char c)
+        {
+          return std::isxdigit(c) != 0;
+        });
+    }
+  }
+
   bool check_updates(const std::string &software, const std::string &buildtag, std::string &version, std::string &hash)
   {
     std::vector<std::string> records;
@@ -44,7 +58,7 @@ namespace tools
 
     MDEBUG("Checking updates for " << buildtag << " " << software);
 
-    // All four JudePulse domains have DNSSEC on and valid
+    // All JudePulse update domains are expected to have DNSSEC enabled and valid.
     static const std::vector<std::string> dns_urls = {
         "updates.judepulse.org",
         "updates.judepulse.net",
@@ -71,13 +85,9 @@ namespace tools
       if (software != fields[0] || buildtag != fields[1])
         continue;
 
-      bool alnum = true;
-      for (auto c: fields[3])
-        if (!isalnum(c))
-          alnum = false;
-      if (fields[3].size() != 64 && !alnum)
+      if (!is_valid_update_hash(fields[3]))
       {
-        MWARNING("Invalid hash: " << fields[3]);
+        MWARNING("Invalid update hash: " << fields[3]);
         continue;
       }
 
