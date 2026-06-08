@@ -27,10 +27,10 @@
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "common/dns_utils.h"
-// check local first (in the event of static or in-source compilation of libunbound)
 #include "misc_language.h"
 #include "unbound.h"
 
+#include <cstdint>
 #include <deque>
 #include <set>
 #include <stdlib.h>
@@ -160,35 +160,52 @@ boost::optional<std::string> ipv4_to_string(const char* src, size_t len)
 // stop-gap measure and to make the tests pass at least...
 boost::optional<std::string> ipv6_to_string(const char* src, size_t len)
 {
-  if (len < 8)
+  if (len != 16)
   {
-    MERROR("Invalid IPv4 address: " << std::string(src, len));
+    MERROR("Invalid IPv6 address: " << std::string(src, len));
     return boost::none;
   }
 
   std::stringstream ss;
-  unsigned int bytes[8];
-  for (int i = 0; i < 8; i++)
+  ss << std::hex;
+
+  for (int i = 0; i < 16; i += 2)
   {
-    unsigned char a = src[i];
-    bytes[i] = a;
+    const uint16_t word =
+      (static_cast<uint16_t>(static_cast<unsigned char>(src[i])) << 8) |
+      static_cast<uint16_t>(static_cast<unsigned char>(src[i + 1]));
+
+    if (i != 0)
+      ss << ":";
+
+    ss << word;
   }
-  ss << bytes[0] << ":"
-     << bytes[1] << ":"
-     << bytes[2] << ":"
-     << bytes[3] << ":"
-     << bytes[4] << ":"
-     << bytes[5] << ":"
-     << bytes[6] << ":"
-     << bytes[7];
+
   return ss.str();
 }
-
 boost::optional<std::string> txt_to_string(const char* src, size_t len)
 {
   if (len == 0)
     return boost::none;
-  return std::string(src+1, len-1);
+
+  std::string out;
+  size_t offset = 0;
+
+  while (offset < len)
+  {
+    const size_t segment_len = static_cast<unsigned char>(src[offset++]);
+
+    if (segment_len > len - offset)
+    {
+      MERROR("Invalid TXT record: segment length exceeds record length");
+      return boost::none;
+    }
+
+    out.append(src + offset, segment_len);
+    offset += segment_len;
+  }
+
+  return out;
 }
 
 boost::optional<std::string> tlsa_to_string(const char* src, size_t len)
@@ -301,17 +318,25 @@ std::vector<std::string> DNSResolver::get_record(const std::string& url, int rec
   dnssec_available = false;
   dnssec_valid = false;
   
-  ub_result *result;
+  ub_result *result = nullptr;
   // Make sure we are cleaning after result.
   epee::misc_utils::auto_scope_leave_caller scope_exit_handler =
     epee::misc_utils::create_scope_leave_handler([&](){
-    ub_resolve_free(result);
+    if (result != nullptr)
+      ub_resolve_free(result);
   });
   
   MDEBUG("Performing DNSSEC " << get_record_name(record_type) << " record query for " << url);
 
-  // call DNS resolver, blocking.  if return value not zero, something went wrong
-  if (!ub_resolve(m_data->m_ub_context, string_copy(url.c_str()), record_type, DNS_CLASS_IN, &result))
+  // call DNS resolver, blocking. if return value is not zero, something went wrong
+  const int resolve_status = ub_resolve(m_data->m_ub_context, string_copy(url.c_str()), record_type, DNS_CLASS_IN, &result);
+  if (resolve_status != 0)
+  {
+    MWARNING("DNSSEC " << get_record_name(record_type) << " record query failed for " << url << ": " << ub_strerror(resolve_status));
+    return addresses;
+  }
+
+  if (result != nullptr)
   {
     dnssec_available = (result->secure || result->bogus);
     dnssec_valid = result->secure && !result->bogus;
