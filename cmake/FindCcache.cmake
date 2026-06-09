@@ -31,7 +31,7 @@
 #
 # Usage of this module as follows:
 #
-#     project(jude)
+#     project(Judecoin)
 #     include(FindCcache) # Include AFTER the project() macro to be able to reach the CMAKE_CXX_COMPILER variable
 #
 # Properties modified by this module:
