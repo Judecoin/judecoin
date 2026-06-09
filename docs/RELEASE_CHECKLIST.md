@@ -18,12 +18,12 @@
   - [ ] Trezor firmware update available
 
 - [ ] Fork height set
-  - [ ] Official website announcement
-  - [ ] Official community announcement
+  - [ ] Community website dynamic
+  - [ ] Community news dynamic
   - [ ] Social media announcement, if applicable
 
 - [ ] Notify wallets
-  - [ ] Official Judecoin wallet users
+  - [ ] Judecoin wallet users
   - [ ] Supported third-party wallet providers, if applicable
   - [ ] Hardware wallet providers, if applicable
   - [ ] Ecosystem wallet partners, if applicable
@@ -67,7 +67,7 @@
 - [ ] CLI reproducible builds validated
 
 - [ ] CLI released
-  - [ ] Official downloads page updated
+  - [ ] Downloads page updated
   - [ ] `hashes.txt` updated on the website
   - [ ] `downloads.yml` updated on the website
   - [ ] Auto-update DNS records updated, if applicable
@@ -75,15 +75,15 @@
   - [ ] Seed nodes updated, if applicable
 
 - [ ] GUI released
-  - [ ] Official downloads page updated
+  - [ ] Downloads page updated
   - [ ] `hashes.txt` updated on the website
   - [ ] `hashes.txt.sig` updated on the website
   - [ ] `downloads.yml` updated on the website
   - [ ] Auto-update DNS records updated, if applicable
   - [ ] Redirects updated on the downloads server, if applicable
 
-- [ ] Release announcements
-  - [ ] Official announcement channel notice
-  - [ ] Official website announcement
-  - [ ] Official community announcement
-  - [ ] Social media announcement, if applicable
+- [ ] Release dynamic
+  - [ ] Community dynamic channel notice
+  - [ ] Community website dynamic
+  - [ ] Community dynamic
+  - [ ] Social media dynamic, if applicable
