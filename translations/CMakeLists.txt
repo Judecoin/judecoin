@@ -64,7 +64,7 @@ else()
       add_custom_command(TARGET generate_translations_header
         PRE_BUILD
         COMMAND ${LRELEASE} "${CMAKE_CURRENT_SOURCE_DIR}/${ts_file}" -qm "${qm_file}"
-        WORKING_DIRECTORY "${CMAKE_CURRENT_BIN_DIR}")
+        WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
     endforeach()
   endif()
 endif()
@@ -74,7 +74,7 @@ string(REPLACE ".ts" ".qm" qm_files "${ts_files}")
 add_custom_command(TARGET generate_translations_header
   POST_BUILD
   COMMAND $<TARGET_FILE:generate_translations_header> ${qm_files}
-  WORKING_DIRECTORY "${CMAKE_CURRENT_BIN_DIR}"
+  WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
   COMMENT "Generating embedded translations header")
 
 # export the generator target to a file, so it can be imported (see above) by another build
