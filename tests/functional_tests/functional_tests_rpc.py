@@ -5,9 +5,7 @@ import time
 import subprocess
 from signal import SIGTERM
 import socket
-import string
 import os
-import time
 
 USAGE = 'usage: functional_tests_rpc.py <python> <srcdir> <builddir> [<tests-to-run> | all]'
 DEFAULT_TESTS = [
@@ -27,7 +25,7 @@ try:
   sys.argv[4]
 except:
   print(USAGE)
-  print('Available tests: ' + string.join(DEFAULT_TESTS, ', '))
+  print('Available tests: ' + ', '.join(DEFAULT_TESTS))
   print('Or run all with "all"')
   sys.exit(0)
 
@@ -175,7 +173,7 @@ else:
       if p.returncode:
         n_returncode += 1
     if n_returncode == len(processes):
-      print('All done: ' + string.join([x.returncode for x in processes], ', '))
+      print('All done: ' + ', '.join(str(x.returncode) for x in processes))
       break
     time.sleep(1)
   for p in processes:
