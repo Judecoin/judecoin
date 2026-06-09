@@ -4,7 +4,7 @@ Judecoin daemon internationalization
 The Judecoin command-line tools can be translated into various languages.
 
 If you wish to contribute translations and need help or support, please refer to
-the official Judecoin community channels.
+the Judecoin community channels.
 
 In order to use the same translation workflow as the Judecoin GUI, the command-line
 tools use Qt Linguist translation files. However, to avoid the dependencies on Qt
