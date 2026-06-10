@@ -36,11 +36,14 @@ RUN set -ex && \
 
 COPY --from=builder /src/build/x86_64-linux-gnu/release/bin /usr/local/bin/
 
-# Create runtime directories
-RUN mkdir -p /wallet /root/.bitjudecoin
+# Create judecoin user and runtime directories
+RUN adduser --system --group --disabled-password --home /home/judecoin judecoin && \
+    mkdir -p /wallet /home/judecoin/.bitjudecoin /root/.bitjudecoin && \
+    chown -R judecoin:judecoin /home/judecoin/.bitjudecoin && \
+    chown -R judecoin:judecoin /wallet
 
-# Contains the blockchain
-VOLUME /root/.bitjudecoin
+# Default data directory for the non-root container user
+VOLUME /home/judecoin/.bitjudecoin
 
 # Generate your wallet via accessing the container and run:
 # cd /wallet
@@ -50,6 +53,11 @@ VOLUME /wallet
 EXPOSE 16060
 EXPOSE 16063
 
+ENV HOME=/home/judecoin
+
+# Switch to non-root user by default
+USER judecoin
+
 ENTRYPOINT ["judecoind"]
 
-CMD ["--p2p-bind-ip=0.0.0.0", "--p2p-bind-port=16060", "--rpc-bind-ip=0.0.0.0", "--rpc-bind-port=16063", "--non-interactive", "--confirm-external-bind"]
+CMD ["--data-dir=/home/judecoin/.bitjudecoin", "--p2p-bind-ip=0.0.0.0", "--p2p-bind-port=16060", "--rpc-bind-ip=0.0.0.0", "--rpc-bind-port=16063", "--non-interactive", "--confirm-external-bind"]

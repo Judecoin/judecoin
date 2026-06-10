@@ -587,11 +587,15 @@ Packages are available for
     # or build using a specific number of cores (reduce RAM requirement)
     docker build --build-arg NPROC=1 -t judecoin .
 
-    # either run in foreground
-    docker run -it -v /judecoin/chain:/root/.bitjudecoin -v /judecoin/wallet:/wallet -p 16060:16060 judecoin
+    # Run with the default non-root container user
+    docker run -it -v /judecoin/chain:/home/judecoin/.bitjudecoin -v /judecoin/wallet:/wallet -p 16060:16060 judecoin
 
-    # or in background
-    docker run -it -d -v /judecoin/chain:/root/.bitjudecoin -v /judecoin/wallet:/wallet -p 16060:16060 judecoin
+    # Or run in background with the default non-root container user
+    docker run -it -d -v /judecoin/chain:/home/judecoin/.bitjudecoin -v /judecoin/wallet:/wallet -p 16060:16060 judecoin
+
+    # Optional: run as root, matching the traditional ~/.bitjudecoin path
+    docker run -it --user root -v /judecoin/chain:/root/.bitjudecoin -v /judecoin/wallet:/wallet -p 16060:16060 judecoin \
+      --data-dir=/root/.bitjudecoin --p2p-bind-ip=0.0.0.0 --p2p-bind-port=16060 --rpc-bind-ip=0.0.0.0 --rpc-bind-port=16063 --non-interactive --confirm-external-bind
     ```
 
 * The build needs 3 GB space.
