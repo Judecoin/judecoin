@@ -410,7 +410,7 @@ application.
     cd judecoin
     ```
 
-* f you would like a specific [version/tag](https://github.com/Judecoin/judecoin/tags), check out that version tag. For example, use the latest stable Judecoin release tag. If you don't care about the version and just want binaries from master, skip this step:
+* If you would like a specific [version/tag](https://github.com/Judecoin/judecoin/tags), check out that version tag. For example, use the latest stable Judecoin release tag. If you don't care about the version and just want binaries from master, skip this step:
 
     ```bash
     git checkout <latest-release-tag>
@@ -691,7 +691,7 @@ DNS_PUBLIC=tcp torsocks ./judecoind --p2p-bind-ip 127.0.0.1 --no-igd --rpc-bind-
 
 ## Pruning
 
-As of May 2020, the full Judecoin blockchain file is about 80 GB. One can store a pruned blockchain, which is about 28 GB.
+The full Judecoin blockchain data directory can grow over time as new blocks are added. Users who want to reduce storage requirements can run a pruned blockchain.
 A pruned blockchain can only serve part of the historical chain data to other peers, but is otherwise identical in
 functionality to the full blockchain.
 To use a pruned blockchain, it is best to start the initial sync with --prune-blockchain. However, it is also possible

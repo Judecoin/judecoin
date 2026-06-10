@@ -165,7 +165,7 @@ HiddenServicePort 18089 127.0.0.1:18089  # rpc-restricted-bind-port
 
 This will store key information in `/var/lib/tor/data/jude` and `/var/lib/tor/data/jude-rpc`
 and will forward "Tor port" 18084 and 18089 to ports 18084 and 18089 of ip 127.0.0.1, respectively. The file
-`/usr/lib/tor/data/jude/hostname` will contain the ".onion" address for use with `--anonymous-inbound`, and
+`/var/lib/tor/data/jude/hostname` will contain the ".onion" address for use with `--anonymous-inbound`, and
 `/var/lib/tor/data/jude-rpc/hostname` will contain the ".onion" address for use with RPC.
 
 I2P must be configured with a standard server tunnel. Configuration differs by
