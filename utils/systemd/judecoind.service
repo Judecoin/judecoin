@@ -1,0 +1,20 @@
+[Unit]
+Description=Judecoin Full Node
+After=network-online.target
+
+[Service]
+User=judecoin
+Group=judecoin
+WorkingDirectory=~
+StateDirectory=judecoin
+LogsDirectory=judecoin
+
+Type=simple
+ExecStart=/usr/bin/judecoind --config-file /etc/judecoind.conf --non-interactive
+StandardOutput=null
+StandardError=null
+
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

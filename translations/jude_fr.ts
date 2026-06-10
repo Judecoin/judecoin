@@ -3094,7 +3094,7 @@ Sinon, vous prouvez le plus petit solde supérieur à &lt;montant&gt; dans votre
 To start synchronizing with the daemon, use the &quot;refresh&quot; command.
 Use the &quot;help&quot; command to see the list of available commands.
 Use &quot;help &lt;command&gt;&quot; to see a command&apos;s documentation.
-Always use the &quot;exit&quot; command when closing jude-wallet-cli to save 
+Always use the &quot;exit&quot; command when closing judecoin-wallet-cli to save 
 your current session&apos;s state. Otherwise, you might need to synchronize 
 your wallet again (your wallet keys are NOT at risk in any case).
 </source>
@@ -3102,7 +3102,7 @@ your wallet again (your wallet keys are NOT at risk in any case).
 Pour commencer la synchronisation avec le démon, utilisez la commande &quot;refresh&quot;.
 Utilisez la commande &quot;help&quot; pour voir la liste des commandes disponibles.
 Utilisez &quot;help &lt;commande&gt;&quot; pour voir la documentation d&apos;une commande.
-Utilisez toujours la commande &quot;exit&quot; pour fermer jude-wallet-cli pour sauvegarder 
+Utilisez toujours la commande &quot;exit&quot; pour fermer judecoin-wallet-cli pour sauvegarder 
 l&apos;état de votre session. Sinon, vous pourriez avoir besoin de synchroniser 
 votre portefeuille à nouveau (mais les clés de votre portefeuille ne risquent rien).
 </translation>
