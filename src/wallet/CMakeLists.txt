@@ -99,7 +99,7 @@ if(NOT IOS)
       ${EXTRA_LIBRARIES})
   set_property(TARGET wallet_rpc_server
     PROPERTY
-      OUTPUT_NAME "jude-wallet-rpc")
+      OUTPUT_NAME "judecoin-wallet-rpc")
   install(TARGETS wallet_rpc_server DESTINATION bin)
 endif()
 

@@ -71,5 +71,5 @@ target_link_libraries(daemon
     $<TARGET_NAME_IF_EXISTS:blocks>)
 set_property(TARGET daemon
   PROPERTY
-    OUTPUT_NAME "juded")
+    OUTPUT_NAME "judecoind")
 install(TARGETS daemon DESTINATION bin)
