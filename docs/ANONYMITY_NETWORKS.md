@@ -99,7 +99,7 @@ forwarded to `judecoind` localhost port 18085. Using `tx-proxy`(required), these
 addresses will be shared with peers over the same network type, otherwise your
 peers will not be notified of your onion or I2P address.
 
-**_Note: The specified port for `anonymous-inbound` must be unique (not 18080 etc). `anonymous-inbound` is not for blockchain sync!_**
+**_Note: The specified port for `anonymous-inbound` must be unique (not 16060 etc). `anonymous-inbound` is not for blockchain sync!_**
 Peers will use their own `tx-proxy` to relay transactions, which originate on their node,
 to your `anonymous-inbound`.
 

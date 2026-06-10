@@ -9,7 +9,7 @@ complete -c judecoin-wallet-rpc -l trusted-daemon -d "Enable commands which rely
 complete -c judecoin-wallet-rpc -l untrusted-daemon -d "Disable commands which rely on a trusted daemon"
 complete -c judecoin-wallet-rpc -l password -r -d "Wallet password (escape/quote as needed)"
 complete -c judecoin-wallet-rpc -l password-file -r -F -d "Wallet password file"
-complete -c judecoin-wallet-rpc -l daemon-port -r -d "Use daemon instance at port <arg> instead of 18081. Default: 0"
+complete -c judecoin-wallet-rpc -l daemon-port -r -d "Use daemon instance at port <arg> instead of 16063. Default: 0"
 complete -c judecoin-wallet-rpc -l daemon-login -r -d "Specify username[:password] for daemon RPC client"
 complete -c judecoin-wallet-rpc -l daemon-ssl -x -a "enabled disabled autodetect" -d "Enable SSL on daemon RPC connections. Default: autodetect"
 complete -c judecoin-wallet-rpc -l daemon-ssl-private-key -r -k -a "(__fish_complete_suffix .pem)" -d "Path to a PEM format private key"
