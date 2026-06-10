@@ -588,10 +588,10 @@ Packages are available for
     docker build --build-arg NPROC=1 -t judecoin .
 
     # either run in foreground
-    docker run -it -v /judecoin/chain:/root/.bitjudecoin -v /judecoin/wallet:/wallet -p 18080:18080 judecoin
+    docker run -it -v /judecoin/chain:/root/.bitjudecoin -v /judecoin/wallet:/wallet -p 16060:16060 judecoin
 
     # or in background
-    docker run -it -d -v /judecoin/chain:/root/.bitjudecoin -v /judecoin/wallet:/wallet -p 18080:18080 judecoin
+    docker run -it -d -v /judecoin/chain:/root/.bitjudecoin -v /judecoin/wallet:/wallet -p 16060:16060 judecoin
     ```
 
 * The build needs 3 GB space.
