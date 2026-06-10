@@ -410,7 +410,7 @@ application.
     cd judecoin
     ```
 
-* If you would like a specific [version/tag](https://github.com/Judecoin/judecoin/tags), do a git checkout for that version. eg. 'v0.17.1.0'. If you don't care about the version and just want binaries from master, skip this step:
+* f you would like a specific [version/tag](https://github.com/Judecoin/judecoin/tags), check out that version tag. For example, use the latest stable Judecoin release tag. If you don't care about the version and just want binaries from master, skip this step:
 
     ```bash
     git checkout <latest-release-tag>
