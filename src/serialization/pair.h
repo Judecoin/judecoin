@@ -29,7 +29,7 @@
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
 #pragma once
-#include <memory>
+#include <utility>
 #include <boost/type_traits/make_unsigned.hpp>
 #include "serialization.h"
 
