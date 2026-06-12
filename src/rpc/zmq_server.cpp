@@ -78,7 +78,7 @@ namespace
 
     if (zmq_setsockopt(out.get(), ZMQ_IPV6, std::addressof(ipv6_option), sizeof(ipv6_option)) != 0)
     {
-        MONERO_LOG_ZMQ_ERROR("Failed to enable IPv6");
+        JUDE_LOG_ZMQ_ERROR("Failed to enable IPv6");
         return nullptr;
     }
 
