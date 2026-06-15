@@ -25,12 +25,13 @@
 // 
 
 #pragma once
-#include <boost/asio/deadline_timer.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/unordered_map.hpp>
 #include <boost/smart_ptr/make_shared.hpp>
 
 #include <atomic>
+#include <chrono>
 #include <deque>
 
 #include "levin_base.h"
@@ -190,19 +191,19 @@ public:
   template <class callback_t>
   struct anvoke_handler: invoke_response_handler_base
   {
-    anvoke_handler(const callback_t& cb, uint64_t timeout,  async_protocol_handler& con, int command)
+    anvoke_handler(const callback_t& cb, std::chrono::milliseconds timeout,  async_protocol_handler& con, int command)
       :m_cb(cb), m_timeout(timeout), m_con(con), m_timer(con.m_pservice_endpoint->get_io_context()), m_timer_started(false),
       m_cancel_timer_called(false), m_timer_cancelled(false), m_command(command)
     {
       if(m_con.start_outer_call())
       {
-        MDEBUG(con.get_context_ref() << "anvoke_handler, timeout: " << timeout);
-        m_timer.expires_from_now(boost::posix_time::milliseconds(timeout));
+        MDEBUG(con.get_context_ref() << "anvoke_handler, timeout: " << timeout.count());
+        m_timer.expires_after(timeout);
         m_timer.async_wait([&con, command, cb, timeout](const boost::system::error_code& ec)
         {
           if(ec == boost::asio::error::operation_aborted)
             return;
-          MINFO(con.get_context_ref() << "Timeout on invoke operation happened, command: " << command << " timeout: " << timeout);
+          MINFO(con.get_context_ref() << "Timeout on invoke operation happened, command: " << command << " timeout: " << timeout.count());
           epee::span<const uint8_t> fake;
           cb(LEVIN_ERROR_CONNECTION_TIMEDOUT, fake, con.get_context_ref());
           con.close();
@@ -215,11 +216,11 @@ public:
     {}
     callback_t m_cb;
     async_protocol_handler& m_con;
-    boost::asio::deadline_timer m_timer;
+    boost::asio::steady_timer m_timer;
     bool m_timer_started;
     bool m_cancel_timer_called;
     bool m_timer_cancelled;
-    uint64_t m_timeout;
+    std::chrono::milliseconds m_timeout;
     int m_command;
     virtual bool handle(int res, const epee::span<const uint8_t> buff, typename async_protocol_handler::connection_context& context)
     {
@@ -247,26 +248,24 @@ public:
       if(!m_cancel_timer_called)
       {
         m_cancel_timer_called = true;
-        boost::system::error_code ignored_ec;
-        m_timer_cancelled = 1 == m_timer.cancel(ignored_ec);
+        m_timer_cancelled = 1 == m_timer.cancel();
       }
       return m_timer_cancelled;
     }
     virtual void reset_timer()
     {
-      boost::system::error_code ignored_ec;
-      if (!m_cancel_timer_called && m_timer.cancel(ignored_ec) > 0)
+      if (!m_cancel_timer_called && m_timer.cancel() > 0)
       {
         callback_t& cb = m_cb;
-        uint64_t timeout = m_timeout;
+        std::chrono::milliseconds timeout = m_timeout;
         async_protocol_handler& con = m_con;
         int command = m_command;
-        m_timer.expires_from_now(boost::posix_time::milliseconds(m_timeout));
+        m_timer.expires_after(m_timeout);
         m_timer.async_wait([&con, cb, command, timeout](const boost::system::error_code& ec)
         {
           if(ec == boost::asio::error::operation_aborted)
             return;
-          MINFO(con.get_context_ref() << "Timeout on invoke operation happened, command: " << command << " timeout: " << timeout);
+          MINFO(con.get_context_ref() << "Timeout on invoke operation happened, command: " << command << " timeout: " << timeout.count());
           epee::span<const uint8_t> fake;
           cb(LEVIN_ERROR_CONNECTION_TIMEDOUT, fake, con.get_context_ref());
           con.close();

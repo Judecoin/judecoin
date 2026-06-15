@@ -44,6 +44,7 @@
 #include <cassert>
 #include <map>
 #include <memory>
+#include <chrono>
 #include <condition_variable>
 
 #include <boost/asio.hpp>
@@ -445,7 +446,7 @@ namespace net_utils
       idle_callback_conext_base(boost::asio::io_context& io_serice):
                                                           m_timer(io_serice)
       {}
-      boost::asio::deadline_timer m_timer;
+      boost::asio::steady_timer m_timer;
     };
 
     template <class t_handler>
@@ -469,7 +470,7 @@ namespace net_utils
       {
         boost::shared_ptr<idle_callback_conext<t_handler>> ptr(new idle_callback_conext<t_handler>(io_context_, t_callback, timeout_ms));
         //needed call handler here ?...
-        ptr->m_timer.expires_from_now(boost::posix_time::milliseconds(ptr->m_period));
+        ptr->m_timer.expires_after(std::chrono::milliseconds(ptr->m_period));
         ptr->m_timer.async_wait(boost::bind(&boosted_tcp_server<t_protocol_handler>::global_timer_handler<t_handler>, this, ptr));
         return true;
       }
@@ -480,7 +481,7 @@ namespace net_utils
       //if handler return false - he don't want to be called anymore
       if(!ptr->call_handler())
         return true;
-      ptr->m_timer.expires_from_now(boost::posix_time::milliseconds(ptr->m_period));
+      ptr->m_timer.expires_after(std::chrono::milliseconds(ptr->m_period));
       ptr->m_timer.async_wait(boost::bind(&boosted_tcp_server<t_protocol_handler>::global_timer_handler<t_handler>, this, ptr));
       return true;
     }
