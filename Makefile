@@ -28,7 +28,7 @@
 
 ANDROID_STANDALONE_TOOLCHAIN_PATH ?= /usr/local/toolchain
 
-dotgit=$(shell ls -d .git/config)
+dotgit := $(wildcard .git/config)
 ifneq ($(dotgit), .git/config)
   USE_SINGLE_BUILDDIR=1
 endif
@@ -61,19 +61,19 @@ debug: cmake-debug
 #  * libwallet_api_tests fail (Issue #895)
 debug-test:
 	mkdir -p $(builddir)/debug
-	cd $(builddir)/debug && cmake -D BUILD_TESTS=ON -D CMAKE_BUILD_TYPE=Debug $(topdir) &&  $(MAKE) && $(MAKE) ARGS="-E libwallet_api_tests" test
+	cd $(builddir)/debug && cmake -G "Unix Makefiles" -D BUILD_TESTS=ON -D CMAKE_BUILD_TYPE=Debug $(topdir) &&  $(MAKE) && $(MAKE) ARGS="-E libwallet_api_tests" test
 
 debug-test-asan:
 	mkdir -p $(builddir)/debug
-	cd $(builddir)/debug && cmake -D BUILD_TESTS=ON -D SANITIZE=ON -D CMAKE_BUILD_TYPE=Debug $(topdir) &&  $(MAKE) && $(MAKE) ARGS="-E libwallet_api_tests" test
+	cd $(builddir)/debug && cmake -G "Unix Makefiles" -D BUILD_TESTS=ON -D SANITIZE=ON -D CMAKE_BUILD_TYPE=Debug $(topdir) &&  $(MAKE) && $(MAKE) ARGS="-E libwallet_api_tests" test
 
 debug-test-trezor:
 	mkdir -p $(builddir)/debug
-	cd $(builddir)/debug && cmake -D BUILD_TESTS=ON -D TREZOR_DEBUG=ON -D CMAKE_BUILD_TYPE=Debug $(topdir) &&  $(MAKE) && $(MAKE) ARGS="-E libwallet_api_tests" test
+	cd $(builddir)/debug && cmake -G "Unix Makefiles" -D BUILD_TESTS=ON -D TREZOR_DEBUG=ON -D CMAKE_BUILD_TYPE=Debug $(topdir) &&  $(MAKE) && $(MAKE) ARGS="-E libwallet_api_tests" test
 
 debug-all:
 	mkdir -p $(builddir)/debug
-	cd $(builddir)/debug && cmake -D BUILD_TESTS=ON -D BUILD_SHARED_LIBS=OFF -D CMAKE_BUILD_TYPE=Debug $(topdir) && $(MAKE)
+	cd $(builddir)/debug && cmake -G "Unix Makefiles" -D BUILD_TESTS=ON -D BUILD_SHARED_LIBS=OFF -D CMAKE_BUILD_TYPE=Debug $(topdir) && $(MAKE)
 
 cmake-release:
 	mkdir -p $(builddir)/release
@@ -84,11 +84,11 @@ release: cmake-release
 
 release-test:
 	mkdir -p $(builddir)/release
-	cd $(builddir)/release && cmake -D BUILD_TESTS=ON -D CMAKE_BUILD_TYPE=Release $(topdir) && $(MAKE) && $(MAKE) test
+	cd $(builddir)/release && cmake -G "Unix Makefiles" -D BUILD_TESTS=ON -D CMAKE_BUILD_TYPE=Release $(topdir) && $(MAKE) && $(MAKE) test
 
 release-all:
 	mkdir -p $(builddir)/release
-	cd $(builddir)/release && cmake -D BUILD_TESTS=ON -D CMAKE_BUILD_TYPE=Release $(topdir) && $(MAKE)
+	cd $(builddir)/release && cmake -G "Unix Makefiles" -D BUILD_TESTS=ON -D CMAKE_BUILD_TYPE=Release $(topdir) && $(MAKE)
 
 release-static:
 	mkdir -p $(builddir)/release
@@ -96,7 +96,7 @@ release-static:
 
 coverage:
 	mkdir -p $(builddir)/debug
-	cd $(builddir)/debug && cmake -D BUILD_TESTS=ON -D CMAKE_BUILD_TYPE=Debug -D COVERAGE=ON $(topdir) && $(MAKE) && $(MAKE) test
+	cd $(builddir)/debug && cmake -G "Unix Makefiles" -D BUILD_TESTS=ON -D CMAKE_BUILD_TYPE=Debug -D COVERAGE=ON $(topdir) && $(MAKE) && $(MAKE) test
 
 fuzz:
 	mkdir -p $(builddir)/fuzz
@@ -117,4 +117,5 @@ clean-all:
 tags:
 	ctags -R --sort=1 --c++-kinds=+p --fields=+iaS --extra=+q --language-force=C++ src contrib tests/gtest
 
-.PHONY: all cmake-debug debug debug-test debug-all cmake-release release release-test release-all clean tags
+.PHONY: all depends cmake-debug debug debug-test debug-test-asan debug-test-trezor debug-all \
+        cmake-release release release-test release-all release-static coverage fuzz clean clean-all tags
