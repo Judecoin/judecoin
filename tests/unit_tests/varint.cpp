@@ -34,6 +34,7 @@
 #include <iostream>
 #include <vector>
 #include <boost/foreach.hpp>
+#include "common/varint.h"
 #include "cryptonote_basic/cryptonote_basic.h"
 #include "cryptonote_basic/cryptonote_basic_impl.h"
 #include "serialization/binary_archive.h"
@@ -61,4 +62,54 @@ TEST(varint, equal)
     ASSERT_EQ (read, bytes);
     ASSERT_TRUE(idx2 == idx);
   }
+}
+
+TEST(varint, max_uint64_t_bytes)
+{
+  const uint64_t max_val = std::numeric_limits<uint64_t>::max();
+  ASSERT_EQ(tools::get_varint_byte_size(max_val), 10);
+}
+
+TEST(varint, get_varint_byte_size)
+{
+  // uint8_t boundary values
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint8_t>(0)), 1);
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint8_t>(127)), 1);
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint8_t>(128)), 2);
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint8_t>(255)), 2);
+
+  // uint16_t boundary values
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint16_t>(0)), 1);
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint16_t>(127)), 1);
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint16_t>(128)), 2);
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint16_t>(16383)), 2);
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint16_t>(16384)), 3);
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint16_t>(65535)), 3);
+
+  // uint32_t boundary values
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint32_t>(0)), 1);
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint32_t>(127)), 1);
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint32_t>(16383)), 2);
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint32_t>(2097151)), 3);
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint32_t>(2097152)), 4);
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint32_t>(268435455)), 4);
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint32_t>(268435456)), 5);
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint32_t>(4294967295)), 5);
+
+  // uint64_t boundary values
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint64_t>(0)), 1);
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint64_t>(127)), 1);
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint64_t>(16383)), 2);
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint64_t>(2097151)), 3);
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint64_t>(268435455)), 4);
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint64_t>(34359738367ULL)), 5);
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint64_t>(34359738368ULL)), 6);
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint64_t>(4398046511103ULL)), 6);
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint64_t>(4398046511104ULL)), 7);
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint64_t>(562949953421311ULL)), 7);
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint64_t>(562949953421312ULL)), 8);
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint64_t>(72057594037927935ULL)), 8);
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint64_t>(72057594037927936ULL)), 9);
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint64_t>(9223372036854775807ULL)), 9);
+  ASSERT_EQ(tools::get_varint_byte_size(static_cast<uint64_t>(9223372036854775808ULL)), 10);
 }

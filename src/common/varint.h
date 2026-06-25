@@ -125,4 +125,16 @@ namespace tools {
     int read_varint(InputIt &&first, InputIt &&last, T &i) {
     return read_varint<std::numeric_limits<T>::digits>(std::forward<InputIt>(first), std::forward<InputIt>(last), i);
   }
+
+  /*! \brief Returns the number of bytes needed to encode a varint
+   */
+  template <typename T, typename = std::enable_if_t<std::is_integral_v<T> && std::is_unsigned_v<T>>>
+  constexpr std::size_t get_varint_byte_size(T val) {
+    std::size_t bytes = 0;
+    do {
+      ++bytes;
+      val >>= 7;
+    } while (val);
+    return bytes;
+  }
 }

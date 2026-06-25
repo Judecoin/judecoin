@@ -30,6 +30,7 @@
 
 #include <atomic>
 #include <boost/algorithm/string.hpp>
+#include "common/varint.h"
 #include "wipeable_string.h"
 #include "string_tools.h"
 #include "string_tools_lexical.h"
@@ -717,16 +718,19 @@ namespace cryptonote
   bool add_extra_nonce_to_tx_extra(std::vector<uint8_t>& tx_extra, const blobdata& extra_nonce)
   {
     CHECK_AND_ASSERT_MES(extra_nonce.size() <= TX_EXTRA_NONCE_MAX_COUNT, false, "extra nonce could be 255 bytes max");
+    const std::size_t len_varint_bytes = tools::get_varint_byte_size(extra_nonce.size());
     size_t start_pos = tx_extra.size();
-    tx_extra.resize(tx_extra.size() + 2 + extra_nonce.size());
+    tx_extra.resize(tx_extra.size() + 1 + len_varint_bytes + extra_nonce.size());
     //write tag
     tx_extra[start_pos] = TX_EXTRA_NONCE;
     //write len
     ++start_pos;
-    tx_extra[start_pos] = static_cast<uint8_t>(extra_nonce.size());
+    tools::write_varint(&tx_extra[start_pos], extra_nonce.size());
+    assert(tx_extra.data() + start_pos + len_varint_bytes == tx_extra.data() + tx_extra.size() - extra_nonce.size());
     //write data
-    ++start_pos;
-    memcpy(&tx_extra[start_pos], extra_nonce.data(), extra_nonce.size());
+    start_pos += len_varint_bytes;
+    if (!extra_nonce.empty())
+      memcpy(&tx_extra[start_pos], extra_nonce.data(), extra_nonce.size());
     return true;
   }
   //---------------------------------------------------------------
