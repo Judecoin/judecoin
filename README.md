@@ -32,7 +32,8 @@ Portions Copyright (c) The Cryptonote developers.
 - Web: [judecoin.info](https://www.judecoin.info/)
 - Community-News: [github.com/Judecoin/information](https://github.com/Judecoin/information/tree/main/community-news)
 - GitHub: [github.com/Judecoin/judecoin](https://github.com/Judecoin/judecoin)
-- Block Explorer: [judeblock.org](https://www.judeblock.org/)
+- Block Explorer Ⅰ: [judeblock.org](https://www.judeblock.org/)
+- Block Explorer Ⅱ: [judeblock.net](https://www.judeblock.net/)
 
 ## Documentation
 
