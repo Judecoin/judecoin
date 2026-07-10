@@ -247,7 +247,7 @@ namespace net_utils
               )
             ) {
               m_state.ssl.enabled = false;
-              finish_read(bytes_transferred);
+              handle_read(bytes_transferred);
             }
             else {
               m_state.ssl.detected = true;
@@ -385,7 +385,7 @@ namespace net_utils
           m_conn_context.m_recv_cnt += bytes_transferred;
           start_timer(get_timeout_from_bytes_read(bytes_transferred), true);
         }
-        finish_read(bytes_transferred);
+        handle_read(bytes_transferred);
       }
     };
     if (!m_state.ssl.enabled)
@@ -412,7 +412,7 @@ namespace net_utils
   }
 
   template<typename T>
-  void connection<T>::finish_read(size_t bytes_transferred)
+  void connection<T>::handle_read(size_t bytes_transferred)
   {
     // Post handle_recv to a separate `strand_`, distinct from `m_strand`
     // which is listening for reads/writes. This avoids a circular dep.
@@ -738,6 +738,8 @@ namespace net_utils
     }
     else
       m_state.status = status_t::WASTED;
+
+    m_state.condition.notify_all();
   }
 
   template<typename T>
@@ -796,6 +798,7 @@ namespace net_utils
       m_state.socket.connected = false;
     }
     m_state.status = status_t::WASTED;
+    m_state.condition.notify_all();
   }
 
   template<typename T>
@@ -1114,7 +1117,7 @@ namespace net_utils
   template<typename T>
   bool connection<T>::cancel()
   {
-    return close();
+    return close(false);
   }
 
   template<typename T>
@@ -1130,12 +1133,17 @@ namespace net_utils
   }
 
   template<typename T>
-  bool connection<T>::close()
+  bool connection<T>::close(const bool wait_for_shutdown)
   {
-    std::lock_guard<std::mutex> guard(m_state.lock);
+    std::unique_lock<std::mutex> guard(m_state.lock);
     if (m_state.status != status_t::RUNNING)
       return false;
     terminate_async();
+    if (!wait_for_shutdown)
+      return true;
+    m_state.condition.wait(guard, [this]{
+      return m_state.status == status_t::TERMINATED || m_state.status == status_t::WASTED;
+    });
     return true;
   }
 
@@ -1542,7 +1550,7 @@ namespace net_utils
   }
   //---------------------------------------------------------------------------------
   template<class t_protocol_handler>
-  void boosted_tcp_server<t_protocol_handler>::send_stop_signal()
+  void boosted_tcp_server<t_protocol_handler>::send_stop_signal(std::function<void()> close_all_connections)
   {
     m_stop_signal_sent = true;
     typename connection<t_protocol_handler>::shared_state *state = static_cast<typename connection<t_protocol_handler>::shared_state*>(m_state.get());
@@ -1555,6 +1563,8 @@ namespace net_utils
     }
     connections_.clear();
     connections_mutex.unlock();
+    close_all_connections();
+    MINFO("Stopping IOContext");
     io_context_.stop();
     CATCH_ENTRY_L0("boosted_tcp_server<t_protocol_handler>::send_stop_signal()", void());
   }

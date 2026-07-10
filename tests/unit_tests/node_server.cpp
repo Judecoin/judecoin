@@ -616,7 +616,7 @@ TEST(cryptonote_protocol_handler, race_condition)
     }
     virtual bool drop_connection(const contexts::basic& context) override {
       if (shared_state)
-        return shared_state->close(context.m_connection_id);
+        return shared_state->close(context.m_connection_id, false);
       else
         return {};
     }

@@ -110,7 +110,7 @@ namespace
     {
       if (!m_connections[id].is_nil())
       {
-        m_tcp_server.get_config_object().close(m_connections[id]);
+        m_tcp_server.get_config_object().close(m_connections[id], true);
         return true;
       }
       else
@@ -371,7 +371,7 @@ TEST_F(net_load_test_clt, a_lot_of_client_connections_and_connections_closed_by_
   parallel_exec([&](size_t thread_idx) {
     for (size_t i = thread_idx; i < CONNECTION_COUNT; i += m_thread_count)
     {
-      connection_opener.close(i);
+      connection_opener.close(i, true);
     }
   });
 
