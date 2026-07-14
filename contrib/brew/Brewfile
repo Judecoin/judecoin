@@ -4,8 +4,6 @@
 #     https://github.com/Homebrew/homebrew-bundle
 # Execute `brew bundle` in the directory containing the Brewfile.
 
-tap "homebrew/bundle"
-
 brew "autoconf"
 brew "autogen"
 brew "automake"
