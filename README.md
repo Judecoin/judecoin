@@ -596,9 +596,9 @@ Packages are available for
 
     # Optional: run as root, matching the traditional ~/.bitjudecoin path
     docker run -it --user root -v /judecoin/chain:/root/.bitjudecoin -v /judecoin/wallet:/wallet -p 16060:16060 judecoin \
-      --data-dir=/root/.bitjudecoin --p2p-bind-ip=0.0.0.0 --p2p-bind-port=16060 --rpc-bind-ip=0.0.0.0 --rpc-bind-port=16063 --non-interactive --confirm-external-bind
+    --data-dir=/root/.bitjudecoin --p2p-bind-ip=0.0.0.0 --p2p-bind-port=16060 --rpc-bind-ip=0.0.0.0 --rpc-bind-port=16063 --restricted-rpc --non-interactive --confirm-external-bind
     ```
-
+* RPC security: The examples above publish only the P2P port (`16060`). If the RPC port (`16063`) is also published, keep `--restricted-rpc` enabled and restrict access with a firewall. Never expose unrestricted RPC to the public internet.
 * The build needs 3 GB space.
 * Wait one hour or more
 
