@@ -60,4 +60,4 @@ USER judecoin
 
 ENTRYPOINT ["judecoind"]
 
-CMD ["--data-dir=/home/judecoin/.bitjudecoin", "--p2p-bind-ip=0.0.0.0", "--p2p-bind-port=16060", "--rpc-bind-ip=0.0.0.0", "--rpc-bind-port=16063", "--non-interactive", "--confirm-external-bind"]
+CMD ["--data-dir=/home/judecoin/.bitjudecoin", "--p2p-bind-ip=0.0.0.0", "--p2p-bind-port=16060", "--rpc-bind-ip=0.0.0.0", "--rpc-bind-port=16063", "--restricted-rpc", "--non-interactive", "--confirm-external-bind"]
