@@ -55,7 +55,7 @@ class MultisigTest():
         self.reset()
         for pub_addr in PUB_ADDRS:
             self.mine(pub_addr, 4)
-        self.mine('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 80)
+        self.mine('J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF', 80)
 
         print('Testing in-depth transferring with many different multisig setups')
 
@@ -207,7 +207,7 @@ class MultisigTest():
       assert not hasattr(self, 'wallet') or not self.wallet
       self.wallet = [Wallet(idx = 0)]
       res = self.wallet[0].restore_deterministic_wallet(seed = normal_seed)
-      assert res.address == '42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm'
+      assert res.address == 'J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF'
 
       self.wallet[0].refresh()
 
@@ -227,7 +227,7 @@ class MultisigTest():
       res = self.wallet[0].transfer(dsts, get_tx_metadata = True)
       tx_hex = res.tx_metadata
       res = self.wallet[0].relay_tx(tx_hex)
-      self.mine('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 10)
+      self.mine('J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF', 10)
 
     def remake_some_multisig_wallets_by_multsig_seed(self, threshold):
       N = len(self.wallet)
@@ -364,7 +364,7 @@ class MultisigTest():
 
         print("Creating multisig transaction from wallet " + str(signers[0]))
 
-        dst = {'address': '42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 'amount': 1000000000000}
+        dst = {'address': 'J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF', 'amount': 1000000000000}
         res = self.wallet[signers[0]].transfer([dst])
         assert len(res.tx_hash) == 0 # not known yet
         txid = res.tx_hash
@@ -379,7 +379,7 @@ class MultisigTest():
         assert len(res.unsigned_txset) == 0
         multisig_txset = res.multisig_txset
 
-        daemon.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 1)
+        daemon.generateblocks('J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF', 1)
         for i in range(len(self.wallet)):
           self.wallet[i].refresh()
 
@@ -398,7 +398,7 @@ class MultisigTest():
           assert desc.fee == fee
           assert len(desc.recipients) == 1
           rec = desc.recipients[0]
-          assert rec.address == '42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm'
+          assert rec.address == 'J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF'
           assert rec.amount == 1000000000000
 
           res = self.wallet[signers[i+1]].sign_multisig(multisig_txset)
@@ -423,7 +423,7 @@ class MultisigTest():
           assert len([x for x in (res['pending'] if 'pending' in res else []) if x.txid == txid]) == (1 if i == signers[-1] else 0)
           assert len([x for x in (res['out'] if 'out' in res else []) if x.txid == txid]) == 0
 
-        daemon.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 1)
+        daemon.generateblocks('J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF', 1)
         return txid
 
     def try_transfer_frozen(self, signers):
@@ -433,7 +433,7 @@ class MultisigTest():
 
         print("Creating multisig transaction from wallet " + str(signers[0]))
 
-        dst = {'address': '42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 'amount': 1000000000000}
+        dst = {'address': 'J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF', 'amount': 1000000000000}
         res = self.wallet[signers[0]].transfer([dst])
         assert len(res.tx_hash) == 0 # not known yet
         txid = res.tx_hash
@@ -449,7 +449,7 @@ class MultisigTest():
         spent_key_images = res.spent_key_images.key_images
         multisig_txset = res.multisig_txset
 
-        daemon.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 1)
+        daemon.generateblocks('J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF', 1)
         for i in range(len(self.wallet)):
           self.wallet[i].refresh()
 
@@ -496,7 +496,7 @@ class MultisigTest():
           assert desc.fee == fee
           assert len(desc.recipients) == 1
           rec = desc.recipients[0]
-          assert rec.address == '42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm'
+          assert rec.address == 'J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF'
           assert rec.amount == 1000000000000
 
           res = self.wallet[signers[i+1]].sign_multisig(multisig_txset)
@@ -521,7 +521,7 @@ class MultisigTest():
           assert len([x for x in (res['pending'] if 'pending' in res else []) if x.txid == txid]) == (1 if i == signers[-1] else 0)
           assert len([x for x in (res['out'] if 'out' in res else []) if x.txid == txid]) == 0
 
-        daemon.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 1)
+        daemon.generateblocks('J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF', 1)
         return txid
 
     def check_transaction(self, txid):
@@ -575,7 +575,7 @@ class MultisigImportTempRefreshFailTest():
             unlocked_balance = res.unlocked_balance
 
         # Construct outgoing transfer
-        dst = {'address': '42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 'amount': unlocked_balance // 2}
+        dst = {'address': 'J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF', 'amount': unlocked_balance // 2}
         res = wallets[0].transfer([dst])
         assert len(res.tx_hash) == 0 # not known yet
         txid = res.tx_hash
@@ -606,7 +606,7 @@ class MultisigImportTempRefreshFailTest():
         assert len(res.tx_hash_list) == 1
         txid = res.tx_hash_list[0]
 
-        MultisigTest.mine('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 1)
+        MultisigTest.mine('J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF', 1)
 
         timeout = 15
         wait_cutoff = time.monotonic() + timeout

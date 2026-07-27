@@ -81,7 +81,7 @@ class SpeedTest():
         print('Test speed of block generation')
         start = time.time()
 
-        res = daemon.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', blocks)
+        res = daemon.generateblocks('J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF', blocks)
 
         print('generating ', blocks, 'blocks took: ', time.time() - start, 'seconds')
 

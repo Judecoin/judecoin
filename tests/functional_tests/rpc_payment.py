@@ -360,7 +360,7 @@ class RPCPaymentTest():
         assert res.credits == credits - 1
         credits = res.credits
 
-        res = daemon.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 100)
+        res = daemon.generateblocks('J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF', 100)
         block_hashes = res.blocks
 
         # ask for 1 block -> 1 credit

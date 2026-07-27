@@ -68,7 +68,7 @@ class GetOutputDistributionTest():
         assert len(d.distribution) == 1
         assert d.distribution[0] == 0
 
-        res = daemon.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 1)
+        res = daemon.generateblocks('J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF', 1)
 
         res = daemon.get_output_distribution([0], 0, 0)
         assert len(res.distributions) == 1
@@ -91,7 +91,7 @@ class GetOutputDistributionTest():
         assert len(d.distribution) == 1
         assert d.distribution[0] == 0
 
-        res = daemon.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 3)
+        res = daemon.generateblocks('J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF', 3)
 
         res = daemon.get_output_distribution([0], 0, 0, cumulative = True)
         assert len(res.distributions) == 1
@@ -106,7 +106,7 @@ class GetOutputDistributionTest():
         assert d.distribution[3] == 3
 
         # extend
-        res = daemon.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 80)
+        res = daemon.generateblocks('J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF', 80)
 
         res = daemon.get_output_distribution([0], 0, 0, cumulative = True)
         assert len(res.distributions) == 1
@@ -121,9 +121,9 @@ class GetOutputDistributionTest():
         # pop and replace, this will do through the "trim and extend" path
         res = daemon.pop_blocks(2)
         self.wallet.refresh()
-        dst = {'address': '42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 'amount': 1000000000000}
+        dst = {'address': 'J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF', 'amount': 1000000000000}
         self.wallet.transfer([dst])
-        res = daemon.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 1)
+        res = daemon.generateblocks('J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF', 1)
         for step in range(3): # the second will be cached, the third will also be cached, but we get it in non-cumulative mode
             res = daemon.get_output_distribution([0], 0, 0, cumulative = step < 3)
             assert len(res.distributions) == 1

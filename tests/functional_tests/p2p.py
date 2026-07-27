@@ -63,6 +63,7 @@ class P2PTest():
         try: self.wallet.close_wallet()
         except: pass
         res = self.wallet.restore_deterministic_wallet(seed = seed)
+        self.address = res.address
 
     def mine(self, blocks):
         assert blocks >= 1
@@ -72,7 +73,7 @@ class P2PTest():
         daemon = Daemon(idx = 2)
 
         # generate blocks
-        res_generateblocks = daemon.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', blocks)
+        res_generateblocks = daemon.generateblocks(self.address, blocks)
 
     def test_p2p_reorg(self):
         print('Testing P2P reorg')
@@ -96,8 +97,8 @@ class P2PTest():
         daemon2.out_peers(0)
         daemon3.out_peers(0)
 
-        res = daemon2.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 2)
-        res = daemon3.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 3)
+        res = daemon2.generateblocks('J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF', 2)
+        res = daemon3.generateblocks('J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF', 3)
 
         res = daemon2.get_info()
         assert res.height == height + 2
@@ -121,8 +122,8 @@ class P2PTest():
         daemon2.out_peers(0)
         daemon3.out_peers(0)
 
-        res = daemon2.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 3)
-        res = daemon3.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 2)
+        res = daemon2.generateblocks('J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF', 3)
+        res = daemon3.generateblocks('J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF', 2)
 
         res = daemon2.get_info()
         assert res.height == height + 6
@@ -145,7 +146,7 @@ class P2PTest():
         # disconnect and mine a lot on daemon3
         daemon2.out_peers(0)
         daemon3.out_peers(0)
-        res = daemon3.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 500)
+        res = daemon3.generateblocks('J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF', 500)
 
         # reconnect and wait for sync
         daemon2.out_peers(8)
@@ -174,7 +175,7 @@ class P2PTest():
         self.wallet.refresh()
         res = self.wallet.get_balance()
 
-        dst = {'address': '42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 'amount': 1000000000000}
+        dst = {'address': 'J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF', 'amount': 1000000000000}
         res = self.wallet.transfer([dst])
         assert len(res.tx_hash) == 32*2
         txid = res.tx_hash
@@ -221,7 +222,7 @@ class P2PTest():
         assert mempool_txid in res.get('tx_hashes', [])
 
         # mine block on daemon2
-        res = daemon2.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 1)
+        res = daemon2.generateblocks('J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF', 1)
         block_height = res.height
 
         # wait until both are synced, or 5 seconds, whichever is first.
@@ -276,7 +277,7 @@ class P2PTest():
         daemon2.flush_txpool()
 
         # mine block on daemon3
-        res = daemon3.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 1)
+        res = daemon3.generateblocks('J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF', 1)
         block_height = res.height
 
         # wait until both are synced, or 5 seconds, whichever is first.

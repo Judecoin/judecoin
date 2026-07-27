@@ -108,14 +108,14 @@ class MiningTest():
         res_status = daemon.mining_status()
 
         if via_daemon:
-            res = daemon.start_mining('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', threads_count = 1)
+            res = daemon.start_mining('J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF', threads_count = 1)
         else:
             res = wallet.start_mining(threads_count = cores_mine)
 
         res_status = daemon.mining_status()
         assert res_status.active == True
         assert res_status.threads_count == cores_mine
-        assert res_status.address == '42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm'
+        assert res_status.address == 'J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF'
         assert res_status.is_background_mining_enabled == False
         assert res_status.block_reward >= 600000000000
 
@@ -197,13 +197,13 @@ class MiningTest():
         assert balance >= prev_balance + (new_height - initial_height) * 600000000000
 
         if via_daemon:
-            res = daemon.start_mining('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', threads_count = 1, do_background_mining = True)
+            res = daemon.start_mining('J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF', threads_count = 1, do_background_mining = True)
         else:
             res = wallet.start_mining(threads_count = 1, do_background_mining = True)
         res_status = daemon.mining_status()
         assert res_status.active == True
         assert res_status.threads_count == 1
-        assert res_status.address == '42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm'
+        assert res_status.address == 'J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF'
         assert res_status.is_background_mining_enabled == True
         assert res_status.block_reward >= 600000000000
 
@@ -238,7 +238,7 @@ class MiningTest():
         daemon = Daemon()
         res = daemon.get_height()
         height = res.height
-        res = daemon.generateblocks('42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm', 5)
+        res = daemon.generateblocks('J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF', 5)
         assert len(res.blocks) == 5
         hashes = res.blocks
         blocks = []
@@ -287,7 +287,7 @@ class MiningTest():
 
         epoch = int(os.environ['SEEDHASH_EPOCH_BLOCKS'])
         lag = int(os.environ['SEEDHASH_EPOCH_LAG'])
-        address = '42ey1afDFnn4886T7196doS9GPMzexD9gXpsZJDwVjeRVdFCSoHnv7KPbBeGpzJBzHRCAs9UxqeoyFQMYbqSWYTfJJQAWDm'
+        address = 'J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF'
 
         # check we can generate blocks, and that the seed hash changes when expected
         res = daemon.getblocktemplate(address)
