@@ -53,7 +53,7 @@
 #undef JUDE_DEFAULT_LOG_CATEGORY
 #define JUDE_DEFAULT_LOG_CATEGORY "wallet.simplewallet"
 // Hardcode Jude's donation address (see #1447)
-constexpr const char JUDE_DONATION_ADDR[] = "888tNkZrPN6JsEgekjMnABU4TBzc2Dt29EPAvkRxbANsAnjyPbb3iQ1YBRk1UXcdRsiKc9dhwMVgN5S9cQUiyoogDavup3H";
+constexpr const char JUDE_DONATION_ADDR[] = "J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF";
 
 /*!
  * \namespace cryptonote
