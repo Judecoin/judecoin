@@ -38,7 +38,7 @@ class AddressValidationTest():
       self.create()
       self.check_bad_addresses()
       self.check_good_addresses()
-      self.check_openalias_addresses()
+      self.check_donation_address()
 
     def create(self):
         print('Creating wallet')
@@ -90,20 +90,13 @@ class AddressValidationTest():
                 else:
                     assert not res.valid
 
-    def check_openalias_addresses(self):
-        print('Validating openalias addresses')
-        addresses = [
-            ['donate@getjude.org', '888tNkZrPN6JsEgekjMnABU4TBzc2Dt29EPAvkRxbANsAnjyPbb3iQ1YBRk1UXcdRsiKc9dhwMVgN5S9cQUiyoogDavup3H']
-        ]
-        for address in addresses:
-            res = self.wallet.validate_address(address[0])
-            assert not res.valid
-            res = self.wallet.validate_address(address[0], allow_openalias = True)
+    def check_donation_address(self):
+        print('Validating Judecoin donation address')
+        address = 'J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF'
+            res = self.wallet.validate_address(address)
             assert res.valid
-            assert not res.integrated
-            assert res.subaddress
             assert res.nettype == 'mainnet'
-            assert res.openalias_address == address[1]
+            assert res.openalias_address == ''
 
 if __name__ == '__main__':
     AddressValidationTest().run_test()

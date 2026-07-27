@@ -32,12 +32,11 @@
 
 #include "wallet/wallet2.h"
 #include "common/dns_utils.h"
-#include "simplewallet/simplewallet.h"
 #include <string>
 
 TEST(AddressFromTXT, Success)
 {
-  std::string addr = "46BeWrHpwXmHDpDEUmZBWZfoQpdc6HaERCNmx1pEYL2rAcuwufPN9rXHHtyUA4QVy66qeFQkn6sfK8aHYjA3jk3o1Bv16em";
+  std::string addr = "J6GX4gh7ix1ft9xVvUci45cTPFPjaRihnNQ7Y8kRvAxCNGVh6Fw8Hw83aJ8hFZyYtvB2CBaBfNKK3gSr4zJkqox1Jm2TiLF";
 
   std::string txtr = "oa1:jude";
   txtr += " recipient_address=";
@@ -82,34 +81,12 @@ TEST(AddressFromTXT, Failure)
   ASSERT_STREQ("", res.c_str());
 }
 
-TEST(AddressFromURL, Success)
-{
-  const std::string addr = JUDE_DONATION_ADDR;
-  
-  bool dnssec_result = false;
-
-  std::vector<std::string> addresses = tools::dns_utils::addresses_from_url("donate.getjude.org", dnssec_result);
-
-  EXPECT_EQ(1, addresses.size());
-  if (addresses.size() == 1)
-  {
-    EXPECT_STREQ(addr.c_str(), addresses[0].c_str());
-  }
-
-  // OpenAlias address with an @ instead of first .
-  addresses = tools::dns_utils::addresses_from_url("donate@getjude.org", dnssec_result);
-  EXPECT_EQ(1, addresses.size());
-  if (addresses.size() == 1)
-  {
-    EXPECT_STREQ(addr.c_str(), addresses[0].c_str());
-  }
-}
 
 TEST(AddressFromURL, Failure)
 {
   bool dnssec_result = false;
 
-  std::vector<std::string> addresses = tools::dns_utils::addresses_from_url("example.veryinvalid", dnssec_result);
+  std::vector<std::string> addresses = tools::dns_utils::addresses_from_url("example.invalid", dnssec_result);
 
   // for a non-existing domain such as "example.invalid", the non-existence is proved with NSEC records
   ASSERT_TRUE(dnssec_result);

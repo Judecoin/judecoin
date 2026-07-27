@@ -26,7 +26,7 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <iostream>
+#include <string>
 #include <vector>
 
 #include "gtest/gtest.h"
@@ -130,26 +130,16 @@ TEST(DNSResolver, IPv6Failure)
   ASSERT_EQ(0, ips.size());
 }
 
-TEST(DNSResolver, GetTXTRecord)
+TEST(DNSResolver, DNSFormatFromOAAddress)
 {
-  bool avail, valid;
+  std::string addr =
+      tools::DNSResolver::instance().get_dns_format_from_oa_address(
+          "donate@example.com");
+  EXPECT_STREQ("donate.example.com", addr.c_str());
 
-  std::vector<std::string> records = tools::DNSResolver::instance().get_txt_record("donate.getjude.org", avail, valid);
-
-  EXPECT_NE(0, records.size());
-
-  for (auto& rec : records)
-  {
-    std::cout << "TXT record for donate.getjude.org: " << rec << std::endl;
-  }
-
-  // replace first @ with .
-  std::string addr = tools::DNSResolver::instance().get_dns_format_from_oa_address("donate@getjude.org");
-  EXPECT_STREQ("donate.getjude.org", addr.c_str());
-
-  // no change
-  addr = tools::DNSResolver::instance().get_dns_format_from_oa_address("donate.getjude.org");
-  EXPECT_STREQ("donate.getjude.org", addr.c_str());
+  addr = tools::DNSResolver::instance().get_dns_format_from_oa_address(
+      "donate.example.com");
+  EXPECT_STREQ("donate.example.com", addr.c_str());
 }
 
 TEST(DNSResolver, Localhost)

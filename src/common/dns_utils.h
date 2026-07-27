@@ -122,7 +122,7 @@ public:
    * @brief Gets a DNS address from OpenAlias format
    *
    * If the address looks good, but contains one @ symbol, replace that with a .
-   * e.g. donate@getjude.org becomes donate.getjude.org
+   * e.g. donate@example.com becomes donate.example.com
    *
    * @param oa_addr  OpenAlias address
    *
