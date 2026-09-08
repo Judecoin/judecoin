@@ -36,6 +36,14 @@ Portions Copyright (c) The Cryptonote developers.
 - Block Explorer Ⅱ: [judeblock.net](https://www.judeblock.net/)
 - Block Explorer Ⅲ: [judeblock.io](https://www.judeblock.io/)
 
+## Community Channels
+
+- Discord: [discord.gg/wcwXGJPyha](https://discord.gg/wcwXGJPyha)
+- Telegram Announcements: [t.me/JudecoinOfficial](https://t.me/JudecoinOfficial)
+- Telegram Community: [t.me/JudecoinCommunity](https://t.me/JudecoinCommunity)
+- X: [x.com/judecoin_](https://x.com/judecoin_)
+- YouTube: [youtube.com/@JudecoinCommunity](https://www.youtube.com/@JudecoinCommunity)
+
 ## Documentation
 
 - [Judecoin Wallet Documentation](https://github.com/Judecoin/wallet)
