@@ -1,7 +1,7 @@
 # Multistage docker build, requires docker 17.05
 
 # builder stage
-FROM ubuntu:22.04 AS builder
+FROM ubuntu:26.04 AS builder
 
 RUN set -ex && \
     apt-get update && \
@@ -26,7 +26,9 @@ RUN set -ex && \
     fi
 
 # runtime stage
-FROM ubuntu:22.04
+FROM ubuntu:26.04
+
+ENV UID=999
 
 RUN set -ex && \
     apt-get update && \
@@ -37,7 +39,7 @@ RUN set -ex && \
 COPY --from=builder /src/build/x86_64-linux-gnu/release/bin /usr/local/bin/
 
 # Create judecoin user and runtime directories
-RUN adduser --system --group --disabled-password --home /home/judecoin judecoin && \
+RUN useradd --system --user-group --uid $UID judecoin && \
     mkdir -p /wallet /home/judecoin/.bitjudecoin /root/.bitjudecoin && \
     chown -R judecoin:judecoin /home/judecoin/.bitjudecoin && \
     chown -R judecoin:judecoin /wallet
