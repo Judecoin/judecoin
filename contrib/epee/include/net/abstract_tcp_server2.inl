@@ -1145,10 +1145,19 @@ namespace net_utils
     terminate_async();
     if (!wait_for_shutdown)
       return true;
-    m_state.condition.wait(guard, [this]{
-      return m_state.status == status_t::TERMINATED || m_state.status == status_t::WASTED;
-    });
-    return true;
+    const bool shutdown = m_state.condition.wait_for(
+      guard,
+      std::chrono::seconds(5),
+      [this]{
+        return m_state.status == status_t::TERMINATED || m_state.status == status_t::WASTED;
+      }
+    );
+    if (shutdown)
+      MDEBUG("Shut down connection " << m_conn_context.m_connection_id);
+    else
+      MERROR("Connection " << m_conn_context.m_connection_id << " did not shut down");
+
+    return shutdown;
   }
 
   template<typename T>
