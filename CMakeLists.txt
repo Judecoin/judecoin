@@ -888,13 +888,15 @@ include(CheckTrezor)
   if(STATIC)
     # STATIC already configures most deps to be linked in statically,
     # here we make more deps static if the platform permits it
-    if (MINGW)
-      # On Windows, this is as close to fully-static as we get:
-      # this leaves only deps on /c/Windows/system32/*.dll
-      set(STATIC_FLAGS "-static")
-    elseif (NOT (APPLE OR FREEBSD OR OPENBSD OR DRAGONFLY))
-      # On Linux, we don't support fully static build, but these can be static
-      set(STATIC_FLAGS "-static-libgcc -static-libstdc++")
+    if (NOT DEFINED STATIC_FLAGS)
+      if (MINGW)
+        # On Windows, this is as close to fully-static as we get:
+        # this leaves only deps on /c/Windows/system32/*.dll
+        set(STATIC_FLAGS "-static")
+      elseif (NOT (APPLE OR FREEBSD OR OPENBSD OR DRAGONFLY))
+        # On Linux, we don't support fully static build, but these can be static
+        set(STATIC_FLAGS "-static-libgcc -static-libstdc++")
+      endif()
     endif()
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${STATIC_FLAGS} ")
   endif()
