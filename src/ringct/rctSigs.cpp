@@ -1573,7 +1573,10 @@ namespace rct {
         if (equalKeys(C, Ctmp) == false) {
             CHECK_AND_ASSERT_THROW_MES(false, "warning, amount decoded incorrectly, will be unable to spend");
         }
-        return h2d(amount);
+        jude_amount amount_8;
+        CHECK_AND_ASSERT_THROW_MES(h2d(amount_8, amount),
+          "long decoded amount contains superfluous data");
+        return amount_8;
     }
 
     jude_amount decodeRct(const rctSig & rv, const key & sk, unsigned int i, hw::device &hwdev) {
@@ -1604,7 +1607,10 @@ namespace rct {
         if (equalKeys(C, Ctmp) == false) {
             CHECK_AND_ASSERT_THROW_MES(false, "warning, amount decoded incorrectly, will be unable to spend");
         }
-        return h2d(amount);
+        jude_amount amount_8;
+        CHECK_AND_ASSERT_THROW_MES(h2d(amount_8, amount),
+          "long decoded amount contains superfluous data");
+        return amount_8;
     }
 
     jude_amount decodeRctSimple(const rctSig & rv, const key & sk, unsigned int i, hw::device &hwdev) {

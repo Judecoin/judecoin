@@ -722,8 +722,8 @@ namespace rct {
     void d2b(bits  amountb, jude_amount val);
     //32 byte key to uint long long
     // if the key holds a value > 2^64
-    // then the value in the first 8 bytes is returned
-    jude_amount h2d(const key &test);
+    // then false is returned
+    bool h2d(jude_amount &amountd, const key &test);
     //32 byte key to int[64]
     void h2b(bits  amountb2, const key & test);
     //int[64] to 32 byte key

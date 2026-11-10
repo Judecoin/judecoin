@@ -37,15 +37,6 @@
 #include <cstddef>
 #include <tuple>
 
-#include "crypto/generic-ops.h"
-
-extern "C" {
-#include "crypto/random.h"
-#include "crypto/keccak.h"
-#include "rctCryptoOps.h"
-}
-#include "crypto/crypto.h"
-
 #include "rctTypes.h"
 
 //Define this flag when debugging to get additional info on the console

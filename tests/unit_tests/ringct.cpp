@@ -974,11 +974,13 @@ static const jude_amount test_amounts[]={0, 1, 2, 3, 4, 5, 10000, 10000000000000
 
 TEST(ringct, d2h)
 {
-  key k, P1;
-  skpkGen(k, P1);
+  key k = skGen();
+  memset(k.bytes + 8, 0, sizeof(k) - 8);
   for (auto amount: test_amounts) {
     d2h(k, amount);
-    ASSERT_TRUE(amount == h2d(k));
+    jude_amount h2d_amount;
+    ASSERT_TRUE(h2d(h2d_amount, k));
+    ASSERT_EQ(h2d_amount, amount);
   }
 }
 
