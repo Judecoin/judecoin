@@ -226,7 +226,6 @@ target_link_libraries(http-client_fuzz_tests
   PRIVATE
     epee
     ${Boost_THREAD_LIBRARY}
-    ${Boost_CHRONO_LIBRARY}
     ${Boost_REGEX_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${Boost_SYSTEM_LIBRARY}
@@ -243,7 +242,6 @@ target_link_libraries(levin_fuzz_tests
     common
     epee
     ${Boost_THREAD_LIBRARY}
-    ${Boost_CHRONO_LIBRARY}
     ${Boost_REGEX_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT}
@@ -259,7 +257,6 @@ target_link_libraries(bulletproof_fuzz_tests
     common
     epee
     ${Boost_THREAD_LIBRARY}
-    ${Boost_CHRONO_LIBRARY}
     ${Boost_REGEX_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT}
@@ -276,7 +273,6 @@ target_link_libraries(tx-extra_fuzz_tests
     common
     epee
     ${Boost_THREAD_LIBRARY}
-    ${Boost_CHRONO_LIBRARY}
     ${Boost_REGEX_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${Boost_SYSTEM_LIBRARY}
@@ -293,7 +289,6 @@ target_link_libraries(utf8_fuzz_tests
     common
     epee
     ${Boost_THREAD_LIBRARY}
-    ${Boost_CHRONO_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT}
     ${EXTRA_LIBRARIES}
     $ENV{LIB_FUZZING_ENGINE})
